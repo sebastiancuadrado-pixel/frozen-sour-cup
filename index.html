@@ -397,6 +397,9 @@ header.top{position:relative}
 #shWa{background:#1f9e55;border-color:#1f9e55;color:#fff;grid-column:1/-1}
 #shMore{grid-column:auto}
 #shClose{width:100%}
+.jav{width:44px;height:44px;flex:none;border-radius:50%;border:1.5px dashed var(--muted);background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;padding:0}
+.jav.has{border:2px solid var(--green)}
+.jav svg{width:20px;height:20px}.jav img{width:100%;height:100%;object-fit:cover}
 </style>
 </head>
 <body>
@@ -502,7 +505,8 @@ header.top{position:relative}
       </div>
       <div>
         <div class="jugsec">
-          <div class="lbl" style="display:flex;justify-content:space-between"><span>Lista de jugadores</span><span id="jugCount">0</span></div>
+          <div class="lbl" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px"><span>Lista de jugadores</span><span id="jugCount">0</span></div>
+          <p class="sub" style="margin:-4px 0 0">Toca el círculo de la cámara para agregar o cambiar la foto de cada jugador.</p>
           <input type="search" id="jugSearch" placeholder="Buscar por RUT o nombre" autocomplete="off">
           <div class="plist jlist" id="jlist"></div>
           <form class="jadd" id="jugForm">
@@ -587,15 +591,15 @@ const DEFAULT_NINES={
   blanca:{name:"Blanca",pars:[4,4,3,5,4,4,4,3,5]}
 };
 const NINE_IDS=["roja","azul","blanca"];
-const S={hof:{},hofForm:null,jug:{},fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
+const S={jfotos:{},hof:{},hofForm:null,jug:{},fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
   teams:[],scores:{},salidas:{},mode:"net",open:null,sel:null,hole:0,drive:null,isAdmin:false,db:null,confirmDel:null,draftOrder:null,editId:null};
 const CATS=["A","B","C","D"];
 const REQ_CATS=["C","D"],REQ_PARS=[3,4,5];
 function pName(t,c){return (t.players&&t.players[c])||("Jugador "+c)}
-function foto(t,c){return (S.fotos[t.id]||{})[c]||""}
+function foto(t,c){const k=t.ruts&&t.ruts[c];return (k&&S.jfotos[k])||(S.fotos[t.id]||{})[c]||""}
 function av(t,c,cls){const f=foto(t,c);const n=pName(t,c);
   return `<span class="av c-${c}${cls?" "+cls:""}">${f?`<img src="${f}" alt="">`:`<i>${esc((n.trim()[0]||c).toUpperCase())}</i>`}<b>${c}</b></span>`}
-function hasFotos(t){const f=S.fotos[t.id];return !!(f&&CATS.some(c=>f[c]))}
+function hasFotos(t){return CATS.some(c=>foto(t,c))}
 // Reduce la foto a un cuadrado de 128 px para que cargue rápido en la cancha
 function shrink(file){return new Promise((ok,bad)=>{const img=new Image();const url=URL.createObjectURL(file);
   img.onload=()=>{const s=Math.min(img.width,img.height),N=128,cv=document.createElement("canvas");cv.width=cv.height=N;
@@ -923,16 +927,18 @@ function confetti(){
 }
 // ---------- cada jugador sube su propia foto ----------
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-foto]");if(!b)return;e.stopPropagation();
-  const [tid,c]=b.dataset.foto.split("|");S.photoTarget={tid,c};S.photoData=null;$("selfPhoto").click()},true);
+  const [tid,c]=b.dataset.foto.split("|");const t=S.teams.find(x=>x.id===tid);const rut=t&&t.ruts&&t.ruts[c];
+  S.photoTarget=rut&&S.jug[rut]?{tid,c,rut}:{tid,c};S.photoData=null;$("selfPhoto").click()},true);
 $("selfPhoto").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f||!S.photoTarget)return;
   try{S.photoData=await shrink(f)}catch(err){toast("No se pudo leer esa imagen");return}
+  if(S.photoTarget.rut&&!S.photoTarget.tid){const j=S.jug[S.photoTarget.rut];$("phPreview").src=S.photoData;$("phWho").textContent=`${j?j.nombre:""} · ${j?j.rut:""}`;$("phModal").hidden=false;return}
   const t=S.teams.find(x=>x.id===S.photoTarget.tid);if(!t)return;
   $("phPreview").src=S.photoData;$("phWho").textContent=`${pName(t,S.photoTarget.c)} · ${t.name} · Categoría ${S.photoTarget.c}`;$("phModal").hidden=false};
 $("phCancel").onclick=()=>{$("phModal").hidden=true;S.photoData=null};
 $("phOther").onclick=()=>$("selfPhoto").click();
-$("phSave").onclick=async()=>{if(!S.photoData||!S.photoTarget||!S.db)return;const {tid,c}=S.photoTarget;
+$("phSave").onclick=async()=>{if(!S.photoData||!S.photoTarget||!S.db)return;const {tid,c,rut}=S.photoTarget;
   $("phSave").disabled=true;
-  try{await S.db.ref(`fotos/${tid}/${c}`).set(S.photoData);$("phModal").hidden=true;toast("¡Foto guardada!")}
+  try{await S.db.ref(rut?`jfotos/${rut}`:`fotos/${tid}/${c}`).set(S.photoData);$("phModal").hidden=true;toast("¡Foto guardada!")}
   catch(err){toast("No se pudo guardar la foto, intenta de nuevo")}
   $("phSave").disabled=false};
 // ---------- campeones pasados ----------
@@ -1048,13 +1054,14 @@ $("addForm").addEventListener("submit",async e=>{
     const upd={};
     if(S.editId){upd[`equipos/${id}/name`]=name;upd[`equipos/${id}/hcp`]=hcp;upd[`equipos/${id}/players`]=players;upd[`equipos/${id}/ruts`]=ruts}
     else upd[`equipos/${id}`]={name,hcp,players,ruts,created:Date.now()};
-    Object.keys(S.formFotos).forEach(c=>{upd[`fotos/${id}/${c}`]=S.formFotos[c]||null});
+    Object.keys(S.formFotos).forEach(c=>{if(ruts[c]){upd[`jfotos/${ruts[c]}`]=S.formFotos[c]||null;upd[`fotos/${id}/${c}`]=null}else upd[`fotos/${id}/${c}`]=S.formFotos[c]||null});
     await S.db.ref().update(upd);toast(name+(S.editId?" actualizado":" agregado"));
     clearForm();$("newName").focus();
   }catch(err){writeErr(err)}
 });
 function clearForm(){S.editId=null;S.formFotos={};["newName","newHcp","pA","pB","pC","pD"].forEach(i=>$(i).value="");syncForm();fillJugList()}
-function syncPhotos(){CATS.forEach(c=>{const cur=c in S.formFotos?S.formFotos[c]:(S.editId?(S.fotos[S.editId]||{})[c]:"");
+function syncPhotos(){CATS.forEach(c=>{const k=typeof findJug==="function"?findJug($("p"+c).value):null;
+  const cur=c in S.formFotos?S.formFotos[c]:((k&&S.jfotos[k])||(S.editId?(S.fotos[S.editId]||{})[c]:"")||"");
   $("ph"+c).innerHTML=cur?`<img src="${cur}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
   $("phdel"+c).hidden=!cur})}
 CATS.forEach(c=>{
@@ -1082,7 +1089,7 @@ function openPick(c,all){const inp=$("p"+c),box=$("pk"+c);
     :`<span class="pkmore">${q?`Nadie disponible con "${esc(q)}"`:"No quedan jugadores sin equipo"}</span>`;
   box.hidden=false;inp.setAttribute("aria-expanded","true");
   box.onmousedown=e=>e.preventDefault();
-  box.querySelectorAll(".pkopt").forEach(b=>b.onclick=e=>{e.preventDefault();inp.value=jLabel(b.dataset.k);closePick(c);
+  box.querySelectorAll(".pkopt").forEach(b=>b.onclick=e=>{e.preventDefault();inp.value=jLabel(b.dataset.k);closePick(c);syncPhotos();
     const nx=CATS[CATS.indexOf(c)+1];if(nx&&!$("p"+nx).value)$("p"+nx).focus()});
 }
 function closePick(c){$("pk"+c).hidden=true;$("p"+c).setAttribute("aria-expanded","false")}
@@ -1101,14 +1108,16 @@ function fillJugList(){const dl=$("jugList");if(!dl)return;
 function renderJug(){
   const keys=Object.keys(S.jug).sort((a,b)=>S.jug[a].nombre.localeCompare(S.jug[b].nombre));
   const free=keys.filter(k=>!teamOf(k)).length;
-  $("jugCount").textContent=keys.length?`${keys.length} · ${free} sin equipo`:"0";
+  const conFoto=keys.filter(k=>S.jfotos[k]).length;
+  $("jugCount").textContent=keys.length?`${keys.length} · ${free} sin equipo · ${conFoto} con foto`:"0";
   const q=$("jugSearch").value.trim().toLowerCase(),qr=cleanRut(q);
   const list=keys.filter(k=>!q||S.jug[k].nombre.toLowerCase().includes(q)||(qr&&k.includes(qr)));
   const box=$("jlist");
   if(document.activeElement&&box.contains(document.activeElement))return;
   box.innerHTML=!keys.length?`<div class="note">Todavía no hay jugadores. Agrégalos abajo o pega la lista completa.</div>`
    :!list.length?`<div class="note">Nadie coincide con "${esc(q)}".</div>`
-   :list.slice(0,60).map(k=>{const t=teamOf(k);return `<div class="pitem jitem"><span class="n">${esc(S.jug[k].nombre)}<small>${esc(S.jug[k].rut)}</small></span>${t?`<span class="jteam">${esc(t.name)}</span>`:`<span class="jteam free">Sin equipo</span>`}${S.confirmJug===k?`<button class="btn danger" data-jdel="${k}">Confirmar</button><button class="btn" data-jcancel="1">No</button>`:`<button class="btn" data-jask="${k}">Quitar</button>`}</div>`}).join("")+(list.length>60?`<p class="sub">Mostrando 60 de ${list.length}. Usa el buscador.</p>`:"");
+   :list.slice(0,60).map(k=>{const t=teamOf(k);return `<div class="pitem jitem"><button type="button" class="jav${S.jfotos[k]?" has":""}" data-jfoto="${k}" title="${S.jfotos[k]?"Cambiar":"Agregar"} foto de ${esc(S.jug[k].nombre)}">${S.jfotos[k]?`<img src="${S.jfotos[k]}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`}</button><span class="n">${esc(S.jug[k].nombre)}<small>${esc(S.jug[k].rut)}</small></span>${t?`<span class="jteam">${esc(t.name)}</span>`:`<span class="jteam free">Sin equipo</span>`}${S.confirmJug===k?`<button class="btn danger" data-jdel="${k}">Confirmar</button><button class="btn" data-jcancel="1">No</button>`:`<button class="btn" data-jask="${k}">Quitar</button>`}</div>`}).join("")+(list.length>60?`<p class="sub">Mostrando 60 de ${list.length}. Usa el buscador.</p>`:"");
+  box.querySelectorAll("[data-jfoto]").forEach(b=>b.onclick=()=>{S.photoTarget={rut:b.dataset.jfoto};S.photoData=null;$("selfPhoto").click()});
   box.querySelectorAll("[data-jask]").forEach(b=>b.onclick=()=>{const k=b.dataset.jask,t=teamOf(k);if(t){toast(`Primero sácalo de ${t.name}`);return}S.confirmJug=k;renderJug()});
   box.querySelectorAll("[data-jcancel]").forEach(b=>b.onclick=()=>{S.confirmJug=null;renderJug()});
   box.querySelectorAll("[data-jdel]").forEach(b=>b.onclick=async()=>{S.confirmJug=null;try{await S.db.ref("jugadores/"+b.dataset.jdel).set(null);toast("Jugador quitado")}catch(e){writeErr(e)}});
@@ -1166,9 +1175,9 @@ function startDemo(){
       store.ts[id][h.key]=Date.now()-(thru[i]-k)*11*60000})});
   const get=p=>p.split("/").reduce((o,k)=>o&&o[k],store);
   const put=(p,v)=>{const ks=p.split("/");let o=store;ks.slice(0,-1).forEach(k=>{o[k]=o[k]||{};o=o[k]});if(v===null)delete o[ks[ks.length-1]];else o[ks[ks.length-1]]=v};
-  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores","campeones"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
+  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores","campeones","jfotos"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
     S.scores=JSON.parse(JSON.stringify(store.scores));S.salidas=JSON.parse(JSON.stringify(store.salidas));
-    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));S.hof=JSON.parse(JSON.stringify(store.campeones||{}));applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
+    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));S.hof=JSON.parse(JSON.stringify(store.campeones||{}));S.jfotos=JSON.parse(JSON.stringify(store.jfotos||{}));applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
   S.db={ref:(p)=>({set:async v=>{put(p,v);sync()},update:async m=>{Object.keys(m).forEach(k=>put(p?p+"/"+k:k,m[k]));sync()},push:async v=>{put(p+"/n"+Date.now(),v);sync()}})};
   S.isAdmin=true;sync();setLive(true,"Demo");showBanner("Modo demo con equipos de ejemplo: puedes probar todo, pero nada se guarda.");
 }
@@ -1202,6 +1211,7 @@ if(location.hash==="#demo"||!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==="P
   db.ref("concursos").on("value",s=>{S.concursos=s.val()||{};renderBoard();renderEntry()});
   db.ref("fotos").on("value",s=>{S.fotos=s.val()||{};renderAll()});
   db.ref("jugadores").on("value",s=>{S.jug=s.val()||{};renderConfig()});
+  db.ref("jfotos").on("value",s=>{S.jfotos=s.val()||{};renderAll()});
   db.ref("campeones").on("value",s=>{S.hof=s.val()||{};renderHof()});
 }
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
