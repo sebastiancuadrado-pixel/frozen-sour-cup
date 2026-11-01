@@ -428,6 +428,26 @@ header.top{position:relative}
 .srcbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;text-transform:none;letter-spacing:.02em}
 .srcbtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7}
 #srcCancel{width:100%}
+/* Ucornianos: rosado */
+nav.tabs{overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{flex:1 0 auto;padding-left:10px;padding-right:10px}
+nav.tabs button.uctab{color:#e2589e}
+nav.tabs button.uctab[aria-selected="true"]{background:#e2589e;color:#fff}
+#v-ucornianos{--gold:#e2589e;--green:#d63c8a;--green-ink:#fff;--rosa-bg:#fdeaf3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #v-ucornianos{--gold:#ff86bf;--green:#e2589e;--rosa-bg:#3a1630}}
+:root[data-theme="dark"] #v-ucornianos{--gold:#ff86bf;--green:#e2589e;--rosa-bg:#3a1630}
+#v-ucornianos .hofhero{background:radial-gradient(ellipse at 22% 50%,color-mix(in srgb,var(--gold) 35%,transparent),transparent 65%),var(--rosa-bg);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+#v-ucornianos .herotxt h2{color:var(--gold)}
+#v-ucornianos .hofcard{border-color:color-mix(in srgb,var(--gold) 35%,var(--line))}
+#v-ucornianos .hofcard.latest{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+#v-ucornianos .hofimg.ph{background:var(--green)}
+#v-ucornianos .btn.primary{background:var(--green);border-color:var(--green)}
+#v-ucornianos .linkbtn{color:var(--gold)}
+.ucimg{max-width:42%;height:auto!important;max-height:230px;object-fit:contain}
+.ucemoji{font-size:110px;line-height:1;flex:none;filter:drop-shadow(0 8px 14px rgba(0,0,0,.25))}
+@media (max-width:440px){nav.tabs{gap:1px;padding:3px}nav.tabs button{flex:1 1 auto;font-size:12px;letter-spacing:0;padding:9px 3px}}
+@media (max-width:380px){nav.tabs button{font-size:11px;padding:9px 2px}}
 </style>
 </head>
 <body>
@@ -448,6 +468,7 @@ header.top{position:relative}
     <button role="tab" aria-selected="true" data-tab="tabla" id="t-tabla">Tabla</button>
     <button role="tab" aria-selected="false" data-tab="ingresar" id="t-ingresar">Ingresar</button>
     <button role="tab" aria-selected="false" data-tab="campeones" id="t-campeones">Campeones</button>
+    <button role="tab" aria-selected="false" data-tab="ucornianos" id="t-ucornianos" class="uctab">Ucornianos</button>
     <button role="tab" aria-selected="false" data-tab="config" id="t-config">Admin</button>
   </nav>
 
@@ -492,6 +513,29 @@ header.top{position:relative}
       <div class="row2"><button class="btn primary" type="submit" id="hofSave">Guardar campeón</button><button class="btn" type="button" id="hofCancel">Cancelar</button></div>
     </form>
     <div class="row2" id="hofAdminBar" hidden><button class="btn primary" id="hofAdd">+ Agregar campeón</button><button class="btn" id="hofCurrent" hidden>Agregar al ganador de este torneo</button></div>
+  </section>
+
+  <section id="v-ucornianos" hidden>
+    <div class="hof-head hofhero uchero"><img class="trophy ucimg" src="unicornio.webp" alt="Ucornianos" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="ucemoji" hidden aria-hidden="true">🦄</span>
+      <div class="herotxt"><div class="hofyear">El rincón de los Ucornianos</div><h2>Ucornianos</h2><p class="sub">Los equipos que terminaron últimos en cada edición.</p></div></div>
+    <div id="ucList"></div>
+    <form class="panel hofform" id="ucForm" hidden>
+      <div class="lbl" id="ucTitle">Agregar ucorniano</div>
+      <div class="hofgrid">
+        <label class="field"><span class="sub">Año</span><input type="number" id="ucAnio" inputmode="numeric" min="1990" max="2100" placeholder="2025" required></label>
+        <label class="field"><span class="sub">Edición</span><input type="text" id="ucEd" maxlength="30" placeholder="Ej: 5ª edición"></label>
+      </div>
+      <label class="field"><span class="sub">Equipo perdedor</span><input type="text" id="ucEquipo" maxlength="40" placeholder="Nombre del equipo" required></label>
+      <label class="field"><span class="sub">Jugadores</span><input type="text" id="ucJug" maxlength="160" placeholder="Ej: Pato Vives, Tomás Cuadrado, Felipe Lagos, Jorge Ossa"></label>
+      <div class="hofgrid">
+        <label class="field"><span class="sub">Resultado</span><input type="text" id="ucRes" maxlength="30" placeholder="Ej: 79,4 neto / +7"></label>
+        <label class="field"><span class="sub">Cancha</span><input type="text" id="ucCancha" maxlength="40" placeholder="Las Rocas de Santo Domingo"></label>
+      </div>
+      <label class="field"><span class="sub">Comentario (opcional)</span><input type="text" id="ucNota" maxlength="120" placeholder="Ej: perdieron 3 pelotas en el lago del 7"></label>
+      <div class="hofphoto"><label class="phbig" for="ucFile" id="ucPh"></label><input type="file" id="ucFile" accept="image/*" hidden><div><div class="sub">Foto del equipo perdedor (opcional)</div><button type="button" class="linkbtn" id="ucPhDel" hidden>Quitar foto</button></div></div>
+      <div class="row2"><button class="btn primary" type="submit" id="ucSave">Guardar</button><button class="btn" type="button" id="ucCancel">Cancelar</button></div>
+    </form>
+    <div class="row2" id="ucAdminBar" hidden><button class="btn primary" id="ucAdd">+ Agregar ucorniano</button><button class="btn" id="ucCurrent" hidden>Agregar al último de este torneo</button></div>
   </section>
 
   <section id="v-config" hidden>
@@ -656,7 +700,7 @@ const DEFAULT_NINES={
   blanca:{name:"Blanca",pars:[4,4,3,5,4,4,4,3,5]}
 };
 const NINE_IDS=["roja","azul","blanca"];
-const S={me:null,viewer:false,por:{},jugLoaded:false,jfotos:{},hof:{},hofForm:null,jug:{},fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
+const S={uc:{},ucForm:null,me:null,viewer:false,por:{},jugLoaded:false,jfotos:{},hof:{},hofForm:null,jug:{},fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
   teams:[],scores:{},salidas:{},mode:"net",open:null,sel:null,hole:0,drive:null,isAdmin:false,db:null,confirmDel:null,draftOrder:null,editId:null};
 const CATS=["A","B","C","D"];
 const REQ_CATS=["C","D"],REQ_PARS=[3,4,5];
@@ -1100,6 +1144,46 @@ $("hofForm").addEventListener("submit",async e=>{e.preventDefault();if(!S.db||!S
   $("hofSave").disabled=true;
   try{await S.db.ref("campeones/"+id).set(d);S.hofForm=null;toast(`Campeón ${anio} guardado`);renderHof()}catch(err){writeErr(err)}
   $("hofSave").disabled=false});
+// ---------- ucornianos (últimos de cada edición) ----------
+function currentLoser(){const ok=S.teams.map(t=>({t,s:stats(t)})).filter(r=>!isDQ(r.t)&&r.s.thru&&r.s.thru===r.s.total).sort((a,b)=>b.s.net-a.s.net);return ok[0]}
+function renderUc(){
+  document.querySelector("#v-ucornianos .hof-head .sub").textContent=`Los equipos que terminaron últimos en la ${S.cfg.name||DEFAULT_NAME}.`;
+  const list=Object.keys(S.uc).map(id=>({id,...S.uc[id]})).sort((a,b)=>(b.anio||0)-(a.anio||0));
+  const box=$("ucList");
+  box.innerHTML=!list.length?`<div class="empty"><strong>Todavía no hay ucornianos</strong>${S.isAdmin?"Agrega el primero con el botón de abajo.":"Aquí quedarán para siempre los últimos de cada edición."}</div>`
+   :`<div class="hof">${list.map((c,i)=>`<article class="hofcard uccard${i===0?" latest":""}">
+      ${c.foto?`<img class="hofimg" src="${c.foto}" alt="Equipo ucorniano ${esc(c.anio||"")}">`:`<div class="hofimg ph"><span>${esc(String(c.anio||""))}</span></div>`}
+      <div class="hofbody"><div class="hofyear">${esc(String(c.anio||""))}${c.edicion?` · ${esc(c.edicion)}`:""}</div>
+      <h3>${esc(c.equipo||"")}</h3>${c.jugadores?`<p class="hofplayers">${esc(c.jugadores)}</p>`:""}
+      <div class="hofmeta">${c.resultado?`<span>🦄 ${esc(c.resultado)}</span>`:""}${c.cancha?`<span>${esc(c.cancha)}</span>`:""}</div>
+      ${c.nota?`<p class="hofnote">${esc(c.nota)}</p>`:""}
+      ${S.isAdmin?`<div class="hofadmin"><button class="linkbtn" data-uedit="${c.id}">Editar</button>${S.ucDel===c.id?`<button class="btn danger" data-udel="${c.id}">Confirmar borrar</button><button class="btn" data-uno="1">No</button>`:`<button class="linkbtn" data-uask="${c.id}">Borrar</button>`}</div>`:""}</div></article>`).join("")}</div>`;
+  box.querySelectorAll("[data-uedit]").forEach(b=>b.onclick=()=>openUc(b.dataset.hedit));
+  box.querySelectorAll("[data-uask]").forEach(b=>b.onclick=()=>{S.ucDel=b.dataset.hask;renderUc()});
+  box.querySelectorAll("[data-uno]").forEach(b=>b.onclick=()=>{S.ucDel=null;renderUc()});
+  box.querySelectorAll("[data-udel]").forEach(b=>b.onclick=async()=>{S.ucDel=null;try{await S.db.ref("ucornianos/"+b.dataset.hdel).set(null);toast("Ucorniano borrado")}catch(e){writeErr(e)}});
+  const open=!!S.ucForm;$("ucForm").hidden=!open;$("ucAdminBar").hidden=!S.isAdmin||open;
+  $("ucCurrent").hidden=!(S.cfg.estado==="finalizado"&&currentLoser());
+}
+function setUcPhoto(){const f=S.ucForm&&S.ucForm.foto;$("ucPh").innerHTML=f?`<img src="${f}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;$("ucPhDel").hidden=!f}
+function openUc(id,pre){const c=id?S.uc[id]:(pre||{});S.ucForm={id:id||null,foto:c.foto||""};
+  $("ucTitle").textContent=id?"Editar ucorniano":"Agregar ucorniano";
+  $("ucAnio").value=c.anio||"";$("ucEd").value=c.edicion||"";$("ucEquipo").value=c.equipo||"";$("ucJug").value=c.jugadores||"";
+  $("ucRes").value=c.resultado||"";$("ucCancha").value=c.cancha||"";$("ucNota").value=c.nota||"";setUcPhoto();renderUc();$("ucForm").scrollIntoView({behavior:"smooth",block:"start"})}
+$("ucAdd").onclick=()=>openUc(null,{anio:new Date().getFullYear()-1,cancha:"Las Rocas de Santo Domingo"});
+$("ucCurrent").onclick=()=>{const w=currentLoser();if(!w)return;
+  openUc(null,{anio:new Date().getFullYear(),equipo:w.t.name,jugadores:CATS.map(c=>w.t.players&&w.t.players[c]).filter(Boolean).join(", "),resultado:`${dec(w.s.netStrokes)} neto (${fmt(w.s.net)})`,cancha:"Las Rocas de Santo Domingo"})};
+$("ucCancel").onclick=()=>{S.ucForm=null;renderUc()};
+$("ucFile").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f||!S.ucForm)return;try{S.ucForm.foto=await shrinkTo(f,900,.72);setUcPhoto()}catch(err){toast("No se pudo leer esa imagen")}};
+$("ucPhDel").onclick=()=>{S.ucForm.foto="";setUcPhoto()};
+$("ucForm").addEventListener("submit",async e=>{e.preventDefault();if(!S.db||!S.ucForm)return;
+  const anio=parseInt($("ucAnio").value,10);if(!(anio>=1990&&anio<=2100)){toast("Revisa el año");return}
+  const d={anio,edicion:$("ucEd").value.trim(),equipo:$("ucEquipo").value.trim(),jugadores:$("ucJug").value.trim(),resultado:$("ucRes").value.trim(),cancha:$("ucCancha").value.trim(),nota:$("ucNota").value.trim(),foto:S.ucForm.foto||""};
+  if(!d.equipo){toast("Falta el nombre del equipo");return}
+  const id=S.ucForm.id||("u"+anio+"-"+Date.now().toString(36));
+  $("ucSave").disabled=true;
+  try{await S.db.ref("ucornianos/"+id).set(d);S.ucForm=null;toast(`Ucorniano ${anio} guardado`);renderUc()}catch(err){writeErr(err)}
+  $("ucSave").disabled=false});
 // ---------- compartir ----------
 const APP_URL="https://sebastiancuadrado-pixel.github.io/frozen-sour-cup/";
 function shareText(){return `⛳ ${S.cfg.name||DEFAULT_NAME} · Las Rocas de Santo Domingo\nSigue la tabla en vivo y anota los scores de tu equipo:\n${APP_URL}`}
@@ -1113,12 +1197,12 @@ $("shMore").onclick=async()=>{try{await navigator.share({title:S.cfg.name||DEFAU
 $("shCopy").onclick=async()=>{try{await navigator.clipboard.writeText(APP_URL);toast("Link copiado")}catch(e){
   const r=document.createRange();r.selectNodeContents($("shLink"));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast("Mantén presionado para copiar")}};
 
-function renderAll(){showGate();renderMe();renderHeader();renderBoard();renderEntry();renderConfig();renderHof()}
+function renderAll(){showGate();renderMe();renderHeader();renderBoard();renderEntry();renderConfig();renderHof();renderUc()}
 
 // ---------- tabs ----------
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
-  ["tabla","ingresar","campeones","config"].forEach(t=>$("v-"+t).hidden=t!==b.dataset.tab);
+  ["tabla","ingresar","campeones","ucornianos","config"].forEach(t=>$("v-"+t).hidden=t!==b.dataset.tab);
 });
 $("mGross").onclick=()=>{S.mode="gross";$("mGross").setAttribute("aria-pressed",true);$("mNet").setAttribute("aria-pressed",false);renderBoard()};
 $("mNet").onclick=()=>{S.mode="net";$("mNet").setAttribute("aria-pressed",true);$("mGross").setAttribute("aria-pressed",false);renderBoard()};
@@ -1283,6 +1367,7 @@ function startDemo(){
   names.flat().concat(["Tomás Lira","Ignacio Mora","Andrés Bravo","Felipe Rivas"]).forEach((n,i)=>{const k=mk(12000000+i*137911);store.jugadores[k]={rut:fmtRut(k),nombre:n.includes(" ")?n:n+" "+sur[i%sur.length]}});
   store.campeones={c2025:{anio:2025,edicion:"4ª edición",equipo:"Los Birdies",jugadores:"Ejemplo Uno, Ejemplo Dos, Ejemplo Tres, Ejemplo Cuatro",resultado:"60,4 neto (−11,6)",cancha:"Las Rocas de Santo Domingo",nota:"Ejemplo de la demo",foto:""},
     c2024:{anio:2024,edicion:"3ª edición",equipo:"Sour Power",jugadores:"Ejemplo Cinco, Ejemplo Seis, Ejemplo Siete, Ejemplo Ocho",resultado:"62,1 neto",cancha:"Las Rocas de Santo Domingo",nota:"",foto:""}};
+  store.ucornianos={u2025:{anio:2025,edicion:"4ª edición",equipo:"Los Sin Rumbo",jugadores:"Ejemplo Nueve, Ejemplo Diez, Ejemplo Once, Ejemplo Doce",resultado:"79,4 neto (+7,4)",cancha:"Las Rocas de Santo Domingo",nota:"Ejemplo de la demo",foto:""}};
   const jk=Object.keys(store.jugadores);
   names.forEach((n,i)=>{const id="d"+i;const r={A:jk[i*4],B:jk[i*4+1],C:jk[i*4+2],D:jk[i*4+3]};
     store.equipos[id]={name:"Equipo "+(i+1),hcp:hc[i],players:{A:store.jugadores[r.A].nombre,B:store.jugadores[r.B].nombre,C:store.jugadores[r.C].nombre,D:store.jugadores[r.D].nombre},ruts:r,created:i};
@@ -1292,9 +1377,9 @@ function startDemo(){
       store.ts[id][h.key]=Date.now()-(thru[i]-k)*11*60000})});
   const get=p=>p.split("/").reduce((o,k)=>o&&o[k],store);
   const put=(p,v)=>{const ks=p.split("/");let o=store;ks.slice(0,-1).forEach(k=>{o[k]=o[k]||{};o=o[k]});if(v===null)delete o[ks[ks.length-1]];else o[ks[ks.length-1]]=v};
-  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores","campeones","jfotos","por"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
+  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores","campeones","jfotos","por","ucornianos"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
     S.scores=JSON.parse(JSON.stringify(store.scores));S.salidas=JSON.parse(JSON.stringify(store.salidas));
-    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));S.hof=JSON.parse(JSON.stringify(store.campeones||{}));S.jfotos=JSON.parse(JSON.stringify(store.jfotos||{}));S.por=JSON.parse(JSON.stringify(store.por||{}));S.jugLoaded=true;applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
+    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));S.hof=JSON.parse(JSON.stringify(store.campeones||{}));S.jfotos=JSON.parse(JSON.stringify(store.jfotos||{}));S.por=JSON.parse(JSON.stringify(store.por||{}));S.uc=JSON.parse(JSON.stringify(store.ucornianos||{}));S.jugLoaded=true;applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
   S.db={ref:(p)=>({set:async v=>{put(p,v);sync()},update:async m=>{Object.keys(m).forEach(k=>put(p?p+"/"+k:k,m[k]));sync()},push:async v=>{put(p+"/n"+Date.now(),v);sync()}})};
   S.isAdmin=true;sync();setLive(true,"Demo");showBanner("Modo demo con equipos de ejemplo: puedes probar todo, pero nada se guarda.");
 }
@@ -1332,6 +1417,7 @@ if(location.hash==="#demo"||!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==="P
   db.ref("por").on("value",s=>{S.por=s.val()||{};renderEntry()});
   db.ref("jfotos").on("value",s=>{S.jfotos=s.val()||{};renderAll()});
   db.ref("campeones").on("value",s=>{S.hof=s.val()||{};renderHof()});
+  db.ref("ucornianos").on("value",s=>{S.uc=s.val()||{};renderUc()});
 }
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script>
