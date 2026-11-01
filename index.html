@@ -324,6 +324,17 @@ table.lb th:nth-child(1){width:34px}table.lb th:nth-child(3){width:38px}table.lb
 .resetopts .btn{display:grid;text-align:left;gap:2px;font-weight:600}
 .resetopts small{font-weight:400;font-size:12px;color:var(--muted)}
 .statebox .linkbtn{justify-self:start;color:var(--muted)}
+/* Lista de jugadores */
+.jugsec{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--soft);margin-top:4px}
+.jugsec input[type=search]{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:9px 10px;font:15px var(--body);width:100%;box-sizing:border-box}
+.jlist{max-height:320px;overflow:auto}
+.jitem{background:var(--surface)}
+.jitem .n small{display:block;font-weight:400;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.jteam{font-size:12px;color:var(--ok);white-space:nowrap}.jteam.free{color:var(--muted)}
+.jadd{display:grid;grid-template-columns:1fr;gap:6px}
+.bulk summary{cursor:pointer;font-weight:600;color:var(--green);font-size:14px}
+.bulk textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:9px;font:14px var(--body);margin:6px 0}
+@media (min-width:520px){.jadd{grid-template-columns:150px 1fr auto}}
 </style>
 </head>
 <body>
@@ -403,16 +414,33 @@ table.lb th:nth-child(1){width:34px}table.lb th:nth-child(3){width:38px}table.lb
         <button class="btn" id="podioBtn">Mostrar podio ahora</button>
       </div>
       <div>
-        <div class="lbl" style="display:flex;justify-content:space-between"><span>Equipos</span><span id="teamCount">0 de 39</span></div>
+        <div class="jugsec">
+          <div class="lbl" style="display:flex;justify-content:space-between"><span>Lista de jugadores</span><span id="jugCount">0</span></div>
+          <input type="search" id="jugSearch" placeholder="Buscar por RUT o nombre" autocomplete="off">
+          <div class="plist jlist" id="jlist"></div>
+          <form class="jadd" id="jugForm">
+            <input type="text" id="jugRut" placeholder="RUT, ej: 12.345.678-9" autocomplete="off" required>
+            <input type="text" id="jugNombre" placeholder="Nombre y apellido" maxlength="40" autocomplete="off" required>
+            <button class="btn primary" type="submit">Agregar jugador</button>
+          </form>
+          <details class="bulk"><summary>Pegar lista completa</summary>
+            <p class="sub">Copia desde Excel o WhatsApp y pega un jugador por línea, con su RUT y nombre en cualquier orden.</p>
+            <textarea id="jugBulk" rows="6" placeholder="12.345.678-9 Juan Pérez&#10;9.876.543-2 Pedro Soto"></textarea>
+            <button class="btn primary" type="button" id="jugImport">Importar lista</button>
+            <p class="sub" id="jugImportMsg"></p>
+          </details>
+        </div>
+        <datalist id="jugList"></datalist>
+        <div class="lbl" style="display:flex;justify-content:space-between;margin-top:18px"><span>Equipos</span><span id="teamCount">0 de 39</span></div>
         <div class="plist" id="plist"></div>
         <form class="add" id="addForm" style="margin-top:8px">
           <div class="lbl formtitle" id="formTitle">Nuevo equipo</div>
           <input type="text" id="newName" maxlength="40" placeholder="Nombre del equipo" required>
           <input type="text" id="newHcp" inputmode="decimal" placeholder="Hcp">
-          <div class="pl"><label class="phbtn" for="fA" id="phA" title="Foto del jugador A"></label><input type="file" id="fA" accept="image/*" hidden><span class="cat c-A">A</span><input type="text" id="pA" maxlength="30" placeholder="Jugador A"><button type="button" class="phdel" id="phdelA" hidden aria-label="Quitar foto">✕</button></div>
-          <div class="pl"><label class="phbtn" for="fB" id="phB" title="Foto del jugador B"></label><input type="file" id="fB" accept="image/*" hidden><span class="cat c-B">B</span><input type="text" id="pB" maxlength="30" placeholder="Jugador B"><button type="button" class="phdel" id="phdelB" hidden aria-label="Quitar foto">✕</button></div>
-          <div class="pl"><label class="phbtn" for="fC" id="phC" title="Foto del jugador C"></label><input type="file" id="fC" accept="image/*" hidden><span class="cat c-C">C</span><input type="text" id="pC" maxlength="30" placeholder="Jugador C"><button type="button" class="phdel" id="phdelC" hidden aria-label="Quitar foto">✕</button></div>
-          <div class="pl"><label class="phbtn" for="fD" id="phD" title="Foto del jugador D"></label><input type="file" id="fD" accept="image/*" hidden><span class="cat c-D">D</span><input type="text" id="pD" maxlength="30" placeholder="Jugador D"><button type="button" class="phdel" id="phdelD" hidden aria-label="Quitar foto">✕</button></div>
+          <div class="pl"><label class="phbtn" for="fA" id="phA" title="Foto del jugador A"></label><input type="file" id="fA" accept="image/*" hidden><span class="cat c-A">A</span><input type="text" id="pA" list="jugList" autocomplete="off" placeholder="RUT o nombre"><button type="button" class="phdel" id="phdelA" hidden aria-label="Quitar foto">✕</button></div>
+          <div class="pl"><label class="phbtn" for="fB" id="phB" title="Foto del jugador B"></label><input type="file" id="fB" accept="image/*" hidden><span class="cat c-B">B</span><input type="text" id="pB" list="jugList" autocomplete="off" placeholder="RUT o nombre"><button type="button" class="phdel" id="phdelB" hidden aria-label="Quitar foto">✕</button></div>
+          <div class="pl"><label class="phbtn" for="fC" id="phC" title="Foto del jugador C"></label><input type="file" id="fC" accept="image/*" hidden><span class="cat c-C">C</span><input type="text" id="pC" list="jugList" autocomplete="off" placeholder="RUT o nombre"><button type="button" class="phdel" id="phdelC" hidden aria-label="Quitar foto">✕</button></div>
+          <div class="pl"><label class="phbtn" for="fD" id="phD" title="Foto del jugador D"></label><input type="file" id="fD" accept="image/*" hidden><span class="cat c-D">D</span><input type="text" id="pD" list="jugList" autocomplete="off" placeholder="RUT o nombre"><button type="button" class="phdel" id="phdelD" hidden aria-label="Quitar foto">✕</button></div>
           <button class="btn primary" type="submit" id="addBtn">Agregar equipo</button>
           <button class="btn" type="button" id="cancelEdit" hidden>Cancelar edición</button>
         </form>
@@ -458,7 +486,7 @@ const DEFAULT_NINES={
   blanca:{name:"Blanca",pars:[4,4,3,5,4,4,4,3,5]}
 };
 const NINE_IDS=["roja","azul","blanca"];
-const S={fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
+const S={jug:{},fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
   teams:[],scores:{},salidas:{},mode:"net",open:null,sel:null,hole:0,drive:null,isAdmin:false,db:null,confirmDel:null,draftOrder:null,editId:null};
 const CATS=["A","B","C","D"];
 const REQ_CATS=["C","D"],REQ_PARS=[3,4,5];
@@ -472,6 +500,18 @@ function shrink(file){return new Promise((ok,bad)=>{const img=new Image();const 
   img.onload=()=>{const s=Math.min(img.width,img.height),N=128,cv=document.createElement("canvas");cv.width=cv.height=N;
     cv.getContext("2d").drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,N,N);URL.revokeObjectURL(url);ok(cv.toDataURL("image/jpeg",.72))};
   img.onerror=()=>{URL.revokeObjectURL(url);bad()};img.src=url})}
+// ---------- RUT chileno ----------
+function cleanRut(v){return String(v||"").toUpperCase().replace(/[^0-9K]/g,"")}
+function validRut(k){if(!/^\d{6,8}[0-9K]$/.test(k))return false;let sum=0,m=2;
+  for(let i=k.length-2;i>=0;i--){sum+=Number(k[i])*m;m=m===7?2:m+1}
+  const r=11-(sum%11),dv=r===11?"0":r===10?"K":String(r);return dv===k[k.length-1]}
+function fmtRut(k){const b=k.slice(0,-1),dv=k.slice(-1);return b.replace(/\B(?=(\d{3})+(?!\d))/g,".")+"-"+dv}
+function jLabel(k){const j=S.jug[k];return j?`${j.nombre} · ${j.rut}`:""}
+function teamOf(k,except){return S.teams.find(t=>t.id!==except&&t.ruts&&CATS.some(c=>t.ruts[c]===k))}
+function findJug(v){v=String(v||"").trim();if(!v)return null;
+  const keys=Object.keys(S.jug);const byLabel=keys.find(k=>jLabel(k)===v);if(byLabel)return byLabel;
+  const rk=cleanRut(v.split("·").pop());if(S.jug[rk])return rk;
+  const byName=keys.filter(k=>S.jug[k].nombre.toLowerCase()===v.toLowerCase());return byName.length===1?byName[0]:undefined}
 function holeLabel(h){return S.cfg.nines[h.nine].name+" "+h.num}
 // Requisito: C y D deben aportar al menos una salida en un par 3, un par 4 y un par 5
 function reqStatus(t){
@@ -655,7 +695,7 @@ function renderStateBox(){
 function renderConfig(){
   $("loginForm").hidden=S.isAdmin;$("adminPanel").hidden=!S.isAdmin;
   if(!S.isAdmin)return;
-  renderStateBox();
+  renderStateBox();renderJug();
   if(document.activeElement!==$("cfgName")&&S.draftOrder===null)$("cfgName").value=S.cfg.name||"";
   const order=S.draftOrder||S.cfg.order;
   $("ninePick").innerHTML=NINE_IDS.map(id=>{const i=order.indexOf(id);const n=S.cfg.nines[id]||DEFAULT_NINES[id];
@@ -681,7 +721,7 @@ function renderConfig(){
     const t=S.teams.find(x=>x.id===inp.dataset.id);if(!t||Number(t.hcp)===v)return;
     try{await S.db.ref("equipos/"+t.id+"/hcp").set(v);toast(`${t.name}: Hcp ${dec(v)}`)}catch(e){writeErr(e)}});
   pl.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const t=S.teams.find(x=>x.id===b.dataset.edit);if(!t)return;
-    S.editId=t.id;$("newName").value=t.name;$("newHcp").value=dec(Number(t.hcp)||0);CATS.forEach(c=>$("p"+c).value=(t.players&&t.players[c])||"");S.formFotos={};
+    S.editId=t.id;$("newName").value=t.name;$("newHcp").value=dec(Number(t.hcp)||0);CATS.forEach(c=>{const k=t.ruts&&t.ruts[c];$("p"+c).value=k&&S.jug[k]?jLabel(k):(t.players&&t.players[c])||""});S.formFotos={};fillJugList();
     syncForm();$("addForm").hidden=false;$("addForm").scrollIntoView({behavior:"smooth",block:"center"});$("newName").focus()});
   pl.querySelectorAll("[data-ask]").forEach(b=>b.onclick=()=>{S.confirmDel=b.dataset.ask;renderConfig()});
   pl.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=()=>{S.confirmDel=null;renderConfig()});
@@ -837,18 +877,25 @@ $("addForm").addEventListener("submit",async e=>{
   if(!S.editId&&S.teams.length>=MAX_TEAMS){toast("Máximo "+MAX_TEAMS+" equipos");return}
   if(S.teams.some(t=>t.id!==S.editId&&t.name.toLowerCase()===name.toLowerCase())){toast("Ya existe un equipo con ese nombre");return}
   const hcp=parseHcp($("newHcp").value);if(hcp===null){toast("Hcp entre 0 y 54");return}
-  const players={};CATS.forEach(c=>players[c]=$("p"+c).value.trim());
+  const players={},ruts={};const hasList=Object.keys(S.jug).length>0;
+  for(const c of CATS){const v=$("p"+c).value.trim();if(!v){players[c]="";continue}
+    if(hasList){const k=findJug(v);
+      if(!k){toast(`Jugador ${c}: "${v}" no está en la lista de jugadores`);$("p"+c).focus();return}
+      const other=teamOf(k,S.editId);if(other){toast(`${S.jug[k].nombre} ya está en ${other.name}`);$("p"+c).focus();return}
+      if(Object.values(ruts).includes(k)){toast(`${S.jug[k].nombre} está repetido en este equipo`);return}
+      ruts[c]=k;players[c]=S.jug[k].nombre}
+    else players[c]=v}
   try{
     const id=S.editId||("t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
     const upd={};
-    if(S.editId){upd[`equipos/${id}/name`]=name;upd[`equipos/${id}/hcp`]=hcp;upd[`equipos/${id}/players`]=players}
-    else upd[`equipos/${id}`]={name,hcp,players,created:Date.now()};
+    if(S.editId){upd[`equipos/${id}/name`]=name;upd[`equipos/${id}/hcp`]=hcp;upd[`equipos/${id}/players`]=players;upd[`equipos/${id}/ruts`]=ruts}
+    else upd[`equipos/${id}`]={name,hcp,players,ruts,created:Date.now()};
     Object.keys(S.formFotos).forEach(c=>{upd[`fotos/${id}/${c}`]=S.formFotos[c]||null});
     await S.db.ref().update(upd);toast(name+(S.editId?" actualizado":" agregado"));
     clearForm();$("newName").focus();
   }catch(err){writeErr(err)}
 });
-function clearForm(){S.editId=null;S.formFotos={};["newName","newHcp","pA","pB","pC","pD"].forEach(i=>$(i).value="");syncForm()}
+function clearForm(){S.editId=null;S.formFotos={};["newName","newHcp","pA","pB","pC","pD"].forEach(i=>$(i).value="");syncForm();fillJugList()}
 function syncPhotos(){CATS.forEach(c=>{const cur=c in S.formFotos?S.formFotos[c]:(S.editId?(S.fotos[S.editId]||{})[c]:"");
   $("ph"+c).innerHTML=cur?`<img src="${cur}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
   $("phdel"+c).hidden=!cur})}
@@ -859,6 +906,46 @@ CATS.forEach(c=>{
 });
 function syncForm(){syncPhotos();$("formTitle").textContent=S.editId?"Editar equipo":"Nuevo equipo";$("addBtn").textContent=S.editId?"Guardar cambios":"Agregar equipo";$("cancelEdit").hidden=!S.editId}
 $("cancelEdit").onclick=()=>{clearForm();renderConfig()};
+
+// ---------- lista de jugadores (RUT y nombre) ----------
+function fillJugList(){const dl=$("jugList");if(!dl)return;
+  const keys=Object.keys(S.jug).filter(k=>!teamOf(k,S.editId)).sort((a,b)=>S.jug[a].nombre.localeCompare(S.jug[b].nombre));
+  dl.innerHTML=keys.map(k=>`<option value="${esc(jLabel(k))}"></option>`).join("")}
+function renderJug(){
+  const keys=Object.keys(S.jug).sort((a,b)=>S.jug[a].nombre.localeCompare(S.jug[b].nombre));
+  const free=keys.filter(k=>!teamOf(k)).length;
+  $("jugCount").textContent=keys.length?`${keys.length} · ${free} sin equipo`:"0";
+  const q=$("jugSearch").value.trim().toLowerCase(),qr=cleanRut(q);
+  const list=keys.filter(k=>!q||S.jug[k].nombre.toLowerCase().includes(q)||(qr&&k.includes(qr)));
+  const box=$("jlist");
+  if(document.activeElement&&box.contains(document.activeElement))return;
+  box.innerHTML=!keys.length?`<div class="note">Todavía no hay jugadores. Agrégalos abajo o pega la lista completa.</div>`
+   :!list.length?`<div class="note">Nadie coincide con "${esc(q)}".</div>`
+   :list.slice(0,60).map(k=>{const t=teamOf(k);return `<div class="pitem jitem"><span class="n">${esc(S.jug[k].nombre)}<small>${esc(S.jug[k].rut)}</small></span>${t?`<span class="jteam">${esc(t.name)}</span>`:`<span class="jteam free">Sin equipo</span>`}${S.confirmJug===k?`<button class="btn danger" data-jdel="${k}">Confirmar</button><button class="btn" data-jcancel="1">No</button>`:`<button class="btn" data-jask="${k}">Quitar</button>`}</div>`}).join("")+(list.length>60?`<p class="sub">Mostrando 60 de ${list.length}. Usa el buscador.</p>`:"");
+  box.querySelectorAll("[data-jask]").forEach(b=>b.onclick=()=>{const k=b.dataset.jask,t=teamOf(k);if(t){toast(`Primero sácalo de ${t.name}`);return}S.confirmJug=k;renderJug()});
+  box.querySelectorAll("[data-jcancel]").forEach(b=>b.onclick=()=>{S.confirmJug=null;renderJug()});
+  box.querySelectorAll("[data-jdel]").forEach(b=>b.onclick=async()=>{S.confirmJug=null;try{await S.db.ref("jugadores/"+b.dataset.jdel).set(null);toast("Jugador quitado")}catch(e){writeErr(e)}});
+  fillJugList();
+}
+$("jugSearch").oninput=()=>renderJug();
+$("jugRut").onblur=()=>{const k=cleanRut($("jugRut").value);if(validRut(k))$("jugRut").value=fmtRut(k)};
+$("jugForm").addEventListener("submit",async e=>{e.preventDefault();if(!S.db)return;
+  const k=cleanRut($("jugRut").value),nombre=$("jugNombre").value.trim().replace(/\s+/g," ");
+  if(!validRut(k)){toast("Ese RUT no es válido, revisa el dígito verificador");$("jugRut").focus();return}
+  if(!nombre){toast("Falta el nombre");return}
+  if(S.jug[k]){toast(`Ese RUT ya está cargado: ${S.jug[k].nombre}`);return}
+  try{await S.db.ref("jugadores/"+k).set({rut:fmtRut(k),nombre});$("jugRut").value="";$("jugNombre").value="";$("jugRut").focus();toast(nombre+" agregado a la lista")}catch(err){writeErr(err)}});
+$("jugImport").onclick=async()=>{if(!S.db)return;
+  const lines=$("jugBulk").value.split(/\n/).map(l=>l.trim()).filter(Boolean);const upd={},bad=[];let dup=0;
+  lines.forEach(l=>{const m=l.match(/\d{1,2}\.?\d{3}\.?\d{3}\s*-?\s*[\dkK]\b/);if(!m){bad.push(l);return}
+    const k=cleanRut(m[0]);const nombre=l.replace(m[0],"").replace(/^[\s,;:\-–|·\t]+|[\s,;:\-–|·\t]+$/g,"").replace(/\s+/g," ");
+    if(!validRut(k)||!nombre){bad.push(l);return}if(S.jug[k]||upd["jugadores/"+k]){dup++;return}
+    upd["jugadores/"+k]={rut:fmtRut(k),nombre:nombre.slice(0,40)}});
+  const n=Object.keys(upd).length;
+  if(!n){$("jugImportMsg").textContent=bad.length?`No encontré RUT válidos. Revisa: ${bad.slice(0,3).join(" | ")}`:(dup?"Todos esos jugadores ya estaban cargados.":"Pega al menos un jugador.");return}
+  try{await S.db.ref().update(upd);$("jugBulk").value="";
+    $("jugImportMsg").textContent=`${n} jugadores importados.`+(dup?` ${dup} ya estaban.`:"")+(bad.length?` ${bad.length} líneas con error: ${bad.slice(0,3).join(" | ")}${bad.length>3?"…":""}`:"");
+    toast(n+" jugadores importados")}catch(err){writeErr(err)}};
 
 // ---------- admin login ----------
 $("loginForm").addEventListener("submit",async e=>{
@@ -878,16 +965,21 @@ function startDemo(){
   const names=[["Pato","Nico","Felipe","Tomás"],["Juan","Rodrigo","Matías","Andrés"],["Diego","Pablo","Cristián","José"],["Seba","Ignacio","Gonzalo","Martín"],["Benja","Javier","Álvaro","Raúl"],["Max","Vicente","Joaquín","Carlos"]];
   const hc=[6.2,8.5,4,11.3,9.8,7.1];const thru=[18,14,12,9,6,3];
   const H=holes();let seed=3;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
-  names.forEach((n,i)=>{const id="d"+i;store.equipos[id]={name:"Equipo "+(i+1),hcp:hc[i],players:{A:n[0],B:n[1],C:n[2],D:n[3]},created:i};
+  store.jugadores={};const mk=b=>{let s=0,m=2;const d=String(b);for(let i=d.length-1;i>=0;i--){s+=Number(d[i])*m;m=m===7?2:m+1}const r=11-(s%11);return d+(r===11?"0":r===10?"K":r)};
+  const sur=["Pérez","Soto","Rojas","Muñoz","Díaz","Silva","Vega","Fuentes"];
+  names.flat().concat(["Tomás Lira","Ignacio Mora","Andrés Bravo","Felipe Rivas"]).forEach((n,i)=>{const k=mk(12000000+i*137911);store.jugadores[k]={rut:fmtRut(k),nombre:n.includes(" ")?n:n+" "+sur[i%sur.length]}});
+  const jk=Object.keys(store.jugadores);
+  names.forEach((n,i)=>{const id="d"+i;const r={A:jk[i*4],B:jk[i*4+1],C:jk[i*4+2],D:jk[i*4+3]};
+    store.equipos[id]={name:"Equipo "+(i+1),hcp:hc[i],players:{A:store.jugadores[r.A].nombre,B:store.jugadores[r.B].nombre,C:store.jugadores[r.C].nombre,D:store.jugadores[r.D].nombre},ruts:r,created:i};
     store.scores[id]={};store.salidas[id]={};store.ts[id]={};
     H.slice(0,thru[i]).forEach((h,k)=>{const r=rnd();store.scores[id][h.key]=Math.max(2,h.par+(r<.22?-1:r<.8?0:1));
       store.salidas[id][h.key]=["A","B","A","C","B","D","A","B","C","A","D","B","A","C","B","D","A","B"][(k+i)%18];
       store.ts[id][h.key]=Date.now()-(thru[i]-k)*11*60000})});
   const get=p=>p.split("/").reduce((o,k)=>o&&o[k],store);
   const put=(p,v)=>{const ks=p.split("/");let o=store;ks.slice(0,-1).forEach(k=>{o[k]=o[k]||{};o=o[k]});if(v===null)delete o[ks[ks.length-1]];else o[ks[ks.length-1]]=v};
-  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
+  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
     S.scores=JSON.parse(JSON.stringify(store.scores));S.salidas=JSON.parse(JSON.stringify(store.salidas));
-    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
+    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
   S.db={ref:(p)=>({set:async v=>{put(p,v);sync()},update:async m=>{Object.keys(m).forEach(k=>put(p?p+"/"+k:k,m[k]));sync()},push:async v=>{put(p+"/n"+Date.now(),v);sync()}})};
   S.isAdmin=true;sync();setLive(true,"Demo");showBanner("Modo demo con equipos de ejemplo: puedes probar todo, pero nada se guarda.");
 }
@@ -913,13 +1005,14 @@ if(location.hash==="#demo"||!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==="P
   db.ref(".info/connected").on("value",s=>setLive(!!s.val(),s.val()?"En vivo":"Sin señal · se guarda igual"));
   db.ref("config").on("value",s=>{applyConfig(s.val());renderAll()});
   db.ref("equipos").on("value",s=>{const v=s.val()||{};
-    S.teams=Object.keys(v).map(id=>({id,name:String(v[id].name||"Equipo"),hcp:v[id].hcp,players:v[id].players||{},created:v[id].created||0})).sort((a,b)=>a.created-b.created);
+    S.teams=Object.keys(v).map(id=>({id,name:String(v[id].name||"Equipo"),hcp:v[id].hcp,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created||0})).sort((a,b)=>a.created-b.created);
     renderAll()});
   db.ref("scores").on("value",s=>{S.scores=s.val()||{};renderBoard();renderEntry()});
   db.ref("salidas").on("value",s=>{S.salidas=s.val()||{};renderBoard();renderEntry()});
   db.ref("ts").on("value",s=>{S.ts=s.val()||{};renderBoard()});
   db.ref("concursos").on("value",s=>{S.concursos=s.val()||{};renderBoard();renderEntry()});
   db.ref("fotos").on("value",s=>{S.fotos=s.val()||{};renderAll()});
+  db.ref("jugadores").on("value",s=>{S.jug=s.val()||{};renderConfig()});
 }
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script>
