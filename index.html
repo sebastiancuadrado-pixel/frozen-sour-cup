@@ -320,6 +320,10 @@ table.lb th:nth-child(1){width:34px}table.lb th:nth-child(3){width:38px}table.lb
 .phcard{background:var(--surface);color:var(--ink);border-radius:16px;padding:18px;display:grid;gap:10px;justify-items:center;width:min(340px,100%);box-shadow:0 10px 40px rgba(0,0,0,.35)}
 .phcard img{width:150px;height:150px;border-radius:50%;object-fit:cover;border:3px solid var(--green)}
 .phcard .row2{justify-content:center}
+.resetopts{display:grid;gap:8px}
+.resetopts .btn{display:grid;text-align:left;gap:2px;font-weight:600}
+.resetopts small{font-weight:400;font-size:12px;color:var(--muted)}
+.statebox .linkbtn{justify-self:start;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -629,9 +633,19 @@ function renderStateBox(){
   const info=st==="previo"?"Los equipos todavía no pueden anotar scores.":st==="en_juego"?`Comenzó a las ${hm(S.cfg.inicio)} · ${played} de ${S.teams.length} equipos en cancha · ${done} terminaron.`:`Finalizó a las ${hm(S.cfg.fin)}. Los scores quedaron cerrados y el podio está visible para todos.`;
   const action={previo:["Iniciar torneo","en_juego","Desde ese momento todos pueden anotar scores."],en_juego:["Finalizar torneo","finalizado",done<S.teams.length?`Aún faltan ${S.teams.length-done} equipos por terminar. Se cerrarán los scores y se mostrará el podio.`:"Se cerrarán los scores y se mostrará el podio."],finalizado:["Reabrir torneo","en_juego","Los equipos podrán volver a anotar y corregir scores."]}[st];
   const label={previo:"Por comenzar",en_juego:"En juego",finalizado:"Finalizado"}[st];
+  if(S.confirmReset){box.innerHTML=`<div class="lbl">Reiniciar torneo</div><p class="sub" style="margin:0">Esto no se puede deshacer. El torneo vuelve a "Por comenzar".</p>
+    <div class="resetopts"><button class="btn" id="rsScores">Borrar solo scores<small>Mantiene equipos, jugadores y fotos</small></button>
+    <button class="btn danger" id="rsAll">Borrar todo<small>Scores, equipos, jugadores y fotos</small></button>
+    <button class="btn" id="rsNo">Cancelar</button></div>`;
+    $("rsNo").onclick=()=>{S.confirmReset=false;renderStateBox()};
+    const doReset=async all=>{const u={scores:null,salidas:null,ts:null,concursos:null,"config/estado":"previo","config/inicio":0,"config/fin":0,"config/podio":false};
+      if(all){u.equipos=null;u.fotos=null}
+      S.confirmReset=false;try{await S.db.ref().update(u);toast(all?"Torneo borrado por completo":"Scores borrados, equipos intactos")}catch(e){writeErr(e)}renderStateBox()};
+    $("rsScores").onclick=()=>doReset(false);$("rsAll").onclick=()=>doReset(true);return}
   box.innerHTML=S.confirmState?`<div class="lbl">¿${action[0]}?</div><p class="sub" style="margin:0">${action[2]}</p>
     <div class="row2"><button class="btn primary" id="stYes">Sí, ${action[0].toLowerCase()}</button><button class="btn" id="stNo">Cancelar</button></div>`
-   :`<div class="strow"><div><div class="lbl">Estado del torneo</div><div class="stlabel s-${st}">${label}</div></div><button class="btn ${st==="en_juego"?"danger":"primary"} stbtn" id="stGo">${action[0]}</button></div><p class="sub" style="margin:0">${info}</p>`;
+   :`<div class="strow"><div><div class="lbl">Estado del torneo</div><div class="stlabel s-${st}">${label}</div></div><button class="btn ${st==="en_juego"?"danger":"primary"} stbtn" id="stGo">${action[0]}</button></div><p class="sub" style="margin:0">${info}</p><button class="linkbtn" id="resetGo">Reiniciar torneo…</button>`;
+  if($("resetGo"))$("resetGo").onclick=()=>{S.confirmReset=true;renderStateBox()};
   if($("stGo"))$("stGo").onclick=()=>{S.confirmState=true;renderStateBox()};
   if($("stNo"))$("stNo").onclick=()=>{S.confirmState=false;renderStateBox()};
   if($("stYes"))$("stYes").onclick=async()=>{const next=action[1];const upd={estado:next};
@@ -871,7 +885,7 @@ function startDemo(){
       store.ts[id][h.key]=Date.now()-(thru[i]-k)*11*60000})});
   const get=p=>p.split("/").reduce((o,k)=>o&&o[k],store);
   const put=(p,v)=>{const ks=p.split("/");let o=store;ks.slice(0,-1).forEach(k=>{o[k]=o[k]||{};o=o[k]});if(v===null)delete o[ks[ks.length-1]];else o[ks[ks.length-1]]=v};
-  const sync=()=>{const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
+  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
     S.scores=JSON.parse(JSON.stringify(store.scores));S.salidas=JSON.parse(JSON.stringify(store.salidas));
     S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
   S.db={ref:(p)=>({set:async v=>{put(p,v);sync()},update:async m=>{Object.keys(m).forEach(k=>put(p?p+"/"+k:k,m[k]));sync()},push:async v=>{put(p+"/n"+Date.now(),v);sync()}})};
