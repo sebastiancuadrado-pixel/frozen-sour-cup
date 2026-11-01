@@ -400,6 +400,30 @@ header.top{position:relative}
 .jav{width:44px;height:44px;flex:none;border-radius:50%;border:1.5px dashed var(--muted);background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;padding:0}
 .jav.has{border:2px solid var(--green)}
 .jav svg{width:20px;height:20px}.jav img{width:100%;height:100%;object-fit:cover}
+/* Registro */
+.gate{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:auto;
+  padding:calc(24px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.gatecard{width:min(380px,100%);display:grid;gap:12px;justify-items:center;text-align:center}
+.gatelogo{width:110px;height:110px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.3))}
+.gatecard h2{margin:0;font:700 28px/1.1 var(--display);text-wrap:balance}
+.gatecard .sub{margin:0}
+.gateform{display:grid;gap:10px;width:100%}
+.gateform input{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:14px;font:600 18px var(--body);text-align:center;width:100%;box-sizing:border-box;font-variant-numeric:tabular-nums}
+.gateform input:focus{border-color:var(--green);outline:none}
+.gateerr{margin:0;color:var(--under);font-size:14px}
+.gateadmin{color:var(--muted);font-size:12px}
+.mechip{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin:2px 0 4px;flex-wrap:wrap}
+.mechip b{color:var(--ink)}
+.meav{width:22px;height:22px;border-radius:50%;background:var(--soft);display:inline-flex;align-items:center;justify-content:center;overflow:hidden;font:700 11px var(--display);color:var(--ink);border:1.5px solid var(--green)}
+.meav img{width:100%;height:100%;object-fit:cover}
+.porline{font-size:12px;color:var(--muted);margin-top:-8px}
+.meprof{display:flex;align-items:center;gap:8px;border:0;background:none;color:var(--muted);font:13px var(--body);padding:2px 0;cursor:pointer;text-align:left;flex-wrap:wrap}
+.melink{color:var(--green);font-weight:600;text-decoration:underline}
+.profcard{gap:10px}
+.profcard h3{margin:0;font:700 24px var(--display)}
+.profph{width:130px;height:130px;border-radius:50%;border:3px solid var(--green);background:var(--soft);overflow:hidden;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.profph img{width:100%;height:100%;object-fit:cover}
+.profph span{font:700 48px var(--display);color:var(--ink)}
 </style>
 </head>
 <body>
@@ -409,6 +433,7 @@ header.top{position:relative}
     <div class="ttl">
       <h1 id="tName">Frozen Sour Cup</h1>
       <button class="sharebtn" id="shareBtn" type="button" aria-label="Compartir la app"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.3M8.3 13.2l7.4 4.3"/></svg>Compartir</button>
+      <div class="mechip" id="meChip" hidden></div>
       <div class="sub"><span class="live off" id="live"><i></i><span id="liveTxt">Conectando</span></span><span id="stateTxt" class="state" hidden></span><span id="courseTxt">Las Rocas de Santo Domingo</span></div>
     </div>
   </header>
@@ -541,6 +566,32 @@ header.top{position:relative}
   </section>
 </div>
 <div class="toast" id="toast"></div>
+<div class="phmodal" id="profModal" hidden role="dialog" aria-modal="true" aria-labelledby="profName">
+  <div class="phcard profcard">
+    <div class="lbl">Mi perfil</div>
+    <button type="button" class="profph" id="profPh" aria-label="Cambiar mi foto"></button>
+    <h3 id="profName"></h3>
+    <p class="sub" id="profInfo" style="margin:0"></p>
+    <p class="sub" id="profHint" style="margin:0"></p>
+    <div class="row2"><button class="btn primary" id="profPhoto" type="button">Subir mi foto</button><button class="btn" id="profClose" type="button">Cerrar</button></div>
+    <button class="linkbtn" id="profOut" type="button">No soy yo · Salir</button>
+  </div>
+</div>
+<div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="gatecard">
+    <img src="logo.png" alt="" class="gatelogo" width="110" height="110">
+    <h2 id="gateTitle">Bienvenido a la <span id="gateName">Frozen Sour Cup</span></h2>
+    <p class="sub">Regístrate con tu RUT para anotar los scores de tu equipo.</p>
+    <form id="gateForm" class="gateform">
+      <input type="text" id="gateRut" inputmode="text" autocomplete="off" placeholder="Tu RUT, ej: 12.345.678-9" aria-label="Tu RUT">
+      <button class="btn primary big" type="submit" id="gateGo">Entrar</button>
+    </form>
+    <p class="gateerr" id="gateErr" hidden></p>
+    <div class="gatehi" id="gateHi" hidden></div>
+    <button class="linkbtn" id="gateView" type="button">Solo quiero ver la tabla</button>
+    <button class="linkbtn gateadmin" id="gateAdmin" type="button">Soy el administrador</button>
+  </div>
+</div>
 <input type="file" id="selfPhoto" accept="image/*" hidden>
 <div class="phmodal" id="shareModal" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle">
   <div class="phcard sharecard">
@@ -591,7 +642,7 @@ const DEFAULT_NINES={
   blanca:{name:"Blanca",pars:[4,4,3,5,4,4,4,3,5]}
 };
 const NINE_IDS=["roja","azul","blanca"];
-const S={jfotos:{},hof:{},hofForm:null,jug:{},fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
+const S={me:null,viewer:false,por:{},jugLoaded:false,jfotos:{},hof:{},hofForm:null,jug:{},fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
   teams:[],scores:{},salidas:{},mode:"net",open:null,sel:null,hole:0,drive:null,isAdmin:false,db:null,confirmDel:null,draftOrder:null,editId:null};
 const CATS=["A","B","C","D"];
 const REQ_CATS=["C","D"],REQ_PARS=[3,4,5];
@@ -722,7 +773,9 @@ function renderEntry(){
   const H=holes();if(!H.length){box.innerHTML=`<div class="note">El administrador aún no elige las vueltas.</div>`;return}
   if(S.cfg.estado!=="en_juego"&&!S.isAdmin){box.innerHTML=S.cfg.estado==="previo"?`<div class="empty"><strong>El torneo aún no comienza</strong>Podrás anotar scores apenas el administrador dé la partida.</div>`:`<div class="empty"><strong>Torneo finalizado</strong>Ya no se pueden anotar ni editar scores. Revisa los resultados en la Tabla.</div>`;return}
   const adminNote=S.cfg.estado!=="en_juego"?`<div class="note">${S.cfg.estado==="previo"?"El torneo no ha comenzado":"El torneo está finalizado"}: solo tú, como administrador, puedes anotar o corregir scores.</div>`:"";
-  if(!S.teams.find(t=>t.id===S.sel)){let saved=null;try{saved=localStorage.getItem("fsc-team")}catch(e){}S.sel=S.teams.find(t=>t.id===saved)?saved:S.teams[0].id;S.hole=firstEmpty(S.sel)}
+  if(!canScore()){box.innerHTML=`<div class="empty"><strong>Regístrate para anotar</strong>Estás en modo visita: puedes ver la tabla, pero para anotar scores tienes que entrar con tu RUT.<div style="margin-top:12px"><button class="btn primary" id="toGate">Registrarme con mi RUT</button></div></div>`;
+    $("toGate").onclick=()=>{S.viewer=false;try{localStorage.removeItem("fsc-me")}catch(e){}renderAll()};return}
+  if(!S.teams.find(t=>t.id===S.sel)){let saved=null;try{saved=localStorage.getItem("fsc-team")}catch(e){}const mt=myTeam();S.sel=mt?mt.id:S.teams.find(t=>t.id===saved)?saved:S.teams[0].id;S.hole=firstEmpty(S.sel)}
   if(S.hole>=H.length)S.hole=H.length-1;
   const t=S.teams.find(x=>x.id===S.sel);const sc=S.scores[t.id]||{};const sal=S.salidas[t.id]||{};const h=H[S.hole];const cur=sc[h.key];
   if(S.driveFor!==t.id+h.key){S.drive=sal[h.key]||null;S.draftN=typeof cur==="number"?cur:null;S.driveFor=t.id+h.key;S.editing=false}
@@ -743,6 +796,7 @@ function renderEntry(){
   box.innerHTML=`${adminNote}<div><div class="lbl">Equipo</div>${sel}</div>
   <div><div class="lbl">Hoyo</div>${ninesHtml}</div>
   <div class="cur"><h3>${esc(S.cfg.nines[h.nine].name)} ${h.num} · Par ${h.par}</h3><div class="meta">${s.thru?`Gross ${fmt(s.toPar)} · Neto ${fmt(s.net)} tras ${s.thru}`:"Sin scores"}</div></div>
+  ${(()=>{const who=(S.por[t.id]||{})[h.key];const tsv=(S.ts[t.id]||{})[h.key];if(typeof cur!=="number"||!who)return "";const n=who==="admin"?"el administrador":(S.jug[who]?S.jug[who].nombre:"");return n?`<div class="porline">Anotado por ${esc(n)}${tsv?" · "+new Date(tsv).toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit",hour12:false}):""}</div>`:""})()}
   <div><div class="lbl">1 · ¿De quién fue la salida?</div>${drives}${hint}</div>
   <div><div class="lbl">2 · Golpes del equipo</div><div class="nums">${nums}</div></div>
   <div class="confirm${ready&&dirty?" armed":""}">
@@ -759,7 +813,7 @@ function renderEntry(){
   $("saveH").onclick=()=>{if(!S.drive){toast("Falta elegir de quién fue la salida");return}if(!S.draftN){toast("Falta elegir los golpes");return}
     saveStroke(t.id,h.key,S.draftN,S.drive)};
   $("prevH").onclick=()=>{S.hole--;renderEntry()};$("nextH").onclick=()=>{S.hole++;renderEntry()};
-  if($("cSave"))$("cSave").onclick=async()=>{const cat=$("cCat").value;const dist=parseFloat(String($("cDist").value).replace(",","."));
+  if($("cSave"))$("cSave").onclick=async()=>{if(!canScore()){toast("Regístrate para registrar concursos");return}const cat=$("cCat").value;const dist=parseFloat(String($("cDist").value).replace(",","."));
     if(!(dist>0&&dist<1000)){toast("Ingresa la distancia en metros");return}
     const c=$("cSave").dataset.c;try{await S.db.ref("concursos/"+c).set({team:t.id,cat,dist:Math.round(dist*100)/100,ts:firebaseTime()});toast(`${pName(t,cat)} es el nuevo líder`)}catch(e){writeErr(e)}};
   if($("editH"))$("editH").onclick=()=>{if(S.editing){S.editing=false;S.drive=sal[h.key]||null;S.draftN=cur}else{S.editing=true;toast("Ya puedes cambiar la salida o los golpes")}renderEntry()};
@@ -783,7 +837,7 @@ function renderStateBox(){
     <button class="btn danger" id="rsAll">Borrar todo<small>Scores, equipos, jugadores y fotos</small></button>
     <button class="btn" id="rsNo">Cancelar</button></div>`;
     $("rsNo").onclick=()=>{S.confirmReset=false;renderStateBox()};
-    const doReset=async all=>{const u={scores:null,salidas:null,ts:null,concursos:null,"config/estado":"previo","config/inicio":0,"config/fin":0,"config/podio":false};
+    const doReset=async all=>{const u={scores:null,salidas:null,ts:null,por:null,concursos:null,"config/estado":"previo","config/inicio":0,"config/fin":0,"config/podio":false};
       if(all){u.equipos=null;u.fotos=null}
       S.confirmReset=false;try{await S.db.ref().update(u);toast(all?"Torneo borrado por completo":"Scores borrados, equipos intactos")}catch(e){writeErr(e)}renderStateBox()};
     $("rsScores").onclick=()=>doReset(false);$("rsAll").onclick=()=>doReset(true);return}
@@ -831,7 +885,7 @@ function renderConfig(){
   pl.querySelectorAll("[data-ask]").forEach(b=>b.onclick=()=>{S.confirmDel=b.dataset.ask;renderConfig()});
   pl.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=()=>{S.confirmDel=null;renderConfig()});
   pl.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{const id=b.dataset.del;S.confirmDel=null;
-    try{await S.db.ref().update({["equipos/"+id]:null,["scores/"+id]:null,["salidas/"+id]:null,["fotos/"+id]:null});toast("Equipo quitado")}catch(e){writeErr(e)}});
+    try{await S.db.ref().update({["equipos/"+id]:null,["scores/"+id]:null,["salidas/"+id]:null,["por/"+id]:null,["fotos/"+id]:null});toast("Equipo quitado")}catch(e){writeErr(e)}});
 }
 // Posición actual vs. posición antes del último hoyo de cada equipo
 function rankOf(list,key){const r={};let lastVal=null,lastPos=0;
@@ -925,8 +979,47 @@ function confetti(){
   let f=0;(function tick(){ctx.clearRect(0,0,W,Hh);ps.forEach(p=>{p.y+=p.vy;p.x+=p.vx;p.r+=.1;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);ctx.restore()});
     if(++f<240)requestAnimationFrame(tick);else ctx.clearRect(0,0,W,Hh)})();
 }
+// ---------- registro con RUT ----------
+try{const m=localStorage.getItem("fsc-me");if(m==="viewer")S.viewer=true;else if(m)S.me=m}catch(e){}
+function myTeam(){return S.me?S.teams.find(t=>t.ruts&&CATS.some(c=>t.ruts[c]===S.me)):null}
+function meName(){const j=S.me&&S.jug[S.me];return j?j.nombre:""}
+function showGate(){if(S.isAdmin){$("gate").hidden=true;return}
+  const need=!S.me&&!S.viewer;$("gate").hidden=!need;$("gateName").textContent=S.cfg.name||DEFAULT_NAME;
+  if(need&&document.activeElement!==$("gateRut"))setTimeout(()=>{try{$("gateRut").focus()}catch(e){}},50)}
+function renderMe(){const c=$("meChip");
+  if(S.me&&S.jug[S.me]){const t=myTeam();const f=S.jfotos[S.me];
+    c.innerHTML=`<button type="button" class="meprof" id="meProf"><span class="meav">${f?`<img src="${f}" alt="">`:esc(meName()[0]||"?")}</span><span>Hola, <b>${esc(meName().split(" ")[0])}</b>${t?` · ${esc(t.name)}`:""}</span><span class="melink">Mi perfil${f?"":" · subir foto"}</span></button>`;c.hidden=false;
+    $("meProf").onclick=openProfile}
+  else if(S.viewer&&!S.isAdmin){c.innerHTML=`<span>Modo visita</span><button class="linkbtn" id="meOut">Registrarme</button>`;c.hidden=false}
+  else c.hidden=true;
+  if($("meOut"))$("meOut").onclick=()=>{S.me=null;S.viewer=false;try{localStorage.removeItem("fsc-me")}catch(e){}$("gateRut").value="";$("gateErr").hidden=true;renderAll()}}
+$("gateRut").onblur=()=>{const k=cleanRut($("gateRut").value);if(validRut(k))$("gateRut").value=fmtRut(k)};
+$("gateForm").addEventListener("submit",e=>{e.preventDefault();const k=cleanRut($("gateRut").value);const err=$("gateErr");
+  if(!k){err.textContent="Escribe tu RUT.";err.hidden=false;return}
+  if(!validRut(k)){err.textContent="Ese RUT no es válido. Revisa el dígito verificador.";err.hidden=false;return}
+  if(!S.jugLoaded){err.textContent="Cargando la lista de jugadores, intenta en un segundo.";err.hidden=false;return}
+  if(!S.jug[k]){err.textContent="Tu RUT no está en la lista de jugadores. Pídele al organizador que te agregue, o entra como visita.";err.hidden=false;return}
+  S.me=k;S.viewer=false;try{localStorage.setItem("fsc-me",k)}catch(e){}err.hidden=true;
+  const t=myTeam();if(t){S.sel=t.id;S.hole=firstEmpty(t.id);try{localStorage.setItem("fsc-team",t.id)}catch(e){}}
+  toast(`¡Hola, ${meName().split(" ")[0]}!`);renderAll();if(!S.jfotos[k])setTimeout(openProfile,400)});
+$("gateView").onclick=()=>{S.viewer=true;try{localStorage.setItem("fsc-me","viewer")}catch(e){}renderAll()};
+$("gateAdmin").onclick=()=>{S.viewer=true;$("gate").hidden=true;document.querySelector('nav.tabs [data-tab="config"]').click();renderMe()};
+function canScore(){return S.isAdmin||!!(S.me&&S.jug[S.me])}
+function openProfile(){if(!S.me||!S.jug[S.me])return;const j=S.jug[S.me],t=myTeam(),f=S.jfotos[S.me];
+  let cat="";if(t)CATS.forEach(c=>{if(t.ruts[c]===S.me)cat=c});
+  $("profPh").innerHTML=f?`<img src="${f}" alt="">`:`<span>${esc(j.nombre[0]||"?")}</span>`;
+  $("profName").textContent=j.nombre;$("profInfo").textContent=`RUT ${j.rut}${t?` · ${t.name}${cat?" · Categoría "+cat:""}`:" · Todavía sin equipo"}`;
+  $("profHint").textContent=f?"Así te ven los demás en la tabla y en tu equipo.":"Sube una foto para que tus compañeros te reconozcan en la app.";
+  $("profPhoto").textContent=f?"Cambiar mi foto":"Subir mi foto";$("profModal").hidden=false}
+function pickMyPhoto(){S.photoTarget={rut:S.me};S.photoData=null;$("profModal").hidden=true;$("selfPhoto").click()}
+$("profPhoto").onclick=pickMyPhoto;$("profPh").onclick=pickMyPhoto;
+$("profClose").onclick=()=>$("profModal").hidden=true;
+$("profModal").onclick=e=>{if(e.target.id==="profModal")$("profModal").hidden=true};
+$("profOut").onclick=()=>{$("profModal").hidden=true;S.me=null;S.viewer=false;try{localStorage.removeItem("fsc-me")}catch(e){}$("gateRut").value="";$("gateErr").hidden=true;renderAll()};
+
 // ---------- cada jugador sube su propia foto ----------
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-foto]");if(!b)return;e.stopPropagation();
+  if(!canScore()){toast("Regístrate con tu RUT para subir tu foto");return}
   const [tid,c]=b.dataset.foto.split("|");const t=S.teams.find(x=>x.id===tid);const rut=t&&t.ruts&&t.ruts[c];
   S.photoTarget=rut&&S.jug[rut]?{tid,c,rut}:{tid,c};S.photoData=null;$("selfPhoto").click()},true);
 $("selfPhoto").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f||!S.photoTarget)return;
@@ -998,7 +1091,7 @@ $("shMore").onclick=async()=>{try{await navigator.share({title:S.cfg.name||DEFAU
 $("shCopy").onclick=async()=>{try{await navigator.clipboard.writeText(APP_URL);toast("Link copiado")}catch(e){
   const r=document.createRange();r.selectNodeContents($("shLink"));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast("Mantén presionado para copiar")}};
 
-function renderAll(){renderHeader();renderBoard();renderEntry();renderConfig();renderHof()}
+function renderAll(){showGate();renderMe();renderHeader();renderBoard();renderEntry();renderConfig();renderHof()}
 
 // ---------- tabs ----------
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{
@@ -1021,7 +1114,9 @@ function saveStroke(tid,key,v,drive,stay){
   renderEntry();renderBoard();
   // Score y salida se guardan juntos; sin señal, Firebase los envía cuando vuelve la conexión
   S.lastSaved=tid+key;S.ts[tid]=Object.assign({},S.ts[tid],{[key]:v===null?null:Date.now()});
-  S.db.ref().update({[`scores/${tid}/${key}`]:v,[`salidas/${tid}/${key}`]:drive,[`ts/${tid}/${key}`]:v===null?null:firebaseTime()}).catch(writeErr);
+  const by=S.me&&S.jug[S.me]?S.me:(S.isAdmin?"admin":null);
+  S.por[tid]=Object.assign({},S.por[tid],{[key]:v===null?null:by});
+  S.db.ref().update({[`scores/${tid}/${key}`]:v,[`salidas/${tid}/${key}`]:drive,[`ts/${tid}/${key}`]:v===null?null:firebaseTime(),[`por/${tid}/${key}`]:v===null?null:by}).catch(writeErr);
   toast(v===null?"Hoyo borrado":`Guardado: ${t.name} · ${v} golpes · salida ${drive}`);
 }
 $("saveCfg").onclick=async()=>{
@@ -1175,9 +1270,9 @@ function startDemo(){
       store.ts[id][h.key]=Date.now()-(thru[i]-k)*11*60000})});
   const get=p=>p.split("/").reduce((o,k)=>o&&o[k],store);
   const put=(p,v)=>{const ks=p.split("/");let o=store;ks.slice(0,-1).forEach(k=>{o[k]=o[k]||{};o=o[k]});if(v===null)delete o[ks[ks.length-1]];else o[ks[ks.length-1]]=v};
-  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores","campeones","jfotos"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
+  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores","campeones","jfotos","por"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
     S.scores=JSON.parse(JSON.stringify(store.scores));S.salidas=JSON.parse(JSON.stringify(store.salidas));
-    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));S.hof=JSON.parse(JSON.stringify(store.campeones||{}));S.jfotos=JSON.parse(JSON.stringify(store.jfotos||{}));applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
+    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));S.hof=JSON.parse(JSON.stringify(store.campeones||{}));S.jfotos=JSON.parse(JSON.stringify(store.jfotos||{}));S.por=JSON.parse(JSON.stringify(store.por||{}));S.jugLoaded=true;applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
   S.db={ref:(p)=>({set:async v=>{put(p,v);sync()},update:async m=>{Object.keys(m).forEach(k=>put(p?p+"/"+k:k,m[k]));sync()},push:async v=>{put(p+"/n"+Date.now(),v);sync()}})};
   S.isAdmin=true;sync();setLive(true,"Demo");showBanner("Modo demo con equipos de ejemplo: puedes probar todo, pero nada se guarda.");
 }
@@ -1210,7 +1305,9 @@ if(location.hash==="#demo"||!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==="P
   db.ref("ts").on("value",s=>{S.ts=s.val()||{};renderBoard()});
   db.ref("concursos").on("value",s=>{S.concursos=s.val()||{};renderBoard();renderEntry()});
   db.ref("fotos").on("value",s=>{S.fotos=s.val()||{};renderAll()});
-  db.ref("jugadores").on("value",s=>{S.jug=s.val()||{};renderConfig()});
+  db.ref("jugadores").on("value",s=>{S.jug=s.val()||{};S.jugLoaded=true;
+    if(S.me&&!S.jug[S.me]){S.me=null;try{localStorage.removeItem("fsc-me")}catch(e){}}renderAll()});
+  db.ref("por").on("value",s=>{S.por=s.val()||{};renderEntry()});
   db.ref("jfotos").on("value",s=>{S.jfotos=s.val()||{};renderAll()});
   db.ref("campeones").on("value",s=>{S.hof=s.val()||{};renderHof()});
 }
