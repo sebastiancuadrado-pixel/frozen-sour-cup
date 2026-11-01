@@ -371,6 +371,15 @@ nav.tabs button{font-size:15px;padding-left:2px;padding-right:2px}
 .phbig{width:96px;height:72px;border-radius:10px;border:1.5px dashed var(--muted);display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;overflow:hidden;flex:none}
 .phbig svg{width:26px;height:26px}.phbig img{width:100%;height:100%;object-fit:cover}
 #hofAdminBar{margin-top:12px}
+/* Trofeo */
+.hofhero{display:flex;align-items:center;gap:18px;padding:16px 18px;margin-bottom:14px;border-radius:16px;
+  background:radial-gradient(ellipse at 22% 50%,color-mix(in srgb,var(--gold) 26%,transparent),transparent 62%),var(--surface);border:1px solid var(--line);overflow:hidden}
+.hofhero .trophy{height:230px;width:auto;flex:none;filter:drop-shadow(0 10px 18px rgba(0,0,0,.35));animation:shine 3.5s ease-in-out infinite}
+.herotxt{min-width:0;display:grid;gap:4px}
+.herotxt h2{margin:0;font:700 30px/1 var(--display)}
+@keyframes shine{50%{filter:drop-shadow(0 10px 18px rgba(0,0,0,.35)) brightness(1.08)}}
+@media (prefers-reduced-motion:reduce){.hofhero .trophy{animation:none}}
+@media (max-width:420px){.hofhero .trophy{height:190px}.herotxt h2{font-size:26px}}
 </style>
 </head>
 <body>
@@ -413,7 +422,8 @@ nav.tabs button{font-size:15px;padding-left:2px;padding-right:2px}
   </section>
 
   <section id="v-campeones" hidden>
-    <div class="hof-head"><h2>Campeones pasados</h2><p class="sub">Los ganadores de cada edición.</p></div>
+    <div class="hof-head hofhero"><img class="trophy" src="trofeo.webp" alt="Trofeo de la Copa Frozen Sour Tour" width="227" height="640">
+      <div class="herotxt"><div class="hofyear">Copa Frozen Sour Tour · desde 2021</div><h2>Campeones pasados</h2><p class="sub">Los ganadores de cada edición.</p></div></div>
     <div id="hofList"></div>
     <form class="panel hofform" id="hofForm" hidden>
       <div class="lbl" id="hofTitle">Agregar campeón</div>
@@ -899,7 +909,7 @@ function shrinkTo(file,N,q){return new Promise((ok,bad)=>{const img=new Image();
     cv.getContext("2d").drawImage(img,0,0,w,h);URL.revokeObjectURL(url);ok(cv.toDataURL("image/jpeg",q))};
   img.onerror=()=>{URL.revokeObjectURL(url);bad()};img.src=url})}
 function renderHof(){
-  document.querySelector(".hof-head .sub").textContent=`Los ganadores de cada edición de la ${S.cfg.name||DEFAULT_NAME}.`;
+  document.querySelector(".hof-head .sub").textContent=`Los equipos que han levantado la copa de la ${S.cfg.name||DEFAULT_NAME}.`;
   const list=Object.keys(S.hof).map(id=>({id,...S.hof[id]})).sort((a,b)=>(b.anio||0)-(a.anio||0));
   const box=$("hofList");
   box.innerHTML=!list.length?`<div class="empty"><strong>Todavía no hay campeones cargados</strong>${S.isAdmin?"Agrega el primero con el botón de abajo.":"Pronto aparecerán aquí los ganadores de ediciones anteriores."}</div>`
