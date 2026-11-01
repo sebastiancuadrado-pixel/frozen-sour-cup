@@ -460,6 +460,10 @@ nav.tabs button.uctab[aria-selected="true"]{background:#e2589e;color:#fff}
 .profhcp input{width:80px;padding:8px;text-align:center;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;font:15px var(--body);margin-left:6px}
 .profhcp small{display:block;width:100%;text-align:center;color:var(--muted);font-size:12px}
 @media (max-width:420px){.jitem .jteam{display:none}}
+.lbplayers{display:block;font-weight:400;font-size:12px;color:var(--muted);line-height:1.3;margin-top:1px}
+.renamebar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px 0;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.rename{display:flex;gap:6px;padding:10px 12px 0;flex-wrap:wrap}
+.rename input{flex:1;min-width:140px;border:1px solid var(--green);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 10px;font:600 15px var(--body)}
 </style>
 </head>
 <body>
@@ -763,6 +767,8 @@ function teamHcpInfo(t){const ks=CATS.map(c=>t.ruts&&t.ruts[c]);const hs=ks.map(
   return {v:Number(t.hcp)||0,auto:false,missing:CATS.filter((c,i)=>hs[i]===null)}}
 function teamHcp(t){return teamHcpInfo(t).v}
 function hcpOpen(){return S.cfg.estado==="previo"}
+function shortName(n){const p=String(n||"").trim().split(/\s+/);return p.length>1?`${p[0]} ${p[p.length-1][0]}.`:(p[0]||"")}
+function shortNames(t){return CATS.map(c=>t.players&&t.players[c]).filter(Boolean).map(shortName).join(" · ")}
 function holeLabel(h){return S.cfg.nines[h.nine].name+" "+h.num}
 // Requisito: C y D deben aportar al menos una salida en un par 3, un par 4 y un par 5
 function reqStatus(t){
@@ -823,8 +829,21 @@ function renderHeader(){
   sEl.textContent=st==="previo"?"Por comenzar":st==="en_juego"?`En juego${S.cfg.inicio?" desde "+hm(S.cfg.inicio):""}`:`Finalizado${S.cfg.fin?" "+hm(S.cfg.fin):""}`;
   $("courseTxt").textContent=`Las Rocas de Santo Domingo · ${names} · ${holes().length} hoyos · Par ${coursePar()}`;
 }
+function isMember(t){return !!(S.me&&t.ruts&&CATS.some(c=>t.ruts[c]===S.me))}
+function teamNameBar(t){const can=isMember(t)||S.isAdmin;if(!can)return "";
+  if(S.renaming===t.id)return `<form class="rename" data-rn="${esc(t.id)}"><input type="text" id="rn-${esc(t.id)}" maxlength="30" value="${esc(t.name)}" aria-label="Nuevo nombre del equipo"><button class="btn primary" type="submit">Guardar</button><button class="btn" type="button" data-rncancel="1">Cancelar</button></form>`;
+  return `<div class="renamebar"><span>${isMember(t)?"Es tu equipo":"Admin"}</span><button type="button" class="linkbtn" data-rnopen="${esc(t.id)}">✎ Cambiar nombre del equipo</button></div>`}
+document.addEventListener("click",e=>{const o=e.target.closest&&e.target.closest("[data-rnopen]");if(o){e.stopPropagation();S.renaming=o.dataset.rnopen;renderBoard();renderEntry();setTimeout(()=>{const i=$("rn-"+S.renaming);if(i){i.focus();i.select()}},30);return}
+  const c=e.target.closest&&e.target.closest("[data-rncancel]");if(c){e.stopPropagation();S.renaming=null;renderBoard();renderEntry()}},true);
+document.addEventListener("submit",async e=>{const f=e.target.closest&&e.target.closest("form[data-rn]");if(!f)return;e.preventDefault();
+  const id=f.dataset.rn,t=S.teams.find(x=>x.id===id);const name=$("rn-"+id).value.trim().replace(/\s+/g," ");
+  if(!t||!name){toast("Escribe un nombre");return}if(name===t.name){S.renaming=null;renderBoard();renderEntry();return}
+  if(S.teams.some(x=>x.id!==id&&x.name.toLowerCase()===name.toLowerCase())){toast("Ya hay un equipo con ese nombre");return}
+  try{await S.db.ref(`equipos/${id}/name`).set(name);S.renaming=null;toast(`Ahora son "${name}"`)}catch(err){toast("No se pudo cambiar el nombre")}});
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("form[data-rn]"))e.stopPropagation()},true);
 function scorecard(t,curKey){
   const sc=S.scores[t.id]||{};const sal=S.salidas[t.id]||{};const st=stats(t);let html="";
+  html+=teamNameBar(t);
   html+=`<div class="roster">${CATS.map(c=>`<button type="button" class="rp" data-foto="${esc(t.id)}|${c}" title="Subir o cambiar la foto de ${esc(pName(t,c))}">${av(t,c)}<span>${esc(pName(t,c))}${t.ruts&&jHcp(t.ruts[c])!==null?`<i class="phcp">Hcp ${d2(jHcp(t.ruts[c]))}</i>`:""}${foto(t,c)?"":`<em>+ foto</em>`}</span></button>`).join("")}</div>
   <p class="sub rphint">Toca tu nombre para subir o cambiar tu foto.</p>`;
   S.cfg.order.forEach(id=>{const n=S.cfg.nines[id];if(!n)return;
@@ -855,7 +874,7 @@ function renderBoard(){
     const thru=r.s.thru===r.s.total?"F":r.s.thru||"–";
     const g=r.s.thru?`<span class="${cls(r.s.toPar)}">${fmt(r.s.toPar)}</span><small>${r.s.strokes}</small>`:"–";
     const n=r.s.thru?`<span class="${cls(r.s.net)}">${fmt(r.s.net)}</span><small>${dec(r.s.netStrokes)}</small>`:"–";
-    html+=`<tr class="row${lead?" lead":""}${r.dq?" dq":""}" data-id="${esc(r.t.id)}"><td class="pos">${pos}${!r.dq&&moves[r.t.id]?`<span class="mv ${moves[r.t.id]>0?"up":"down"}">${moves[r.t.id]>0?"▲":"▼"}${Math.abs(moves[r.t.id])}</span>`:""}</td><td><div class="pname">${hasFotos(r.t)?`<span class="stack">${CATS.map(c=>av(r.t,c,"mini")).join("")}</span>`:""}${esc(r.t.name)}<small>Hcp ${d2(teamHcp(r.t))}<span class="mob"> · ${r.s.thru===r.s.total?"Terminó":r.s.thru?"Hoyo "+r.s.thru:"Sin empezar"}</span></small>${r.s.thru?reqBadge(r.t):""}</div></td><td class="thru hcol">${thru}</td><td class="score ${S.mode==="gross"?"big":""}">${g}</td><td class="score ${S.mode==="net"?"big":""}">${n}</td></tr>`;
+    html+=`<tr class="row${lead?" lead":""}${r.dq?" dq":""}" data-id="${esc(r.t.id)}"><td class="pos">${pos}${!r.dq&&moves[r.t.id]?`<span class="mv ${moves[r.t.id]>0?"up":"down"}">${moves[r.t.id]>0?"▲":"▼"}${Math.abs(moves[r.t.id])}</span>`:""}</td><td><div class="pname">${hasFotos(r.t)?`<span class="stack">${CATS.map(c=>av(r.t,c,"mini")).join("")}</span>`:""}${esc(r.t.name)}<span class="lbplayers">${esc(shortNames(r.t))}</span><small>Hcp ${d2(teamHcp(r.t))}<span class="mob"> · ${r.s.thru===r.s.total?"Terminó":r.s.thru?"Hoyo "+r.s.thru:"Sin empezar"}</span></small>${r.s.thru?reqBadge(r.t):""}</div></td><td class="thru hcol">${thru}</td><td class="score ${S.mode==="gross"?"big":""}">${g}</td><td class="score ${S.mode==="net"?"big":""}">${n}</td></tr>`;
     if(S.open===r.t.id)html+=`<tr><td colspan="5" class="card-cell">${scorecard(r.t)}</td></tr>`;
   });
   box.innerHTML=html+"</tbody></table>";renderTicker();renderContests();renderHoleStats();renderPodium();
