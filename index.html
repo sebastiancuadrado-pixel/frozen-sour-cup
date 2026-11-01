@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Frozen Sour Cup</title>
+<meta name="description" content="Leaderboard en vivo de la Frozen Sour Cup en Las Rocas de Santo Domingo">
+<meta name="theme-color" content="#1b2a6b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Frozen Sour Cup">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+html{color-scheme:light}body{margin:0;font-size:14px;-webkit-text-size-adjust:100%}img{max-width:100%}[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+
+/* Layout: tournament leaderboard board up top, tabs for scoring and setup; scorecard conventions (circle = bajo par, cuadro = sobre par) */
+:root{
+  --bg:#eef1f6; --surface:#ffffff; --ink:#141b33; --muted:#5d6580; --line:#d6dbe7;
+  --green:#1b2a6b; --green-ink:#ffffff; --under:#c8323a; --over:#3d5a99; --gold:#a8822a; --soft:#e2e7f1;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1122; --surface:#151b33; --ink:#e7eaf4; --muted:#98a0bd; --line:#283153;
+  --green:#3d5bc4; --green-ink:#ffffff; --under:#ff6670; --over:#8fb0f0; --gold:#d8b25a; --soft:#1c2442; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1122; --surface:#151b33; --ink:#e7eaf4; --muted:#98a0bd; --line:#283153;
+  --green:#3d5bc4; --green-ink:#ffffff; --under:#ff6670; --over:#8fb0f0; --gold:#d8b25a; --soft:#1c2442; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:860px;margin:0 auto;padding-block:16px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.logo{width:72px;height:72px;flex:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18))}
+.ttl{min-width:0}
+.ttl .sub{flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,7vw,40px);line-height:1;margin:0;letter-spacing:.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px;margin-top:4px;display:flex;gap:8px;align-items:center}
+.live{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:12px;color:var(--under)}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--under);animation:pulse 1.6s infinite}
+.live.off{color:var(--muted)} .live.off i{background:var(--muted);animation:none}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.live i{animation:none}}
+nav.tabs{display:flex;gap:4px;background:var(--soft);padding:4px;border-radius:10px;margin-bottom:16px}
+nav.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:.04em;text-transform:uppercase;padding:9px 6px;border-radius:7px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.note{background:var(--soft);color:var(--muted);border-radius:10px;padding:12px 14px;font-size:14px}
+.err{color:var(--under)}
+
+/* Leaderboard */
+.board{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.board-head{background:var(--green);color:var(--green-ink);display:flex;justify-content:space-between;align-items:center;padding:10px 14px;gap:10px}
+.board-head h2{margin:0;font-family:var(--display);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:17px}
+.seg{display:flex;background:rgba(255,255,255,.15);border-radius:7px;padding:2px}
+.seg button{border:0;background:transparent;color:var(--green-ink);font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:5px;cursor:pointer;opacity:.75}
+.seg button[aria-pressed="true"]{background:var(--green-ink);color:var(--green);opacity:1}
+table.lb{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+table.lb th{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:right;padding:8px 10px;border-bottom:1px solid var(--line)}
+table.lb th:nth-child(2),table.lb td:nth-child(2){text-align:left}
+table.lb td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:right}
+table.lb tr:last-child td{border-bottom:0}
+table.lb tr.row{cursor:pointer}
+table.lb tr.row:hover td{background:var(--soft)}
+.pos{font-family:var(--display);font-weight:700;font-size:18px;width:38px;text-align:center!important}
+.lead .pos{color:var(--gold)}
+.pname{font-weight:600;font-size:16px}
+.pname small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.topar{font-family:var(--display);font-weight:700;font-size:24px;min-width:52px}
+.u{color:var(--under)} .o{color:var(--ink)} .e{color:var(--ink)}
+.thru{color:var(--muted);font-size:13px}
+td.card-cell{padding:0 0 12px!important;background:var(--soft)}
+.empty{padding:28px 18px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font-family:var(--display);font-size:20px;letter-spacing:.03em;margin-bottom:4px}
+
+/* Scorecard grid */
+.sc{overflow-x:auto;padding:10px 10px 0}
+.sc table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13px;min-width:100%}
+.sc th,.sc td{border:1px solid var(--line);padding:5px 0;width:30px;min-width:30px;text-align:center}
+.sc th:first-child,.sc td:first-child{width:auto;min-width:46px;padding:5px 8px;text-align:left;font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:12px;color:var(--muted)}
+.sc .sum{background:var(--soft);font-weight:600}
+.sc tr.hole th{font-family:var(--display);color:var(--muted);font-weight:600}
+.mark{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;font-weight:600}
+.m-eagle{border-radius:50%;box-shadow:0 0 0 1.5px var(--under),0 0 0 3.5px var(--surface),0 0 0 5px var(--under);color:var(--under)}
+.m-birdie{border-radius:50%;border:1.5px solid var(--under);color:var(--under)}
+.m-bogey{border:1.5px solid var(--over);color:var(--over)}
+.m-double{border:1.5px solid var(--over);box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--over);color:var(--over)}
+
+/* Entry */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:16px}
+.lbl{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;font:500 14px var(--body);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--green-ink)}
+.holes{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px}
+.hb{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;padding:5px 0;cursor:pointer;font-variant-numeric:tabular-nums;display:grid;line-height:1.1}
+.hb b{font-family:var(--display);font-size:16px}
+.hb span{font-size:11px;color:var(--muted)}
+.hb.done{background:var(--soft)}
+.hb[aria-pressed="true"]{border-color:var(--green);box-shadow:inset 0 0 0 1.5px var(--green)}
+.cur{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.cur h3{margin:0;font-family:var(--display);font-size:26px;font-weight:700}
+.cur .meta{color:var(--muted);font-size:14px}
+.nums{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.nb{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:12px 0 8px;cursor:pointer;display:grid;gap:2px}
+.nb b{font-family:var(--display);font-size:28px;line-height:1}
+.nb span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.nb.par{border-color:var(--green)}
+.nb.sel{background:var(--green);border-color:var(--green);color:var(--green-ink)}
+.nb.sel span{color:var(--green-ink)}
+.row2{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:9px 14px;font:500 14px var(--body);cursor:pointer}
+.btn.primary{background:var(--green);border-color:var(--green);color:var(--green-ink)}
+.btn.danger{color:var(--under);border-color:var(--under)}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* Setup */
+.field{display:grid;gap:4px}
+input[type=text],input[type=number]{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:9px 10px;font:15px var(--body);width:100%;box-sizing:border-box}
+.pars{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px}
+.pars label{display:grid;gap:2px;text-align:center;font-size:11px;color:var(--muted)}
+.pars input{text-align:center;padding:7px 0}
+.plist{display:grid;gap:6px}
+.pitem{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.pitem .n{flex:1;min-width:0;font-weight:600;overflow-wrap:anywhere}
+.pitem .h{color:var(--muted);font-size:13px}
+.add{display:grid;grid-template-columns:1fr 84px;gap:6px}
+.add #newMembers,.add button{grid-column:1/-1}
+.pitem .idx{font-family:var(--display);font-weight:600;color:var(--muted);min-width:20px;font-variant-numeric:tabular-nums}
+.pitem .n small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.pitem .h{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.pitem .hin{width:62px;padding:6px;text-align:center}
+select{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:10px;font:500 16px var(--body);width:100%}
+.pname small{overflow-wrap:anywhere}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+@media (max-width:420px){.holes,.pars{grid-template-columns:repeat(6,minmax(0,1fr))}.thru-col{display:none}}
+
+:root{--roja:#c23b32;--azul:#2a5fa8;--blanca:#8a958e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--roja:#ec6b61;--azul:#6f9ce6;--blanca:#c9d3cc}}
+:root[data-theme="dark"]{--roja:#ec6b61;--azul:#6f9ce6;--blanca:#c9d3cc}
+table.lb th.on{color:var(--ink)}
+td.score{min-width:52px}
+td.score span{display:block;font-family:var(--display);font-weight:700;font-size:18px;line-height:1.1}
+td.score.big span{font-size:24px}
+td.score small{display:block;color:var(--muted);font-size:12px}
+.netline{display:flex;flex-wrap:wrap;gap:6px 18px;padding:10px 12px 0;font-size:14px;color:var(--muted)}
+.netline b{color:var(--ink);font-variant-numeric:tabular-nums}
+.ninerow{display:grid;gap:4px;margin-bottom:8px}
+.ninelbl{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.ninelbl::before,.np::before{content:"";width:10px;height:10px;border-radius:50%;flex:none;border:1px solid var(--line)}
+.n-roja::before{background:var(--roja)} .n-azul::before{background:var(--azul)} .n-blanca::before{background:#fff}
+.holes{grid-template-columns:repeat(9,minmax(0,1fr))!important}
+.ninepick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.np{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 8px;cursor:pointer;display:grid;justify-items:center;gap:3px;font:600 16px var(--display);letter-spacing:.04em;text-transform:uppercase;position:relative}
+.np::before{width:14px;height:14px}
+.np small{font:400 12px var(--body);color:var(--muted);text-transform:none;letter-spacing:0}
+.np .ord{position:absolute;top:6px;right:8px;font-size:13px;color:var(--green)}
+.np[aria-pressed="true"]{border-color:var(--green);box-shadow:inset 0 0 0 1.5px var(--green)}
+.pars-box summary{cursor:pointer;font-family:var(--display);font-weight:600;letter-spacing:.1em;text-transform:uppercase;font-size:13px;color:var(--muted)}
+.parnine{display:grid;gap:4px;margin-top:10px}
+.pars{grid-template-columns:repeat(9,minmax(0,1fr))!important}
+@media (max-width:420px){.hb b{font-size:14px}.hb span{font-size:10px}.pars input{padding:6px 0;font-size:13px}}
+
+/* Categorías y salidas */
+:root{--cA:#1b2a6b;--cB:#3d5a99;--cC:#c8323a;--cD:#b8761b;--ok:#1d7a46;--warn:#a86a00}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--cA:#7f97e8;--cB:#9fb4e6;--cC:#ff6670;--cD:#f0a94a;--ok:#4cc483;--warn:#f0b54a}}
+:root[data-theme="dark"]{--cA:#7f97e8;--cB:#9fb4e6;--cC:#ff6670;--cD:#f0a94a;--ok:#4cc483;--warn:#f0b54a}
+.cat{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;font:700 13px var(--display);color:#fff;flex:none}
+.c-A.cat{background:var(--cA)}.c-B.cat{background:var(--cB)}.c-C.cat{background:var(--cC)}.c-D.cat{background:var(--cD)}
+.dl{font:700 13px var(--display)}.dl.c-A{color:var(--cA)}.dl.c-B{color:var(--cB)}.dl.c-C{color:var(--cC)}.dl.c-D{color:var(--cD)}
+.drives{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.drv{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px;cursor:pointer;font:500 15px var(--body);text-align:left;min-width:0}
+.drv .dn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.drv.need{border-style:dashed;border-color:var(--warn)}
+.drv.sel{border:2px solid var(--green);background:var(--soft);padding:9px}
+.drives.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.drives.shake{animation:none}}
+.hint{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--warn)}
+.hint .cat{width:18px;height:18px;font-size:12px}
+.badge{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:999px;font:600 11px var(--body);letter-spacing:.02em;white-space:nowrap}
+.badge.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.badge.pend{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.badge.bad{color:var(--under);background:color-mix(in srgb,var(--under) 14%,transparent)}
+.req{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:4px;font-size:13px;align-items:center}
+.req .rh{font:600 12px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center}
+.req .rc{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.req .rv{text-align:center;padding:6px 2px;border-radius:6px;background:var(--soft);color:var(--muted);font-size:12px}
+.req .rv.ok{color:var(--ok);font-weight:600}
+.reqwrap{padding:12px 12px 0}
+.roster{display:flex;flex-wrap:wrap;gap:6px 14px;padding:12px 12px 0;font-size:14px}
+.roster>span{display:flex;align-items:center;gap:6px}
+.add .formtitle,.add .pl,.add #cancelEdit{grid-column:1/-1}
+.add .pl{display:flex;align-items:center;gap:8px}
+.linkbtn{display:inline;border:0;background:none;color:var(--green);font:600 13px var(--body);padding:2px 0;cursor:pointer;text-decoration:underline}
+table.lb{table-layout:fixed}
+table.lb th:nth-child(1){width:40px}table.lb th:nth-child(3){width:46px}table.lb th:nth-child(4){width:58px}table.lb th:nth-child(5){width:70px}
+table.lb td{overflow:hidden}
+td.card-cell{max-width:0;text-align:left!important}
+.pname{overflow-wrap:anywhere}
+@media (max-width:420px){table.lb th:nth-child(3){width:40px}table.lb td,table.lb th{padding-left:6px;padding-right:6px}}
+
+/* Carrusel de resultados en vivo */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.ticker{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;align-items:stretch;background:var(--green);color:var(--green-ink);border-radius:10px;overflow:hidden;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.tk-lbl{display:flex;align-items:center;gap:6px;padding:0 10px;font:700 12px var(--display);letter-spacing:.12em;text-transform:uppercase;background:rgba(0,0,0,.18);flex:none}
+.tk-lbl i{width:7px;height:7px;border-radius:50%;background:#ff5d6a;animation:pulse 1.6s infinite}
+.tk-view{overflow:hidden;flex:1;min-width:0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent)}
+.track{display:flex;width:max-content;animation:tick 30s linear infinite}
+.ticker:hover .track,.ticker:active .track{animation-play-state:paused}
+.tk-set{display:flex}
+.tk{display:flex;align-items:baseline;gap:6px;padding:9px 14px;white-space:nowrap;border-right:1px solid rgba(255,255,255,.15);font-size:14px}
+.tk .tp{font:700 15px var(--display);opacity:.7}
+.tk.first .tp{color:#f3cf6e;opacity:1}
+.tk .tv{font:700 17px var(--display)}
+.tk .tv.u{color:#ffb3b8}.tk .tv.o,.tk .tv.e{color:var(--green-ink)}
+.tk .tt{font-size:12px;opacity:.7}
+@keyframes tick{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.track{animation:none}.tk-view{overflow-x:auto}.tk-set[aria-hidden]{display:none}}
+/* Confirmar y guardar */
+.confirm{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+.confirm.armed{border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}
+.csum{display:flex;align-items:center;gap:8px;font-size:15px;min-height:22px}
+.csum .muted{color:var(--muted)}
+.btn.big{padding:14px;font:700 18px var(--display);letter-spacing:.06em;text-transform:uppercase;width:100%}
+tr.dq td{opacity:.55}tr.dq td.pos{color:var(--under);opacity:1;font-size:14px}
+tr.dq .score span{text-decoration:line-through}
+.dqnote{border:1px solid var(--under);color:var(--under);background:color-mix(in srgb,var(--under) 10%,transparent);border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:10px}
+.req .rv.bad{color:var(--under);font-weight:600}
+.cardbox{background:var(--soft);border-radius:12px;padding-bottom:12px;overflow:hidden}
+.sc .curcol{background:color-mix(in srgb,var(--green) 18%,transparent)}
+.sc th.curcol{color:var(--ink)}
+.panel>*{min-width:0}
+.badge{white-space:nowrap}
+table.lb th:nth-child(1){width:34px}table.lb th:nth-child(3){width:38px}table.lb th:nth-child(4){width:50px}table.lb th:nth-child(5){width:62px}
+@media (max-width:420px){table.lb th:nth-child(1){width:30px}table.lb th:nth-child(3){width:34px}table.lb th:nth-child(4){width:46px}table.lb th:nth-child(5){width:58px}td.score.big span{font-size:21px}}
+.mob{display:none}
+@media (max-width:480px){
+  table.lb .hcol{display:none}.mob{display:inline;white-space:nowrap}
+  table.lb th:nth-child(1){width:30px}table.lb th:nth-child(4){width:50px}table.lb th:nth-child(5){width:64px}
+  .board-head{flex-wrap:wrap}.board-head h2{font-size:15px;letter-spacing:.1em}
+}
+.navrow{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:8px}.navrow .btn{padding-left:6px;padding-right:6px;white-space:nowrap}
+.btn.edit{border-color:var(--green);color:var(--green);font-weight:600}
+.drv:disabled,.nb:disabled{cursor:default;opacity:.55}
+.drv.sel:disabled,.nb.sel:disabled{opacity:1}
+/* Flechas de movimiento */
+.mv{display:block;font:700 11px var(--body);letter-spacing:0;margin-top:2px}
+.mv.up{color:var(--ok)}.mv.down{color:var(--under)}
+/* Avisos en el carrusel */
+.tk.hl{background:rgba(255,255,255,.12)}
+.tk .hlk{font:700 12px var(--display);letter-spacing:.1em;text-transform:uppercase;color:#f3cf6e}
+/* Concursos */
+.contests{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+.ccard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.ccard .ct{font:600 12px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ccard .cl{font-weight:600;font-size:15px;margin-top:2px;overflow-wrap:anywhere}
+.ccard .cd{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.cform{border:1px dashed var(--gold);border-radius:12px;padding:12px}
+.cfrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cfrow .btn{grid-column:1/-1}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+/* Estadísticas de hoyos */
+.stats{margin-top:18px;display:grid;gap:10px}
+.hcards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:2px}
+.hcard span{font:600 12px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.hcard b{font:700 22px var(--display)}
+.hcard em{font-style:normal;font-size:13px}
+.hcard.hard em{color:var(--over)}.hcard.easy em{color:var(--under)}
+/* Podio */
+.podium{position:relative;overflow:hidden;background:var(--green);color:var(--green-ink);border-radius:14px;padding:14px 14px 12px;margin-bottom:12px}
+.podium canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.ptitle{font:700 15px var(--display);letter-spacing:.14em;text-transform:uppercase;text-align:center;margin-bottom:10px}
+.psteps{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:6px}
+.pstep{display:grid;justify-items:center;gap:3px;text-align:center;min-width:0}
+.pname2{font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.pnet{font:700 20px var(--display)}.pnet.u{color:#ffb3b8}.pnet.o,.pnet.e{color:var(--green-ink)}
+.pblock{width:100%;border-radius:8px 8px 0 0;background:rgba(255,255,255,.16);font:700 26px var(--display);display:flex;align-items:center;justify-content:center}
+.p1 .pblock{height:74px;background:#f3cf6e;color:#3a2a00}.p2 .pblock{height:54px}.p3 .pblock{height:40px}
+.pextras{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:center;margin-top:10px;font-size:13px;opacity:.92}
+/* Estado del torneo */
+.state{font:600 12px var(--display);letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:999px}
+.state.s-previo{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.state.s-en_juego{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.state.s-finalizado{color:var(--muted);background:var(--soft)}
+.statebox{display:grid;gap:10px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+.strow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.stlabel{font:700 24px var(--display)}
+.stlabel.s-previo{color:var(--warn)}.stlabel.s-en_juego{color:var(--ok)}.stlabel.s-finalizado{color:var(--muted)}
+.stbtn{padding:12px 18px;font:700 16px var(--display);letter-spacing:.05em;text-transform:uppercase}
+.btn.danger{background:transparent}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <img class="logo" src="logo.png" alt="Logo Frozen Sour Cup" width="72" height="72">
+    <div class="ttl">
+      <h1 id="tName">Frozen Sour Cup</h1>
+      <div class="sub"><span class="live off" id="live"><i></i><span id="liveTxt">Conectando</span></span><span id="stateTxt" class="state" hidden></span><span id="courseTxt">Las Rocas de Santo Domingo</span></div>
+    </div>
+  </header>
+
+  <div class="ticker" id="ticker" hidden aria-label="Resultados en vivo"><div class="tk-lbl"><i></i>Neto</div><div class="tk-view"><div class="track" id="track"></div></div></div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="tabla" id="t-tabla">Tabla</button>
+    <button role="tab" aria-selected="false" data-tab="ingresar" id="t-ingresar">Ingresar</button>
+    <button role="tab" aria-selected="false" data-tab="config" id="t-config">Admin</button>
+  </nav>
+
+  <div id="banner" class="note" hidden></div>
+
+  <section id="v-tabla">
+    <div id="podium"></div>
+    <div id="contestBox"></div>
+    <div class="board">
+      <div class="board-head">
+        <h2>Leaderboard</h2>
+        <div class="seg" aria-label="Ordenar por"><button id="mNet" aria-pressed="true">Neto</button><button id="mGross" aria-pressed="false">Gross</button></div>
+      </div>
+      <div id="lb"></div>
+    </div>
+    <p class="sub" style="margin-top:10px">Toca un equipo para ver su tarjeta. El neto descuenta el handicap del equipo en proporción a los hoyos jugados. Las flechas muestran cuántos lugares subió o bajó cada equipo en su último hoyo.</p>
+    <div id="holeStats"></div>
+  </section>
+
+  <section id="v-ingresar" hidden>
+    <div class="panel" id="entry"></div>
+  </section>
+
+  <section id="v-config" hidden>
+    <form class="panel" id="loginForm">
+      <div class="field">
+        <div class="lbl">Acceso administrador</div>
+        <input type="password" id="adminPin" autocomplete="current-password" placeholder="Clave de administrador" required>
+      </div>
+      <div class="row2"><button class="btn primary" type="submit" id="loginBtn">Entrar</button></div>
+      <p class="sub">Solo el administrador puede agregar equipos, cambiar handicaps y elegir las vueltas.</p>
+    </form>
+    <div class="panel" id="adminPanel" hidden>
+      <div class="statebox" id="stateBox"></div>
+      <div class="row2" style="justify-content:space-between;align-items:center"><span class="sub">Sesión de administrador activa</span><button class="btn" id="logoutBtn">Cerrar sesión</button></div>
+      <div class="field">
+        <div class="lbl">Nombre del campeonato</div>
+        <input type="text" id="cfgName" maxlength="60" placeholder="Frozen Sour Cup">
+      </div>
+      <div>
+        <div class="lbl">Vueltas a jugar (en orden)</div>
+        <div class="ninepick" id="ninePick"></div>
+        <p class="sub" id="nineSum"></p>
+      </div>
+      <details class="pars-box">
+        <summary>Par de cada hoyo por vuelta</summary>
+        <div id="cfgPars"></div>
+      </details>
+      <div>
+        <div class="lbl">Concursos</div>
+        <div class="cgrid">
+          <label class="field"><span class="sub">Long drive</span><select id="cLD"></select></label>
+          <label class="field"><span class="sub">Approach (más cerca de la bandera)</span><select id="cAP"></select></label>
+        </div>
+      </div>
+      <div class="row2"><button class="btn primary" id="saveCfg">Guardar torneo</button></div>
+      <div>
+        <div class="lbl">Premiación</div>
+        <p class="sub" style="margin:0 0 8px">El podio aparece solo cuando todos los equipos terminan. Si quieres mostrarlo antes, por ejemplo en la premiación, actívalo aquí.</p>
+        <button class="btn" id="podioBtn">Mostrar podio ahora</button>
+      </div>
+      <div>
+        <div class="lbl" style="display:flex;justify-content:space-between"><span>Equipos</span><span id="teamCount">0 de 39</span></div>
+        <div class="plist" id="plist"></div>
+        <form class="add" id="addForm" style="margin-top:8px">
+          <div class="lbl formtitle" id="formTitle">Nuevo equipo</div>
+          <input type="text" id="newName" maxlength="40" placeholder="Nombre del equipo" required>
+          <input type="text" id="newHcp" inputmode="decimal" placeholder="Hcp">
+          <label class="pl"><span class="cat c-A">A</span><input type="text" id="pA" maxlength="30" placeholder="Jugador A"></label>
+          <label class="pl"><span class="cat c-B">B</span><input type="text" id="pB" maxlength="30" placeholder="Jugador B"></label>
+          <label class="pl"><span class="cat c-C">C</span><input type="text" id="pC" maxlength="30" placeholder="Jugador C"></label>
+          <label class="pl"><span class="cat c-D">D</span><input type="text" id="pD" maxlength="30" placeholder="Jugador D"></label>
+          <button class="btn primary" type="submit" id="addBtn">Agregar equipo</button>
+          <button class="btn" type="button" id="cancelEdit" hidden>Cancelar edición</button>
+        </form>
+        <div class="note" id="fullNote" style="margin-top:8px" hidden>Llegaste al máximo de 39 equipos. Quita uno para agregar otro.</div>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+// ====== Pega aquí la configuración de tu proyecto Firebase ======
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCa4pY5tDpXT-o7Z0nXlkIcplKl4y5UTRw",
+  authDomain: "frozen-sour-cup.firebaseapp.com",
+  databaseURL: "https://frozen-sour-cup-default-rtdb.firebaseio.com",
+  projectId: "frozen-sour-cup",
+  storageBucket: "frozen-sour-cup.firebasestorage.app",
+  messagingSenderId: "1075740224651",
+  appId: "1:1075740224651:web:b424ad7a410e8215b9b88e"
+};
+const ADMIN_EMAIL = "admin@frozensourcup.app";
+// ================================================================
+
+const MAX_TEAMS=39;
+const DEFAULT_NAME="Frozen Sour Cup";
+// Las Rocas de Santo Domingo: tres vueltas de 9 hoyos, par 36 cada una
+const DEFAULT_NINES={
+  roja:{name:"Roja",pars:[4,4,5,4,4,3,5,3,4]},
+  azul:{name:"Azul",pars:[4,5,4,3,4,5,4,3,4]},
+  blanca:{name:"Blanca",pars:[4,4,3,5,4,4,4,3,5]}
+};
+const NINE_IDS=["roja","azul","blanca"];
+const S={ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
+  teams:[],scores:{},salidas:{},mode:"net",open:null,sel:null,hole:0,drive:null,isAdmin:false,db:null,confirmDel:null,draftOrder:null,editId:null};
+const CATS=["A","B","C","D"];
+const REQ_CATS=["C","D"],REQ_PARS=[3,4,5];
+function pName(t,c){return (t.players&&t.players[c])||("Jugador "+c)}
+function holeLabel(h){return S.cfg.nines[h.nine].name+" "+h.num}
+// Requisito: C y D deben aportar al menos una salida en un par 3, un par 4 y un par 5
+function reqStatus(t){
+  const H=holes(),sal=S.salidas[t.id]||{},sc=S.scores[t.id]||{};
+  const done={};REQ_CATS.forEach(c=>{done[c]={};REQ_PARS.forEach(p=>done[c][p]=null)});
+  const remaining={3:0,4:0,5:0};
+  H.forEach(h=>{const who=sal[h.key];const played=typeof sc[h.key]==="number";
+    if(played&&done[who]&&done[who][h.par]===null)done[who][h.par]=h;
+    if(!played&&remaining[h.par]!==undefined)remaining[h.par]++});
+  let missing=0,impossible=false;
+  REQ_PARS.forEach(p=>{const need=REQ_CATS.filter(c=>!done[c][p]).length;missing+=need;if(need>remaining[p])impossible=true});
+  const finished=H.length>0&&H.every(h=>typeof sc[h.key]==="number");
+  const state=missing===0?"ok":(impossible||finished)?"bad":"pending";
+  return {done,missing,state,remaining};
+}
+function reqBadge(t){const r=reqStatus(t);
+  if(r.state==="ok")return `<span class="badge ok">Salidas ✓</span>`;
+  if(r.state==="bad")return `<span class="badge bad">Descalificado</span>`;
+  return `<span class="badge pend">Salidas ${6-r.missing}/6</span>`}
+// Regla del torneo: si C o D no cumplen sus salidas, el equipo queda descalificado
+function isDQ(t){return reqStatus(t).state==="bad"}
+function dqReason(t){const r=reqStatus(t);const miss=[];REQ_CATS.forEach(c=>REQ_PARS.forEach(p=>{if(!r.done[c][p])miss.push(`${c} (${pName(t,c)}) sin salida en par ${p}`)}));
+  const fin=holes().every(h=>typeof (S.scores[t.id]||{})[h.key]==="number");
+  return (fin?"Terminó sin cumplir: ":"Ya no puede cumplir: ")+miss.join(", ")}
+function reqGrid(t){const r=reqStatus(t);
+  return `<div class="req"><div></div>${REQ_PARS.map(p=>`<div class="rh">Par ${p}</div>`).join("")}${REQ_CATS.map(c=>`<div class="rc"><span class="cat c-${c}">${c}</span>${esc(pName(t,c))}</div>${REQ_PARS.map(p=>{const h=r.done[c][p];return h?`<div class="rv ok">✓ ${esc(holeLabel(h))}</div>`:(r.remaining[p]?`<div class="rv">Pendiente</div>`:`<div class="rv bad">✗ No cumplió</div>`)}).join("")}`).join("")}</div>`}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),1800)}
+function parseHcp(v){if(String(v).trim()==="")return 0;const n=parseFloat(String(v).replace(",","."));if(!(n>=0&&n<=54))return null;return Math.round(n*10)/10}
+function dec(n){n=Math.round(n*10)/10;return Number.isInteger(n)?String(n):n.toFixed(1).replace(".",",")}
+function showBanner(t){const b=$("banner");b.textContent=t;b.hidden=false}
+
+// ---------- course ----------
+function holes(){const out=[];S.cfg.order.forEach(id=>{const n=S.cfg.nines[id];if(!n)return;n.pars.forEach((p,i)=>out.push({key:id+(i+1),nine:id,num:i+1,par:p}))});return out}
+function coursePar(){return holes().reduce((a,h)=>a+h.par,0)}
+
+// ---------- scoring ----------
+function stats(t,override){
+  const H=holes(),sc=override||(S.scores[t.id]||{});let strokes=0,par=0,thru=0;
+  H.forEach(h=>{const v=sc[h.key];if(typeof v==="number"&&v>0){strokes+=v;par+=h.par;thru++}});
+  const hcp=Number(t.hcp)||0;
+  const hcpPlay=hcp*H.length/18;
+  const hcpUsed=H.length?hcpPlay*thru/H.length:0;
+  const toPar=strokes-par, net=Math.round((toPar-hcpUsed)*10)/10;
+  return {strokes,toPar,thru,net,total:H.length,netStrokes:Math.round((strokes-hcpUsed)*10)/10,hcpPlay};
+}
+function fmt(n){n=Math.round(n*10)/10;if(n===0)return "E";return (n>0?"+":"−")+dec(Math.abs(n))}
+function cls(n){return n<0?"u":n>0?"o":"e"}
+function markClass(v,par){const d=v-par;return d<=-2?"m-eagle":d===-1?"m-birdie":d===1?"m-bogey":d>=2?"m-double":""}
+
+// ---------- render ----------
+function renderHeader(){
+  $("tName").textContent=S.cfg.name||DEFAULT_NAME;document.title=S.cfg.name||DEFAULT_NAME;
+  const names=S.cfg.order.map(id=>S.cfg.nines[id]&&S.cfg.nines[id].name).filter(Boolean).join(" + ");
+  const st=S.cfg.estado,hm=t=>t?new Date(t).toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit",hour12:false}):"";
+  const sEl=$("stateTxt");sEl.hidden=false;sEl.className="state s-"+st;
+  sEl.textContent=st==="previo"?"Por comenzar":st==="en_juego"?`En juego${S.cfg.inicio?" desde "+hm(S.cfg.inicio):""}`:`Finalizado${S.cfg.fin?" "+hm(S.cfg.fin):""}`;
+  $("courseTxt").textContent=`Las Rocas de Santo Domingo · ${names} · ${holes().length} hoyos · Par ${coursePar()}`;
+}
+function scorecard(t,curKey){
+  const sc=S.scores[t.id]||{};const sal=S.salidas[t.id]||{};const st=stats(t);let html="";
+  html+=`<div class="roster">${CATS.map(c=>`<span><span class="cat c-${c}">${c}</span>${esc(pName(t,c))}</span>`).join("")}</div>`;
+  S.cfg.order.forEach(id=>{const n=S.cfg.nines[id];if(!n)return;
+    let hh="",pp="",ss="",dd="",ps=0,tot=0,any=false;
+    n.pars.forEach((p,i)=>{const v=sc[id+(i+1)];const w=sal[id+(i+1)];const k=id+(i+1),cc=k===curKey?' class="curcol"':"";hh+=`<th${cc}>${i+1}</th>`;pp+=`<td${cc}>${p}</td>`;ps+=p;
+      ss+=`<td${cc}>${typeof v==="number"?`<span class="mark ${markClass(v,p)}">${v}</span>`:""}</td>`;
+      dd+=`<td${cc}>${w&&typeof v==="number"?`<span class="dl c-${w}">${w}</span>`:""}</td>`;if(typeof v==="number"){tot+=v;any=true}});
+    html+=`<div class="sc"><table><tr class="hole"><th>${esc(n.name)}</th>${hh}<th class="sum">Tot</th></tr><tr><td>Par</td>${pp}<td class="sum">${ps}</td></tr><tr><td>Score</td>${ss}<td class="sum">${any?tot:""}</td></tr><tr><td>Salida</td>${dd}<td class="sum"></td></tr></table></div>`;});
+  html+=`<div class="reqwrap">${isDQ(t)&&!curKey?`<div class="dqnote">Descalificado. ${esc(dqReason(t))}.</div>`:""}<div class="lbl">Salidas obligatorias C y D</div>${reqGrid(t)}</div>`;
+  html+=`<div class="netline"><span>Gross <b>${st.thru?st.strokes:"–"}</b></span><span>Hcp torneo <b>${dec(st.hcpPlay)}</b></span><span>Neto <b>${st.thru?dec(st.netStrokes):"–"}</b>${st.thru&&st.thru<st.total?" (parcial)":""}</span></div>`;
+  return html;
+}
+function renderBoard(){
+  const box=$("lb");
+  if(!S.teams.length){box.innerHTML=`<div class="empty"><strong>Aún no hay equipos</strong>${S.isAdmin?"Agrégalos en la pestaña Admin.":"Cuando el administrador agregue los equipos aparecerán aquí."}</div>`;return}
+  const key=S.mode==="net"?"net":"toPar";
+  const grp=r=>r.dq?2:r.s.thru?0:1;
+  const rows=S.teams.map(t=>({t,s:stats(t),dq:isDQ(t)})).sort((a,b)=>grp(a)-grp(b)||
+    a.s[key]-b.s[key]||b.s.thru-a.s.thru||a.t.name.localeCompare(b.t.name));
+  const moves=movement(key);
+  let html=`<table class="lb"><thead><tr><th>Pos</th><th>Equipo</th><th class="hcol">Hoyo</th><th class="${S.mode==="gross"?"on":""}">Gross</th><th class="${S.mode==="net"?"on":""}">Neto</th></tr></thead><tbody>`;
+  let lastVal=null,lastPos=0;
+  rows.forEach((r,idx)=>{
+    const v=r.s[key];let pos="–";
+    if(r.dq)pos="DQ";
+    else if(r.s.thru){if(v!==lastVal){lastPos=idx+1;lastVal=v}const tied=rows.filter(x=>!x.dq&&x.s.thru&&x.s[key]===v).length>1;pos=(tied?"T":"")+lastPos}
+    const lead=!r.dq&&r.s.thru&&lastPos===1;
+    const thru=r.s.thru===r.s.total?"F":r.s.thru||"–";
+    const g=r.s.thru?`<span class="${cls(r.s.toPar)}">${fmt(r.s.toPar)}</span><small>${r.s.strokes}</small>`:"–";
+    const n=r.s.thru?`<span class="${cls(r.s.net)}">${fmt(r.s.net)}</span><small>${dec(r.s.netStrokes)}</small>`:"–";
+    html+=`<tr class="row${lead?" lead":""}${r.dq?" dq":""}" data-id="${esc(r.t.id)}"><td class="pos">${pos}${!r.dq&&moves[r.t.id]?`<span class="mv ${moves[r.t.id]>0?"up":"down"}">${moves[r.t.id]>0?"▲":"▼"}${Math.abs(moves[r.t.id])}</span>`:""}</td><td><div class="pname">${esc(r.t.name)}<small>Hcp ${dec(Number(r.t.hcp)||0)}<span class="mob"> · ${r.s.thru===r.s.total?"Terminó":r.s.thru?"Hoyo "+r.s.thru:"Sin empezar"}</span></small>${r.s.thru?reqBadge(r.t):""}</div></td><td class="thru hcol">${thru}</td><td class="score ${S.mode==="gross"?"big":""}">${g}</td><td class="score ${S.mode==="net"?"big":""}">${n}</td></tr>`;
+    if(S.open===r.t.id)html+=`<tr><td colspan="5" class="card-cell">${scorecard(r.t)}</td></tr>`;
+  });
+  box.innerHTML=html+"</tbody></table>";renderTicker();renderContests();renderHoleStats();renderPodium();
+  box.querySelectorAll("tr.row").forEach(tr=>tr.onclick=()=>{S.open=S.open===tr.dataset.id?null:tr.dataset.id;renderBoard()});
+}
+function firstEmpty(tid){const H=holes(),sc=S.scores[tid]||{};const i=H.findIndex(h=>typeof sc[h.key]!=="number");return i<0?H.length-1:i}
+function renderEntry(){
+  const box=$("entry");
+  if(!S.teams.length){box.innerHTML=`<div class="empty"><strong>Todavía no hay equipos</strong>${S.isAdmin?"Agrégalos en la pestaña Admin.":"El administrador debe cargarlos primero."}</div>`;return}
+  const H=holes();if(!H.length){box.innerHTML=`<div class="note">El administrador aún no elige las vueltas.</div>`;return}
+  if(S.cfg.estado!=="en_juego"&&!S.isAdmin){box.innerHTML=S.cfg.estado==="previo"?`<div class="empty"><strong>El torneo aún no comienza</strong>Podrás anotar scores apenas el administrador dé la partida.</div>`:`<div class="empty"><strong>Torneo finalizado</strong>Ya no se pueden anotar ni editar scores. Revisa los resultados en la Tabla.</div>`;return}
+  const adminNote=S.cfg.estado!=="en_juego"?`<div class="note">${S.cfg.estado==="previo"?"El torneo no ha comenzado":"El torneo está finalizado"}: solo tú, como administrador, puedes anotar o corregir scores.</div>`:"";
+  if(!S.teams.find(t=>t.id===S.sel)){let saved=null;try{saved=localStorage.getItem("fsc-team")}catch(e){}S.sel=S.teams.find(t=>t.id===saved)?saved:S.teams[0].id;S.hole=firstEmpty(S.sel)}
+  if(S.hole>=H.length)S.hole=H.length-1;
+  const t=S.teams.find(x=>x.id===S.sel);const sc=S.scores[t.id]||{};const sal=S.salidas[t.id]||{};const h=H[S.hole];const cur=sc[h.key];
+  if(S.driveFor!==t.id+h.key){S.drive=sal[h.key]||null;S.draftN=typeof cur==="number"?cur:null;S.driveFor=t.id+h.key;S.editing=false}
+  const saved=typeof cur==="number";const locked=saved&&!S.editing;const dis=locked?" disabled":"";
+  const dirty=S.drive!==(sal[h.key]||null)||S.draftN!==(typeof cur==="number"?cur:null);const ready=!!(S.drive&&S.draftN);
+  const rq=reqStatus(t);const needHere=REQ_CATS.filter(c=>!rq.done[c][h.par]);
+  const hint=needHere.length?`<div class="hint">${needHere.map(c=>`<span class="cat c-${c}">${c}</span>`).join("")} todavía ${needHere.length>1?"necesitan":"necesita"} una salida en par ${h.par}${rq.remaining[h.par]>0&&rq.remaining[h.par]<=needHere.length?` · quedan ${rq.remaining[h.par]} par ${h.par}`:""}</div>`:"";
+  const drives=`<div class="drives">${CATS.map(c=>`<button class="drv${S.drive===c?" sel":""}${needHere.includes(c)&&!locked?" need":""}" data-c="${c}"${dis}><span class="cat c-${c}">${c}</span><span class="dn">${esc(pName(t,c))}</span></button>`).join("")}</div>`;
+  const sel=`<select id="teamSel">${S.teams.map(x=>`<option value="${esc(x.id)}"${x.id===S.sel?" selected":""}>${esc(x.name)} · Hcp ${dec(Number(x.hcp)||0)}</option>`).join("")}</select>`;
+  let ninesHtml="";
+  S.cfg.order.forEach((id,ni)=>{const n=S.cfg.nines[id];if(!n)return;
+    let cells="";n.pars.forEach((p,i)=>{const gi=ni*9+i;const v=sc[id+(i+1)];
+      cells+=`<button class="hb${typeof v==="number"?" done":""}" data-i="${gi}" aria-pressed="${gi===S.hole}"><b>${i+1}</b><span>${typeof v==="number"?v:"·"}</span></button>`});
+    ninesHtml+=`<div class="ninerow"><div class="ninelbl n-${id}">${esc(n.name)}</div><div class="holes">${cells}</div></div>`});
+  const names={"-3":"Albatros","-2":"Eagle","-1":"Birdie","0":"Par","1":"Bogey","2":"Doble","3":"Triple"};
+  let nums="";for(let n=1;n<=10;n++){const d=n-h.par;nums+=`<button class="nb${d===0?" par":""}${S.draftN===n?" sel":""}" data-n="${n}"${dis}><b>${n}</b><span>${n===1?"Hoyo en uno":(names[d]||(d>0?"+"+d:""))}</span></button>`}
+  const s=stats(t);
+  box.innerHTML=`${adminNote}<div><div class="lbl">Equipo</div>${sel}</div>
+  <div><div class="lbl">Hoyo</div>${ninesHtml}</div>
+  <div class="cur"><h3>${esc(S.cfg.nines[h.nine].name)} ${h.num} · Par ${h.par}</h3><div class="meta">${s.thru?`Gross ${fmt(s.toPar)} · Neto ${fmt(s.net)} tras ${s.thru}`:"Sin scores"}</div></div>
+  <div><div class="lbl">1 · ¿De quién fue la salida?</div>${drives}${hint}</div>
+  <div><div class="lbl">2 · Golpes del equipo</div><div class="nums">${nums}</div></div>
+  <div class="confirm${ready&&dirty?" armed":""}">
+    <div class="csum">${ready?`<span class="cat c-${S.drive}">${S.drive}</span><span>Salida de <b>${esc(pName(t,S.drive))}</b> · <b>${S.draftN}</b> golpes${(()=>{const d=S.draftN-h.par;return names[d]?" ("+names[d].toLowerCase()+")":""})()}</span>`:`<span class="muted">${!S.drive&&!S.draftN?"Elige la salida y los golpes":!S.drive?"Falta elegir de quién fue la salida":"Falta elegir los golpes"}</span>`}</div>
+    <button class="btn primary big" id="saveH" ${ready&&dirty?"":"disabled"}>${saved&&!dirty?"✓ Guardado":saved?"Confirmar cambio":"Confirmar y guardar"}</button>
+  </div>
+  <div class="navrow"><button class="btn" id="prevH" ${S.hole===0?"disabled":""}>‹ Anterior</button><button class="btn" id="nextH" ${S.hole===H.length-1?"disabled":""}>Siguiente ›</button>${saved?`<button class="btn${S.editing?"":" edit"}" id="editH">${S.editing?"Cancelar":"✎ Editar hoyo"}</button>`:""}</div>
+  ${contestForm(t,h)}
+  <div><div class="lbl">Tarjeta de ${esc(t.name)}</div><div class="cardbox">${scorecard(t,h.key)}</div></div>`;
+  $("teamSel").onchange=e=>{S.sel=e.target.value;try{localStorage.setItem("fsc-team",S.sel)}catch(err){}S.hole=firstEmpty(S.sel);renderEntry()};
+  box.querySelectorAll(".hb").forEach(b=>b.onclick=()=>{S.hole=+b.dataset.i;renderEntry()});
+  box.querySelectorAll(".drv").forEach(b=>b.onclick=()=>{S.drive=b.dataset.c;renderEntry()});
+  box.querySelectorAll(".nb").forEach(b=>b.onclick=()=>{S.draftN=+b.dataset.n;renderEntry()});
+  $("saveH").onclick=()=>{if(!S.drive){toast("Falta elegir de quién fue la salida");return}if(!S.draftN){toast("Falta elegir los golpes");return}
+    saveStroke(t.id,h.key,S.draftN,S.drive)};
+  $("prevH").onclick=()=>{S.hole--;renderEntry()};$("nextH").onclick=()=>{S.hole++;renderEntry()};
+  if($("cSave"))$("cSave").onclick=async()=>{const cat=$("cCat").value;const dist=parseFloat(String($("cDist").value).replace(",","."));
+    if(!(dist>0&&dist<1000)){toast("Ingresa la distancia en metros");return}
+    const c=$("cSave").dataset.c;try{await S.db.ref("concursos/"+c).set({team:t.id,cat,dist:Math.round(dist*100)/100,ts:firebaseTime()});toast(`${pName(t,cat)} es el nuevo líder`)}catch(e){writeErr(e)}};
+  if($("editH"))$("editH").onclick=()=>{if(S.editing){S.editing=false;S.drive=sal[h.key]||null;S.draftN=cur}else{S.editing=true;toast("Ya puedes cambiar la salida o los golpes")}renderEntry()};
+}
+function contestForm(t,h){
+  const c=contestList().find(x=>x.h.key===h.key);if(!c)return "";
+  return `<div class="cform"><div class="lbl">Concurso ${c.title} en este hoyo</div>
+    <p class="sub" style="margin:0 0 8px">${c.lead?`Va ganando <b>${esc(c.leadName)}</b>${c.lead.dist?" · "+esc(String(c.lead.dist).replace(".",","))+" m":""}.`:"Nadie ha registrado todavía."} ${c.id==="longdrive"?"Registra si alguien de tu equipo pegó más largo.":"Registra si alguien de tu equipo quedó más cerca de la bandera."}</p>
+    <div class="cfrow"><select id="cCat">${CATS.map(k=>`<option value="${k}">${k} · ${esc(pName(t,k))}</option>`).join("")}</select>
+    <input type="text" id="cDist" inputmode="decimal" placeholder="${c.id==="longdrive"?"Metros, ej: 245":"Metros, ej: 1,8"}">
+    <button class="btn primary" id="cSave" data-c="${c.id}">Registrar líder</button></div></div>`;
+}
+function renderStateBox(){
+  const st=S.cfg.estado,box=$("stateBox"),hm=t=>t?new Date(t).toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit",hour12:false}):"";
+  const played=S.teams.filter(t=>stats(t).thru).length,done=S.teams.filter(t=>{const x=stats(t);return x.thru&&x.thru===x.total}).length;
+  const info=st==="previo"?"Los equipos todavía no pueden anotar scores.":st==="en_juego"?`Comenzó a las ${hm(S.cfg.inicio)} · ${played} de ${S.teams.length} equipos en cancha · ${done} terminaron.`:`Finalizó a las ${hm(S.cfg.fin)}. Los scores quedaron cerrados y el podio está visible para todos.`;
+  const action={previo:["Iniciar torneo","en_juego","Desde ese momento todos pueden anotar scores."],en_juego:["Finalizar torneo","finalizado",done<S.teams.length?`Aún faltan ${S.teams.length-done} equipos por terminar. Se cerrarán los scores y se mostrará el podio.`:"Se cerrarán los scores y se mostrará el podio."],finalizado:["Reabrir torneo","en_juego","Los equipos podrán volver a anotar y corregir scores."]}[st];
+  const label={previo:"Por comenzar",en_juego:"En juego",finalizado:"Finalizado"}[st];
+  box.innerHTML=S.confirmState?`<div class="lbl">¿${action[0]}?</div><p class="sub" style="margin:0">${action[2]}</p>
+    <div class="row2"><button class="btn primary" id="stYes">Sí, ${action[0].toLowerCase()}</button><button class="btn" id="stNo">Cancelar</button></div>`
+   :`<div class="strow"><div><div class="lbl">Estado del torneo</div><div class="stlabel s-${st}">${label}</div></div><button class="btn ${st==="en_juego"?"danger":"primary"} stbtn" id="stGo">${action[0]}</button></div><p class="sub" style="margin:0">${info}</p>`;
+  if($("stGo"))$("stGo").onclick=()=>{S.confirmState=true;renderStateBox()};
+  if($("stNo"))$("stNo").onclick=()=>{S.confirmState=false;renderStateBox()};
+  if($("stYes"))$("stYes").onclick=async()=>{const next=action[1];const upd={estado:next};
+    if(next==="en_juego"&&st==="previo")upd.inicio=firebaseTime();if(next==="finalizado")upd.fin=firebaseTime();if(st==="finalizado")upd.fin=0;
+    S.confirmState=false;try{await S.db.ref("config").update(upd);toast({en_juego:st==="finalizado"?"Torneo reabierto":"¡Torneo iniciado!",finalizado:"Torneo finalizado"}[next])}catch(e){writeErr(e)}};
+}
+function renderConfig(){
+  $("loginForm").hidden=S.isAdmin;$("adminPanel").hidden=!S.isAdmin;
+  if(!S.isAdmin)return;
+  renderStateBox();
+  if(document.activeElement!==$("cfgName")&&S.draftOrder===null)$("cfgName").value=S.cfg.name||"";
+  const order=S.draftOrder||S.cfg.order;
+  $("ninePick").innerHTML=NINE_IDS.map(id=>{const i=order.indexOf(id);const n=S.cfg.nines[id]||DEFAULT_NINES[id];
+    return `<button class="np n-${id}" data-n="${id}" aria-pressed="${i>=0}"><span class="ord">${i>=0?(i+1)+"ª":""}</span>${esc(n.name)}<small>Par ${n.pars.reduce((a,b)=>a+b,0)}</small></button>`}).join("");
+  const parTot=order.reduce((a,id)=>a+(S.cfg.nines[id]||DEFAULT_NINES[id]).pars.reduce((x,y)=>x+y,0),0);
+  $("nineSum").textContent=order.length?`${order.map(id=>S.cfg.nines[id].name).join(" → ")} · ${order.length*9} hoyos · Par ${parTot}${S.draftOrder?" · sin guardar":""}`:"Elige al menos una vuelta.";
+  $("ninePick").querySelectorAll(".np").forEach(b=>b.onclick=()=>{
+    const o=(S.draftOrder||S.cfg.order).slice();const i=o.indexOf(b.dataset.n);if(i>=0)o.splice(i,1);else o.push(b.dataset.n);
+    S.draftOrder=o;renderConfig()});
+  const H=holes();["cLD","cAP"].forEach((sid,i)=>{const sel=$(sid);if(document.activeElement===sel)return;const cur=(S.cfg.contests||{})[i?"approach":"longdrive"]||"";
+    sel.innerHTML=`<option value="">Sin concurso</option>`+H.map(h=>`<option value="${h.key}"${h.key===cur?" selected":""}>${esc(holeLabel(h))} · Par ${h.par}</option>`).join("")});
+  $("podioBtn").textContent=S.cfg.podio?"Ocultar podio":"Mostrar podio ahora";
+  const pe=$("cfgPars");
+  if(!pe.contains(document.activeElement)){pe.innerHTML=NINE_IDS.map(id=>{const n=S.cfg.nines[id];
+    return `<div class="parnine"><div class="ninelbl n-${id}">${esc(n.name)}</div><div class="pars">${n.pars.map((v,i)=>`<label>${i+1}<input type="number" id="par-${id}-${i+1}" min="3" max="6" value="${v}"></label>`).join("")}</div></div>`}).join("")}
+  $("teamCount").textContent=`${S.teams.length} de ${MAX_TEAMS}`;
+  const full=S.teams.length>=MAX_TEAMS&&!S.editId;$("addForm").hidden=full;$("fullNote").hidden=!full;syncForm();
+  const pl=$("plist");
+  if(pl.contains(document.activeElement)&&document.activeElement.classList.contains("hin"))return;
+  pl.innerHTML=S.teams.length?S.teams.map((t,i)=>`<div class="pitem"><span class="idx">${i+1}</span><span class="n">${esc(t.name)}<small>${CATS.map(c=>`${c}: ${esc(pName(t,c))}`).join(" · ")}</small><button class="linkbtn" data-edit="${esc(t.id)}">Editar</button></span><label class="h">Hcp <input class="hin" type="text" inputmode="decimal" id="hcp-${esc(t.id)}" data-id="${esc(t.id)}" value="${dec(Number(t.hcp)||0)}"></label>${S.confirmDel===t.id?`<button class="btn danger" data-del="${esc(t.id)}">Confirmar</button><button class="btn" data-cancel="1">No</button>`:`<button class="btn" data-ask="${esc(t.id)}">Quitar</button>`}</div>`).join(""):`<div class="note">Sin equipos todavía. Agrega el primero abajo.</div>`;
+  pl.querySelectorAll(".hin").forEach(inp=>inp.onchange=async()=>{
+    const v=parseHcp(inp.value);if(v===null){toast("Hcp entre 0 y 54");return}
+    const t=S.teams.find(x=>x.id===inp.dataset.id);if(!t||Number(t.hcp)===v)return;
+    try{await S.db.ref("equipos/"+t.id+"/hcp").set(v);toast(`${t.name}: Hcp ${dec(v)}`)}catch(e){writeErr(e)}});
+  pl.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const t=S.teams.find(x=>x.id===b.dataset.edit);if(!t)return;
+    S.editId=t.id;$("newName").value=t.name;$("newHcp").value=dec(Number(t.hcp)||0);CATS.forEach(c=>$("p"+c).value=(t.players&&t.players[c])||"");
+    syncForm();$("addForm").hidden=false;$("addForm").scrollIntoView({behavior:"smooth",block:"center"});$("newName").focus()});
+  pl.querySelectorAll("[data-ask]").forEach(b=>b.onclick=()=>{S.confirmDel=b.dataset.ask;renderConfig()});
+  pl.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=()=>{S.confirmDel=null;renderConfig()});
+  pl.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{const id=b.dataset.del;S.confirmDel=null;
+    try{await S.db.ref().update({["equipos/"+id]:null,["scores/"+id]:null,["salidas/"+id]:null});toast("Equipo quitado")}catch(e){writeErr(e)}});
+}
+// Posición actual vs. posición antes del último hoyo de cada equipo
+function rankOf(list,key){const r={};let lastVal=null,lastPos=0;
+  list.slice().sort((a,b)=>a.s[key]-b.s[key]||b.s.thru-a.s.thru).forEach((x,i)=>{if(x.s[key]!==lastVal){lastPos=i+1;lastVal=x.s[key]}r[x.t.id]=lastPos});return r}
+function movement(key){
+  const H=holes();const live=S.teams.filter(t=>!isDQ(t));
+  const now=live.map(t=>({t,s:stats(t)})).filter(x=>x.s.thru);
+  const prev=live.map(t=>{const sc=Object.assign({},S.scores[t.id]||{});const played=H.filter(h=>typeof sc[h.key]==="number");
+    if(played.length)delete sc[played[played.length-1].key];return {t,s:stats(t,sc)}}).filter(x=>x.s.thru);
+  const a=rankOf(now,key),b=rankOf(prev,key),out={};
+  now.forEach(x=>{if(b[x.t.id])out[x.t.id]=b[x.t.id]-a[x.t.id]});return out;
+}
+// ---------- highlights: birdies y eagles ----------
+function highlights(){
+  const H=holes(),out=[];
+  S.teams.forEach(t=>{const sc=S.scores[t.id]||{},ts=S.ts[t.id]||{};
+    H.forEach(h=>{const v=sc[h.key];if(typeof v!=="number")return;const d=v-h.par;
+      if(d<=-1||v===1)out.push({t,h,v,d,ts:ts[h.key]||0,label:v===1?"Hoyo en uno":d<=-3?"Albatros":d===-2?"Eagle":"Birdie"})})});
+  return out.filter(x=>x.ts).sort((a,b)=>b.ts-a.ts);
+}
+function announce(){
+  const fresh=highlights().filter(x=>x.ts>S.seenTs);
+  if(fresh.length){S.seenTs=Math.max(...fresh.map(x=>x.ts));const x=fresh[0];
+    if(S.lastSaved!==x.t.id+x.h.key)toast(`${x.label} de ${x.t.name} en ${holeLabel(x.h)}`)}
+}
+function renderTicker(){
+  const tk=$("ticker"),tr=$("track");
+  const rows=S.teams.map(t=>({t,s:stats(t)})).filter(r=>r.s.thru&&!isDQ(r.t)).sort((a,b)=>a.s.net-b.s.net||b.s.thru-a.s.thru);
+  announce();
+  if(!rows.length){tk.hidden=true;return}
+  tk.hidden=false;
+  let lastVal=null,lastPos=0;
+  const items=rows.map((r,i)=>{if(r.s.net!==lastVal){lastPos=i+1;lastVal=r.s.net}
+    const thru=r.s.thru===r.s.total?"F":"H"+r.s.thru;
+    return `<span class="tk${lastPos===1?" first":""}"><b class="tp">${lastPos}</b><span class="tn">${esc(r.t.name)}</span><b class="tv ${cls(r.s.net)}">${fmt(r.s.net)}</b><span class="tt">${thru}</span></span>`}).join("");
+  const ct=contestList().filter(c=>c.lead).map(c=>`<span class="tk hl"><b class="hlk">${c.title}</b><span class="tn">${esc(c.leadName)}</span><span class="tt">${c.lead.dist?esc(String(c.lead.dist).replace(".",","))+" m":""}</span></span>`).join("");
+  const all=ct+items;
+  tr.innerHTML=`<div class="tk-set">${all}</div><div class="tk-set" aria-hidden="true">${all}</div>`;
+  const dur=Math.max(14,(rows.length+contestList().filter(c=>c.lead).length)*3.2)+"s";if(tr.style.animationDuration!==dur)tr.style.animationDuration=dur;
+}
+const CONTESTS=[{id:"longdrive",title:"Long drive"},{id:"approach",title:"Approach"}];
+function contestList(){const H=holes();return CONTESTS.map(c=>{const key=(S.cfg.contests||{})[c.id];const h=H.find(x=>x.key===key);if(!h)return null;
+  const lead=(S.concursos||{})[c.id];const t=lead&&S.teams.find(x=>x.id===lead.team);
+  return {...c,h,lead:t?lead:null,leadName:t?`${pName(t,lead.cat)} (${t.name})`:""}}).filter(Boolean)}
+function renderContests(){
+  const list=contestList();const box=$("contestBox");
+  if(!list.length){box.innerHTML="";return}
+  box.innerHTML=`<div class="contests">${list.map(c=>`<div class="ccard"><div class="ct">${c.title} · ${esc(holeLabel(c.h))}</div>${c.lead?`<div class="cl">${esc(c.leadName)}</div><div class="cd">${c.lead.dist?esc(String(c.lead.dist).replace(".",","))+" m":""}</div>`:`<div class="cd">Sin líder todavía</div>`}</div>`).join("")}</div>`;
+}
+// ---------- estadísticas de hoyos ----------
+function renderHoleStats(){
+  const box=$("holeStats");const H=holes();
+  const data=H.map(h=>{const vals=S.teams.map(t=>(S.scores[t.id]||{})[h.key]).filter(v=>typeof v==="number");
+    return {h,n:vals.length,avg:vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null}});
+  const played=data.filter(d=>d.n);
+  if(!played.length){box.innerHTML="";return}
+  const diff=d=>d.avg-d.h.par;
+  const hard=played.slice().sort((a,b)=>diff(b)-diff(a))[0],easy=played.slice().sort((a,b)=>diff(a)-diff(b))[0];
+  const sg=n=>(n>0?"+":n<0?"−":"")+dec(Math.abs(Math.round(n*10)/10));
+  let tables="";
+  S.cfg.order.forEach(id=>{const n=S.cfg.nines[id];if(!n)return;let hh="",pp="",aa="";
+    data.filter(d=>d.h.nine===id).forEach(d=>{hh+=`<th>${d.h.num}</th>`;pp+=`<td>${d.h.par}</td>`;
+      if(!d.n){aa+=`<td></td>`;return}const x=diff(d);const a=Math.min(1,Math.abs(x)/1.2);
+      aa+=`<td style="background:color-mix(in srgb,${x>0?"var(--over)":"var(--under)"} ${Math.round(a*45)}%,transparent)">${dec(Math.round(d.avg*10)/10)}</td>`});
+    tables+=`<div class="sc"><table><tr class="hole"><th>${esc(n.name)}</th>${hh}</tr><tr><td>Par</td>${pp}</tr><tr><td>Prom.</td>${aa}</tr></table></div>`});
+  box.innerHTML=`<div class="stats"><div class="lbl">Hoyos del día</div>
+    <div class="hcards"><div class="hcard hard"><span>Más difícil</span><b>${esc(holeLabel(hard.h))}</b><em>${sg(diff(hard))} sobre par</em></div>
+    <div class="hcard easy"><span>Más fácil</span><b>${esc(holeLabel(easy.h))}</b><em>${sg(diff(easy))} ${diff(easy)<=0?"bajo par":"sobre par"}</em></div></div>
+    <div class="cardbox">${tables}</div><p class="sub">Promedio de golpes de todos los equipos en cada hoyo. Azul: más difícil que el par. Rojo: más fácil.</p></div>`;
+}
+// ---------- podio ----------
+function renderPodium(){
+  const box=$("podium");
+  const live=S.teams.map(t=>({t,s:stats(t),dq:isDQ(t)}));
+  const allDone=live.length>0&&live.every(r=>r.dq||(r.s.thru&&r.s.thru===r.s.total));
+  const ended=S.cfg.estado==="finalizado";
+  if(!(allDone||ended||S.cfg.podio)){box.innerHTML="";return}
+  const ok=live.filter(r=>!r.dq&&r.s.thru).sort((a,b)=>a.s.net-b.s.net||a.s.toPar-b.s.toPar);
+  if(!ok.length){box.innerHTML="";return}
+  const g=ok.slice().sort((a,b)=>a.s.toPar-b.s.toPar)[0];
+  const step=(r,place)=>r?`<div class="pstep p${place}"><div class="pname2">${esc(r.t.name)}</div><div class="pnet ${cls(r.s.net)}">${fmt(r.s.net)}</div><div class="pblock">${place}</div></div>`:`<div class="pstep p${place}"></div>`;
+  const extras=[`<span>Mejor gross <b>${esc(g.t.name)}</b> ${fmt(g.s.toPar)} (${g.s.strokes})</span>`].concat(contestList().filter(c=>c.lead).map(c=>`<span>${c.title} <b>${esc(c.leadName)}</b>${c.lead.dist?" · "+esc(String(c.lead.dist).replace(".",","))+" m":""}</span>`));
+  box.innerHTML=`<div class="podium"><canvas id="confetti" aria-hidden="true"></canvas><div class="ptitle">${ended||allDone?"Campeones":"Podio provisorio"} · ${esc(S.cfg.name||DEFAULT_NAME)}</div>
+    <div class="psteps">${step(ok[1],2)}${step(ok[0],1)}${step(ok[2],3)}</div><div class="pextras">${extras.join("")}</div></div>`;
+  if(!S.confettiDone){S.confettiDone=true;confetti()}
+}
+function confetti(){
+  if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const c=$("confetti");if(!c)return;const ctx=c.getContext("2d");const W=c.width=c.offsetWidth*2,Hh=c.height=c.offsetHeight*2;
+  const cols=["#c8323a","#ffffff","#3d5bc4","#f3cf6e"];const ps=Array.from({length:120},()=>({x:Math.random()*W,y:-Math.random()*Hh,vy:2+Math.random()*4,vx:-1+Math.random()*2,r:Math.random()*6,s:4+Math.random()*6,c:cols[Math.floor(Math.random()*4)]}));
+  let f=0;(function tick(){ctx.clearRect(0,0,W,Hh);ps.forEach(p=>{p.y+=p.vy;p.x+=p.vx;p.r+=.1;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);ctx.restore()});
+    if(++f<240)requestAnimationFrame(tick);else ctx.clearRect(0,0,W,Hh)})();
+}
+function renderAll(){renderHeader();renderBoard();renderEntry();renderConfig()}
+
+// ---------- tabs ----------
+document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  ["tabla","ingresar","config"].forEach(t=>$("v-"+t).hidden=t!==b.dataset.tab);
+});
+$("mGross").onclick=()=>{S.mode="gross";$("mGross").setAttribute("aria-pressed",true);$("mNet").setAttribute("aria-pressed",false);renderBoard()};
+$("mNet").onclick=()=>{S.mode="net";$("mNet").setAttribute("aria-pressed",true);$("mGross").setAttribute("aria-pressed",false);renderBoard()};
+
+// ---------- writes ----------
+function firebaseTime(){return (window.firebase&&firebase.database&&firebase.database.ServerValue)?firebase.database.ServerValue.TIMESTAMP:Date.now()}
+function writeErr(e){const c=String(e&&(e.code||e.message)||"");toast(/permission/i.test(c)?"Solo el administrador puede hacer esto":"No se pudo guardar, intenta de nuevo")}
+function saveStroke(tid,key,v,drive,stay){
+  if(!S.db)return;
+  const t=S.teams.find(x=>x.id===tid);if(!t)return;
+  S.scores[tid]=Object.assign({},S.scores[tid],{[key]:v});S.salidas[tid]=Object.assign({},S.salidas[tid],{[key]:drive});
+  if(v===null){delete S.scores[tid][key];delete S.salidas[tid][key];S.drive=null}
+  if(v!==null&&S.hole<holes().length-1)S.hole++;
+  S.driveFor=null;
+  renderEntry();renderBoard();
+  // Score y salida se guardan juntos; sin señal, Firebase los envía cuando vuelve la conexión
+  S.lastSaved=tid+key;S.ts[tid]=Object.assign({},S.ts[tid],{[key]:v===null?null:Date.now()});
+  S.db.ref().update({[`scores/${tid}/${key}`]:v,[`salidas/${tid}/${key}`]:drive,[`ts/${tid}/${key}`]:v===null?null:firebaseTime()}).catch(writeErr);
+  toast(v===null?"Hoyo borrado":`Guardado: ${t.name} · ${v} golpes · salida ${drive}`);
+}
+$("saveCfg").onclick=async()=>{
+  if(!S.db)return;
+  const order=(S.draftOrder||S.cfg.order).slice();if(!order.length){toast("Elige al menos una vuelta");return}
+  const nines={};NINE_IDS.forEach(id=>{const base=S.cfg.nines[id];const pars=[];
+    for(let i=1;i<=9;i++){const el=$(`par-${id}-${i}`);let v=el?parseInt(el.value,10):base.pars[i-1];if(!(v>=3&&v<=6))v=base.pars[i-1];pars.push(v)}
+    nines[id]={name:base.name,pars}});
+  const name=$("cfgName").value.trim()||DEFAULT_NAME;
+  const contests={longdrive:$("cLD").value,approach:$("cAP").value};
+  try{await S.db.ref("config").update({name,order,nines,contests});S.draftOrder=null;toast("Torneo guardado");renderConfig()}catch(e){writeErr(e)}
+};
+$("podioBtn").onclick=async()=>{const next=!S.cfg.podio;try{await S.db.ref("config/podio").set(next);toast(next?"Podio visible para todos":"Podio oculto")}catch(e){writeErr(e)}};
+$("addForm").addEventListener("submit",async e=>{
+  e.preventDefault();if(!S.db)return;
+  const name=$("newName").value.trim();if(!name)return;
+  if(!S.editId&&S.teams.length>=MAX_TEAMS){toast("Máximo "+MAX_TEAMS+" equipos");return}
+  if(S.teams.some(t=>t.id!==S.editId&&t.name.toLowerCase()===name.toLowerCase())){toast("Ya existe un equipo con ese nombre");return}
+  const hcp=parseHcp($("newHcp").value);if(hcp===null){toast("Hcp entre 0 y 54");return}
+  const players={};CATS.forEach(c=>players[c]=$("p"+c).value.trim());
+  try{
+    if(S.editId){await S.db.ref("equipos/"+S.editId).update({name,hcp,players});toast(name+" actualizado")}
+    else{await S.db.ref("equipos").push({name,hcp,players,created:Date.now()});toast(name+" agregado")}
+    clearForm();$("newName").focus();
+  }catch(err){writeErr(err)}
+});
+function clearForm(){S.editId=null;["newName","newHcp","pA","pB","pC","pD"].forEach(i=>$(i).value="");syncForm()}
+function syncForm(){$("formTitle").textContent=S.editId?"Editar equipo":"Nuevo equipo";$("addBtn").textContent=S.editId?"Guardar cambios":"Agregar equipo";$("cancelEdit").hidden=!S.editId}
+$("cancelEdit").onclick=()=>{clearForm();renderConfig()};
+
+// ---------- admin login ----------
+$("loginForm").addEventListener("submit",async e=>{
+  e.preventDefault();const pin=$("adminPin").value;if(!pin)return;
+  $("loginBtn").disabled=true;
+  try{await firebase.auth().signInWithEmailAndPassword(ADMIN_EMAIL,pin);$("adminPin").value="";toast("Sesión iniciada")}
+  catch(err){toast("Clave incorrecta")}
+  $("loginBtn").disabled=false;
+});
+$("logoutBtn").onclick=()=>firebase.auth().signOut();
+
+
+// ---------- modo demo (#demo): datos de ejemplo en memoria, nada se guarda ----------
+function startDemo(){
+  const store={equipos:{},scores:{},salidas:{},ts:{},concursos:{longdrive:{team:"d1",cat:"A",dist:248,ts:Date.now()-3e5}},
+    config:{name:DEFAULT_NAME,order:["roja","azul"],nines:DEFAULT_NINES,contests:{longdrive:"roja3",approach:"roja6"},podio:false,estado:"en_juego",inicio:Date.now()-2.2*3600e3}};
+  const names=[["Pato","Nico","Felipe","Tomás"],["Juan","Rodrigo","Matías","Andrés"],["Diego","Pablo","Cristián","José"],["Seba","Ignacio","Gonzalo","Martín"],["Benja","Javier","Álvaro","Raúl"],["Max","Vicente","Joaquín","Carlos"]];
+  const hc=[6.2,8.5,4,11.3,9.8,7.1];const thru=[18,14,12,9,6,3];
+  const H=holes();let seed=3;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
+  names.forEach((n,i)=>{const id="d"+i;store.equipos[id]={name:"Equipo "+(i+1),hcp:hc[i],players:{A:n[0],B:n[1],C:n[2],D:n[3]},created:i};
+    store.scores[id]={};store.salidas[id]={};store.ts[id]={};
+    H.slice(0,thru[i]).forEach((h,k)=>{const r=rnd();store.scores[id][h.key]=Math.max(2,h.par+(r<.22?-1:r<.8?0:1));
+      store.salidas[id][h.key]=["A","B","A","C","B","D","A","B","C","A","D","B","A","C","B","D","A","B"][(k+i)%18];
+      store.ts[id][h.key]=Date.now()-(thru[i]-k)*11*60000})});
+  const get=p=>p.split("/").reduce((o,k)=>o&&o[k],store);
+  const put=(p,v)=>{const ks=p.split("/");let o=store;ks.slice(0,-1).forEach(k=>{o[k]=o[k]||{};o=o[k]});if(v===null)delete o[ks[ks.length-1]];else o[ks[ks.length-1]]=v};
+  const sync=()=>{const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
+    S.scores=JSON.parse(JSON.stringify(store.scores));S.salidas=JSON.parse(JSON.stringify(store.salidas));
+    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
+  S.db={ref:(p)=>({set:async v=>{put(p,v);sync()},update:async m=>{Object.keys(m).forEach(k=>put(p?p+"/"+k:k,m[k]));sync()},push:async v=>{put(p+"/n"+Date.now(),v);sync()}})};
+  S.isAdmin=true;sync();setLive(true,"Demo");showBanner("Modo demo con equipos de ejemplo: puedes probar todo, pero nada se guarda.");
+}
+
+function applyConfig(d){
+  if(!d)return;
+  const nines=JSON.parse(JSON.stringify(DEFAULT_NINES));
+  if(d.nines)NINE_IDS.forEach(id=>{const n=d.nines[id];if(n&&Array.isArray(n.pars)&&n.pars.length===9)nines[id]={name:n.name||nines[id].name,pars:n.pars.slice()}});
+  const order=Array.isArray(d.order)?d.order.filter(id=>NINE_IDS.includes(id)):["roja","azul"];
+  const c=d.contests||{};
+  S.cfg={name:d.name||DEFAULT_NAME,order:order.length?order:["roja","azul"],nines,contests:{longdrive:c.longdrive||"",approach:c.approach||""},podio:!!d.podio,
+    estado:["previo","en_juego","finalizado"].includes(d.estado)?d.estado:"previo",inicio:d.inicio||0,fin:d.fin||0};
+}
+// ---------- live data ----------
+function setLive(on,txt){$("live").classList.toggle("off",!on);$("liveTxt").textContent=txt}
+renderAll();
+if(location.hash==="#demo"||!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==="PEGAR_AQUI"){
+  startDemo();
+}else{
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const db=firebase.database();S.db=db;
+  firebase.auth().onAuthStateChanged(u=>{S.isAdmin=!!(u&&u.email===ADMIN_EMAIL);renderAll()});
+  db.ref(".info/connected").on("value",s=>setLive(!!s.val(),s.val()?"En vivo":"Sin señal · se guarda igual"));
+  db.ref("config").on("value",s=>{applyConfig(s.val());renderAll()});
+  db.ref("equipos").on("value",s=>{const v=s.val()||{};
+    S.teams=Object.keys(v).map(id=>({id,name:String(v[id].name||"Equipo"),hcp:v[id].hcp,players:v[id].players||{},created:v[id].created||0})).sort((a,b)=>a.created-b.created);
+    renderAll()});
+  db.ref("scores").on("value",s=>{S.scores=s.val()||{};renderBoard();renderEntry()});
+  db.ref("salidas").on("value",s=>{S.salidas=s.val()||{};renderBoard();renderEntry()});
+  db.ref("ts").on("value",s=>{S.ts=s.val()||{};renderBoard()});
+  db.ref("concursos").on("value",s=>{S.concursos=s.val()||{};renderBoard();renderEntry()});
+}
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+</script>
+</body>
+</html>
