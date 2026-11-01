@@ -239,7 +239,7 @@ table.lb th:nth-child(1){width:34px}table.lb th:nth-child(3){width:38px}table.lb
 @media (max-width:420px){table.lb th:nth-child(1){width:30px}table.lb th:nth-child(3){width:34px}table.lb th:nth-child(4){width:46px}table.lb th:nth-child(5){width:58px}td.score.big span{font-size:21px}}
 .mob{display:none}
 @media (max-width:480px){
-  table.lb .hcol{display:none}.mob{display:inline;white-space:nowrap}
+  table.lb th.hcol,table.lb td.hcol{width:0!important;padding:0!important;font-size:0;border:0;overflow:hidden}.mob{display:inline;white-space:nowrap}
   table.lb th:nth-child(1){width:30px}table.lb th:nth-child(4){width:50px}table.lb th:nth-child(5){width:64px}
   .board-head{flex-wrap:wrap}.board-head h2{font-size:15px;letter-spacing:.1em}
 }
@@ -292,6 +292,34 @@ table.lb th:nth-child(1){width:34px}table.lb th:nth-child(3){width:38px}table.lb
 .stlabel.s-previo{color:var(--warn)}.stlabel.s-en_juego{color:var(--ok)}.stlabel.s-finalizado{color:var(--muted)}
 .stbtn{padding:12px 18px;font:700 16px var(--display);letter-spacing:.05em;text-transform:uppercase}
 .btn.danger{background:transparent}
+/* Fotos de jugadores */
+.av{position:relative;display:inline-flex;width:30px;height:30px;flex:none;border-radius:50%;background:var(--soft);border:2px solid var(--line)}
+.av img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.av i{margin:auto;font:700 14px var(--display);font-style:normal;color:var(--ink)}
+.av b{position:absolute;right:-4px;bottom:-4px;width:15px;height:15px;border-radius:4px;font:700 10px/15px var(--display);text-align:center;color:#fff}
+.av.c-A{border-color:var(--cA)}.av.c-B{border-color:var(--cB)}.av.c-C{border-color:var(--cC)}.av.c-D{border-color:var(--cD)}
+.av.c-A b{background:var(--cA)}.av.c-B b{background:var(--cB)}.av.c-C b{background:var(--cC)}.av.c-D b{background:var(--cD)}
+.drv .av{width:34px;height:34px}
+.stack{display:flex;margin-bottom:4px}
+.av.mini{width:22px;height:22px;border-width:1.5px;margin-right:-5px;box-shadow:0 0 0 1.5px var(--surface)}
+.av.mini b{display:none}.av.mini i{font-size:10px}
+.roster>span{gap:8px}
+.pl{display:flex;align-items:center;gap:8px}
+.phbtn{width:40px;height:40px;flex:none;border-radius:50%;border:1.5px dashed var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);overflow:hidden}
+.phbtn svg{width:22px;height:22px}
+.phbtn img{width:100%;height:100%;object-fit:cover}
+.phdel{border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:6px}
+.pl input[type=text]{flex:1;min-width:0}
+.roster{align-items:center}
+.rp{display:flex;align-items:center;gap:8px;border:0;background:none;color:var(--ink);font:500 14px var(--body);padding:4px 6px 4px 0;cursor:pointer;border-radius:8px;text-align:left}
+.rp span{display:grid;line-height:1.15}
+.rp em{font-style:normal;font-size:11px;color:var(--green);font-weight:600}
+.rp:hover{background:color-mix(in srgb,var(--green) 10%,transparent)}
+.rphint{margin:6px 12px 0;font-size:12px}
+.phmodal{position:fixed;inset:0;z-index:50;background:rgba(5,8,20,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.phcard{background:var(--surface);color:var(--ink);border-radius:16px;padding:18px;display:grid;gap:10px;justify-items:center;width:min(340px,100%);box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.phcard img{width:150px;height:150px;border-radius:50%;object-fit:cover;border:3px solid var(--green)}
+.phcard .row2{justify-content:center}
 </style>
 </head>
 <body>
@@ -377,10 +405,10 @@ table.lb th:nth-child(1){width:34px}table.lb th:nth-child(3){width:38px}table.lb
           <div class="lbl formtitle" id="formTitle">Nuevo equipo</div>
           <input type="text" id="newName" maxlength="40" placeholder="Nombre del equipo" required>
           <input type="text" id="newHcp" inputmode="decimal" placeholder="Hcp">
-          <label class="pl"><span class="cat c-A">A</span><input type="text" id="pA" maxlength="30" placeholder="Jugador A"></label>
-          <label class="pl"><span class="cat c-B">B</span><input type="text" id="pB" maxlength="30" placeholder="Jugador B"></label>
-          <label class="pl"><span class="cat c-C">C</span><input type="text" id="pC" maxlength="30" placeholder="Jugador C"></label>
-          <label class="pl"><span class="cat c-D">D</span><input type="text" id="pD" maxlength="30" placeholder="Jugador D"></label>
+          <div class="pl"><label class="phbtn" for="fA" id="phA" title="Foto del jugador A"></label><input type="file" id="fA" accept="image/*" hidden><span class="cat c-A">A</span><input type="text" id="pA" maxlength="30" placeholder="Jugador A"><button type="button" class="phdel" id="phdelA" hidden aria-label="Quitar foto">✕</button></div>
+          <div class="pl"><label class="phbtn" for="fB" id="phB" title="Foto del jugador B"></label><input type="file" id="fB" accept="image/*" hidden><span class="cat c-B">B</span><input type="text" id="pB" maxlength="30" placeholder="Jugador B"><button type="button" class="phdel" id="phdelB" hidden aria-label="Quitar foto">✕</button></div>
+          <div class="pl"><label class="phbtn" for="fC" id="phC" title="Foto del jugador C"></label><input type="file" id="fC" accept="image/*" hidden><span class="cat c-C">C</span><input type="text" id="pC" maxlength="30" placeholder="Jugador C"><button type="button" class="phdel" id="phdelC" hidden aria-label="Quitar foto">✕</button></div>
+          <div class="pl"><label class="phbtn" for="fD" id="phD" title="Foto del jugador D"></label><input type="file" id="fD" accept="image/*" hidden><span class="cat c-D">D</span><input type="text" id="pD" maxlength="30" placeholder="Jugador D"><button type="button" class="phdel" id="phdelD" hidden aria-label="Quitar foto">✕</button></div>
           <button class="btn primary" type="submit" id="addBtn">Agregar equipo</button>
           <button class="btn" type="button" id="cancelEdit" hidden>Cancelar edición</button>
         </form>
@@ -390,6 +418,15 @@ table.lb th:nth-child(1){width:34px}table.lb th:nth-child(3){width:38px}table.lb
   </section>
 </div>
 <div class="toast" id="toast"></div>
+<input type="file" id="selfPhoto" accept="image/*" hidden>
+<div class="phmodal" id="phModal" hidden role="dialog" aria-modal="true" aria-labelledby="phTitle">
+  <div class="phcard">
+    <div class="lbl" id="phTitle">Tu foto</div>
+    <img id="phPreview" alt="">
+    <p class="sub" id="phWho"></p>
+    <div class="row2"><button class="btn primary" id="phSave">Guardar foto</button><button class="btn" id="phOther">Elegir otra</button><button class="btn" id="phCancel">Cancelar</button></div>
+  </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -417,11 +454,20 @@ const DEFAULT_NINES={
   blanca:{name:"Blanca",pars:[4,4,3,5,4,4,4,3,5]}
 };
 const NINE_IDS=["roja","azul","blanca"];
-const S={ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
+const S={fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
   teams:[],scores:{},salidas:{},mode:"net",open:null,sel:null,hole:0,drive:null,isAdmin:false,db:null,confirmDel:null,draftOrder:null,editId:null};
 const CATS=["A","B","C","D"];
 const REQ_CATS=["C","D"],REQ_PARS=[3,4,5];
 function pName(t,c){return (t.players&&t.players[c])||("Jugador "+c)}
+function foto(t,c){return (S.fotos[t.id]||{})[c]||""}
+function av(t,c,cls){const f=foto(t,c);const n=pName(t,c);
+  return `<span class="av c-${c}${cls?" "+cls:""}">${f?`<img src="${f}" alt="">`:`<i>${esc((n.trim()[0]||c).toUpperCase())}</i>`}<b>${c}</b></span>`}
+function hasFotos(t){const f=S.fotos[t.id];return !!(f&&CATS.some(c=>f[c]))}
+// Reduce la foto a un cuadrado de 128 px para que cargue rápido en la cancha
+function shrink(file){return new Promise((ok,bad)=>{const img=new Image();const url=URL.createObjectURL(file);
+  img.onload=()=>{const s=Math.min(img.width,img.height),N=128,cv=document.createElement("canvas");cv.width=cv.height=N;
+    cv.getContext("2d").drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,N,N);URL.revokeObjectURL(url);ok(cv.toDataURL("image/jpeg",.72))};
+  img.onerror=()=>{URL.revokeObjectURL(url);bad()};img.src=url})}
 function holeLabel(h){return S.cfg.nines[h.nine].name+" "+h.num}
 // Requisito: C y D deben aportar al menos una salida en un par 3, un par 4 y un par 5
 function reqStatus(t){
@@ -484,7 +530,8 @@ function renderHeader(){
 }
 function scorecard(t,curKey){
   const sc=S.scores[t.id]||{};const sal=S.salidas[t.id]||{};const st=stats(t);let html="";
-  html+=`<div class="roster">${CATS.map(c=>`<span><span class="cat c-${c}">${c}</span>${esc(pName(t,c))}</span>`).join("")}</div>`;
+  html+=`<div class="roster">${CATS.map(c=>`<button type="button" class="rp" data-foto="${esc(t.id)}|${c}" title="Subir o cambiar la foto de ${esc(pName(t,c))}">${av(t,c)}<span>${esc(pName(t,c))}${foto(t,c)?"":`<em>+ foto</em>`}</span></button>`).join("")}</div>
+  <p class="sub rphint">Toca tu nombre para subir o cambiar tu foto.</p>`;
   S.cfg.order.forEach(id=>{const n=S.cfg.nines[id];if(!n)return;
     let hh="",pp="",ss="",dd="",ps=0,tot=0,any=false;
     n.pars.forEach((p,i)=>{const v=sc[id+(i+1)];const w=sal[id+(i+1)];const k=id+(i+1),cc=k===curKey?' class="curcol"':"";hh+=`<th${cc}>${i+1}</th>`;pp+=`<td${cc}>${p}</td>`;ps+=p;
@@ -513,7 +560,7 @@ function renderBoard(){
     const thru=r.s.thru===r.s.total?"F":r.s.thru||"–";
     const g=r.s.thru?`<span class="${cls(r.s.toPar)}">${fmt(r.s.toPar)}</span><small>${r.s.strokes}</small>`:"–";
     const n=r.s.thru?`<span class="${cls(r.s.net)}">${fmt(r.s.net)}</span><small>${dec(r.s.netStrokes)}</small>`:"–";
-    html+=`<tr class="row${lead?" lead":""}${r.dq?" dq":""}" data-id="${esc(r.t.id)}"><td class="pos">${pos}${!r.dq&&moves[r.t.id]?`<span class="mv ${moves[r.t.id]>0?"up":"down"}">${moves[r.t.id]>0?"▲":"▼"}${Math.abs(moves[r.t.id])}</span>`:""}</td><td><div class="pname">${esc(r.t.name)}<small>Hcp ${dec(Number(r.t.hcp)||0)}<span class="mob"> · ${r.s.thru===r.s.total?"Terminó":r.s.thru?"Hoyo "+r.s.thru:"Sin empezar"}</span></small>${r.s.thru?reqBadge(r.t):""}</div></td><td class="thru hcol">${thru}</td><td class="score ${S.mode==="gross"?"big":""}">${g}</td><td class="score ${S.mode==="net"?"big":""}">${n}</td></tr>`;
+    html+=`<tr class="row${lead?" lead":""}${r.dq?" dq":""}" data-id="${esc(r.t.id)}"><td class="pos">${pos}${!r.dq&&moves[r.t.id]?`<span class="mv ${moves[r.t.id]>0?"up":"down"}">${moves[r.t.id]>0?"▲":"▼"}${Math.abs(moves[r.t.id])}</span>`:""}</td><td><div class="pname">${hasFotos(r.t)?`<span class="stack">${CATS.map(c=>av(r.t,c,"mini")).join("")}</span>`:""}${esc(r.t.name)}<small>Hcp ${dec(Number(r.t.hcp)||0)}<span class="mob"> · ${r.s.thru===r.s.total?"Terminó":r.s.thru?"Hoyo "+r.s.thru:"Sin empezar"}</span></small>${r.s.thru?reqBadge(r.t):""}</div></td><td class="thru hcol">${thru}</td><td class="score ${S.mode==="gross"?"big":""}">${g}</td><td class="score ${S.mode==="net"?"big":""}">${n}</td></tr>`;
     if(S.open===r.t.id)html+=`<tr><td colspan="5" class="card-cell">${scorecard(r.t)}</td></tr>`;
   });
   box.innerHTML=html+"</tbody></table>";renderTicker();renderContests();renderHoleStats();renderPodium();
@@ -534,7 +581,7 @@ function renderEntry(){
   const dirty=S.drive!==(sal[h.key]||null)||S.draftN!==(typeof cur==="number"?cur:null);const ready=!!(S.drive&&S.draftN);
   const rq=reqStatus(t);const needHere=REQ_CATS.filter(c=>!rq.done[c][h.par]);
   const hint=needHere.length?`<div class="hint">${needHere.map(c=>`<span class="cat c-${c}">${c}</span>`).join("")} todavía ${needHere.length>1?"necesitan":"necesita"} una salida en par ${h.par}${rq.remaining[h.par]>0&&rq.remaining[h.par]<=needHere.length?` · quedan ${rq.remaining[h.par]} par ${h.par}`:""}</div>`:"";
-  const drives=`<div class="drives">${CATS.map(c=>`<button class="drv${S.drive===c?" sel":""}${needHere.includes(c)&&!locked?" need":""}" data-c="${c}"${dis}><span class="cat c-${c}">${c}</span><span class="dn">${esc(pName(t,c))}</span></button>`).join("")}</div>`;
+  const drives=`<div class="drives">${CATS.map(c=>`<button class="drv${S.drive===c?" sel":""}${needHere.includes(c)&&!locked?" need":""}" data-c="${c}"${dis}>${av(t,c)}<span class="dn">${esc(pName(t,c))}</span></button>`).join("")}</div>`;
   const sel=`<select id="teamSel">${S.teams.map(x=>`<option value="${esc(x.id)}"${x.id===S.sel?" selected":""}>${esc(x.name)} · Hcp ${dec(Number(x.hcp)||0)}</option>`).join("")}</select>`;
   let ninesHtml="";
   S.cfg.order.forEach((id,ni)=>{const n=S.cfg.nines[id];if(!n)return;
@@ -614,18 +661,18 @@ function renderConfig(){
   const full=S.teams.length>=MAX_TEAMS&&!S.editId;$("addForm").hidden=full;$("fullNote").hidden=!full;syncForm();
   const pl=$("plist");
   if(pl.contains(document.activeElement)&&document.activeElement.classList.contains("hin"))return;
-  pl.innerHTML=S.teams.length?S.teams.map((t,i)=>`<div class="pitem"><span class="idx">${i+1}</span><span class="n">${esc(t.name)}<small>${CATS.map(c=>`${c}: ${esc(pName(t,c))}`).join(" · ")}</small><button class="linkbtn" data-edit="${esc(t.id)}">Editar</button></span><label class="h">Hcp <input class="hin" type="text" inputmode="decimal" id="hcp-${esc(t.id)}" data-id="${esc(t.id)}" value="${dec(Number(t.hcp)||0)}"></label>${S.confirmDel===t.id?`<button class="btn danger" data-del="${esc(t.id)}">Confirmar</button><button class="btn" data-cancel="1">No</button>`:`<button class="btn" data-ask="${esc(t.id)}">Quitar</button>`}</div>`).join(""):`<div class="note">Sin equipos todavía. Agrega el primero abajo.</div>`;
+  pl.innerHTML=S.teams.length?S.teams.map((t,i)=>`<div class="pitem"><span class="idx">${i+1}</span><span class="n">${hasFotos(t)?`<span class="stack">${CATS.map(c=>av(t,c,"mini")).join("")}</span>`:""}${esc(t.name)}<small>${CATS.map(c=>`${c}: ${esc(pName(t,c))}`).join(" · ")}</small><button class="linkbtn" data-edit="${esc(t.id)}">Editar</button></span><label class="h">Hcp <input class="hin" type="text" inputmode="decimal" id="hcp-${esc(t.id)}" data-id="${esc(t.id)}" value="${dec(Number(t.hcp)||0)}"></label>${S.confirmDel===t.id?`<button class="btn danger" data-del="${esc(t.id)}">Confirmar</button><button class="btn" data-cancel="1">No</button>`:`<button class="btn" data-ask="${esc(t.id)}">Quitar</button>`}</div>`).join(""):`<div class="note">Sin equipos todavía. Agrega el primero abajo.</div>`;
   pl.querySelectorAll(".hin").forEach(inp=>inp.onchange=async()=>{
     const v=parseHcp(inp.value);if(v===null){toast("Hcp entre 0 y 54");return}
     const t=S.teams.find(x=>x.id===inp.dataset.id);if(!t||Number(t.hcp)===v)return;
     try{await S.db.ref("equipos/"+t.id+"/hcp").set(v);toast(`${t.name}: Hcp ${dec(v)}`)}catch(e){writeErr(e)}});
   pl.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const t=S.teams.find(x=>x.id===b.dataset.edit);if(!t)return;
-    S.editId=t.id;$("newName").value=t.name;$("newHcp").value=dec(Number(t.hcp)||0);CATS.forEach(c=>$("p"+c).value=(t.players&&t.players[c])||"");
+    S.editId=t.id;$("newName").value=t.name;$("newHcp").value=dec(Number(t.hcp)||0);CATS.forEach(c=>$("p"+c).value=(t.players&&t.players[c])||"");S.formFotos={};
     syncForm();$("addForm").hidden=false;$("addForm").scrollIntoView({behavior:"smooth",block:"center"});$("newName").focus()});
   pl.querySelectorAll("[data-ask]").forEach(b=>b.onclick=()=>{S.confirmDel=b.dataset.ask;renderConfig()});
   pl.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=()=>{S.confirmDel=null;renderConfig()});
   pl.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{const id=b.dataset.del;S.confirmDel=null;
-    try{await S.db.ref().update({["equipos/"+id]:null,["scores/"+id]:null,["salidas/"+id]:null});toast("Equipo quitado")}catch(e){writeErr(e)}});
+    try{await S.db.ref().update({["equipos/"+id]:null,["scores/"+id]:null,["salidas/"+id]:null,["fotos/"+id]:null});toast("Equipo quitado")}catch(e){writeErr(e)}});
 }
 // Posición actual vs. posición antes del último hoyo de cada equipo
 function rankOf(list,key){const r={};let lastVal=null,lastPos=0;
@@ -719,6 +766,20 @@ function confetti(){
   let f=0;(function tick(){ctx.clearRect(0,0,W,Hh);ps.forEach(p=>{p.y+=p.vy;p.x+=p.vx;p.r+=.1;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);ctx.restore()});
     if(++f<240)requestAnimationFrame(tick);else ctx.clearRect(0,0,W,Hh)})();
 }
+// ---------- cada jugador sube su propia foto ----------
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-foto]");if(!b)return;e.stopPropagation();
+  const [tid,c]=b.dataset.foto.split("|");S.photoTarget={tid,c};S.photoData=null;$("selfPhoto").click()},true);
+$("selfPhoto").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f||!S.photoTarget)return;
+  try{S.photoData=await shrink(f)}catch(err){toast("No se pudo leer esa imagen");return}
+  const t=S.teams.find(x=>x.id===S.photoTarget.tid);if(!t)return;
+  $("phPreview").src=S.photoData;$("phWho").textContent=`${pName(t,S.photoTarget.c)} · ${t.name} · Categoría ${S.photoTarget.c}`;$("phModal").hidden=false};
+$("phCancel").onclick=()=>{$("phModal").hidden=true;S.photoData=null};
+$("phOther").onclick=()=>$("selfPhoto").click();
+$("phSave").onclick=async()=>{if(!S.photoData||!S.photoTarget||!S.db)return;const {tid,c}=S.photoTarget;
+  $("phSave").disabled=true;
+  try{await S.db.ref(`fotos/${tid}/${c}`).set(S.photoData);$("phModal").hidden=true;toast("¡Foto guardada!")}
+  catch(err){toast("No se pudo guardar la foto, intenta de nuevo")}
+  $("phSave").disabled=false};
 function renderAll(){renderHeader();renderBoard();renderEntry();renderConfig()}
 
 // ---------- tabs ----------
@@ -764,13 +825,25 @@ $("addForm").addEventListener("submit",async e=>{
   const hcp=parseHcp($("newHcp").value);if(hcp===null){toast("Hcp entre 0 y 54");return}
   const players={};CATS.forEach(c=>players[c]=$("p"+c).value.trim());
   try{
-    if(S.editId){await S.db.ref("equipos/"+S.editId).update({name,hcp,players});toast(name+" actualizado")}
-    else{await S.db.ref("equipos").push({name,hcp,players,created:Date.now()});toast(name+" agregado")}
+    const id=S.editId||("t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+    const upd={};
+    if(S.editId){upd[`equipos/${id}/name`]=name;upd[`equipos/${id}/hcp`]=hcp;upd[`equipos/${id}/players`]=players}
+    else upd[`equipos/${id}`]={name,hcp,players,created:Date.now()};
+    Object.keys(S.formFotos).forEach(c=>{upd[`fotos/${id}/${c}`]=S.formFotos[c]||null});
+    await S.db.ref().update(upd);toast(name+(S.editId?" actualizado":" agregado"));
     clearForm();$("newName").focus();
   }catch(err){writeErr(err)}
 });
-function clearForm(){S.editId=null;["newName","newHcp","pA","pB","pC","pD"].forEach(i=>$(i).value="");syncForm()}
-function syncForm(){$("formTitle").textContent=S.editId?"Editar equipo":"Nuevo equipo";$("addBtn").textContent=S.editId?"Guardar cambios":"Agregar equipo";$("cancelEdit").hidden=!S.editId}
+function clearForm(){S.editId=null;S.formFotos={};["newName","newHcp","pA","pB","pC","pD"].forEach(i=>$(i).value="");syncForm()}
+function syncPhotos(){CATS.forEach(c=>{const cur=c in S.formFotos?S.formFotos[c]:(S.editId?(S.fotos[S.editId]||{})[c]:"");
+  $("ph"+c).innerHTML=cur?`<img src="${cur}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
+  $("phdel"+c).hidden=!cur})}
+CATS.forEach(c=>{
+  $("f"+c).onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+    try{S.formFotos[c]=await shrink(f);syncPhotos();toast("Foto lista. Toca "+(S.editId?"Guardar cambios":"Agregar equipo")+" para guardarla")}catch(err){toast("No se pudo leer esa imagen")}};
+  $("phdel"+c).onclick=()=>{S.formFotos[c]=null;syncPhotos()};
+});
+function syncForm(){syncPhotos();$("formTitle").textContent=S.editId?"Editar equipo":"Nuevo equipo";$("addBtn").textContent=S.editId?"Guardar cambios":"Agregar equipo";$("cancelEdit").hidden=!S.editId}
 $("cancelEdit").onclick=()=>{clearForm();renderConfig()};
 
 // ---------- admin login ----------
@@ -800,7 +873,7 @@ function startDemo(){
   const put=(p,v)=>{const ks=p.split("/");let o=store;ks.slice(0,-1).forEach(k=>{o[k]=o[k]||{};o=o[k]});if(v===null)delete o[ks[ks.length-1]];else o[ks[ks.length-1]]=v};
   const sync=()=>{const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
     S.scores=JSON.parse(JSON.stringify(store.scores));S.salidas=JSON.parse(JSON.stringify(store.salidas));
-    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
+    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
   S.db={ref:(p)=>({set:async v=>{put(p,v);sync()},update:async m=>{Object.keys(m).forEach(k=>put(p?p+"/"+k:k,m[k]));sync()},push:async v=>{put(p+"/n"+Date.now(),v);sync()}})};
   S.isAdmin=true;sync();setLive(true,"Demo");showBanner("Modo demo con equipos de ejemplo: puedes probar todo, pero nada se guarda.");
 }
@@ -832,6 +905,7 @@ if(location.hash==="#demo"||!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==="P
   db.ref("salidas").on("value",s=>{S.salidas=s.val()||{};renderBoard();renderEntry()});
   db.ref("ts").on("value",s=>{S.ts=s.val()||{};renderBoard()});
   db.ref("concursos").on("value",s=>{S.concursos=s.val()||{};renderBoard();renderEntry()});
+  db.ref("fotos").on("value",s=>{S.fotos=s.val()||{};renderAll()});
 }
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script>
