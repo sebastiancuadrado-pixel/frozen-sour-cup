@@ -424,6 +424,10 @@ header.top{position:relative}
 .profph{width:130px;height:130px;border-radius:50%;border:3px solid var(--green);background:var(--soft);overflow:hidden;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .profph img{width:100%;height:100%;object-fit:cover}
 .profph span{font:700 48px var(--display);color:var(--ink)}
+.srccard{gap:10px}
+.srcbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;text-transform:none;letter-spacing:.02em}
+.srcbtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7}
+#srcCancel{width:100%}
 </style>
 </head>
 <body>
@@ -593,6 +597,16 @@ header.top{position:relative}
   </div>
 </div>
 <input type="file" id="selfPhoto" accept="image/*" hidden>
+<input type="file" id="selfCam" accept="image/*" capture="user" hidden>
+<div class="phmodal" id="srcModal" hidden role="dialog" aria-modal="true" aria-labelledby="srcTitle">
+  <div class="phcard srccard">
+    <div class="lbl" id="srcTitle">Foto de perfil</div>
+    <p class="sub" id="srcWho" style="margin:0"></p>
+    <button class="btn primary big srcbtn" id="srcCam" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>Tomar foto</button>
+    <button class="btn big srcbtn" id="srcGal" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M4 17l5-4.5 3.5 3 3-2.5 4.5 4"/></svg>Elegir de la galería</button>
+    <button class="btn" id="srcCancel" type="button">Cancelar</button>
+  </div>
+</div>
 <div class="phmodal" id="shareModal" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle">
   <div class="phcard sharecard">
     <div class="lbl" id="shTitle">Compartir la app</div>
@@ -612,7 +626,7 @@ header.top{position:relative}
     <div class="lbl" id="phTitle">Tu foto</div>
     <img id="phPreview" alt="">
     <p class="sub" id="phWho"></p>
-    <div class="row2"><button class="btn primary" id="phSave">Guardar foto</button><button class="btn" id="phOther">Elegir otra</button><button class="btn" id="phCancel">Cancelar</button></div>
+    <div class="row2"><button class="btn primary" id="phSave">Guardar foto</button><button class="btn" id="phOther">Otra foto</button><button class="btn" id="phCancel">Cancelar</button></div>
   </div>
 </div>
 
@@ -1011,7 +1025,14 @@ function openProfile(){if(!S.me||!S.jug[S.me])return;const j=S.jug[S.me],t=myTea
   $("profName").textContent=j.nombre;$("profInfo").textContent=`RUT ${j.rut}${t?` · ${t.name}${cat?" · Categoría "+cat:""}`:" · Todavía sin equipo"}`;
   $("profHint").textContent=f?"Así te ven los demás en la tabla y en tu equipo.":"Sube una foto para que tus compañeros te reconozcan en la app.";
   $("profPhoto").textContent=f?"Cambiar mi foto":"Subir mi foto";$("profModal").hidden=false}
-function pickMyPhoto(){S.photoTarget={rut:S.me};S.photoData=null;$("profModal").hidden=true;$("selfPhoto").click()}
+function choosePhoto(){const tg=S.photoTarget||{};let who="";
+  if(tg.rut&&S.jug[tg.rut])who=S.jug[tg.rut].nombre;else if(tg.tid){const t=S.teams.find(x=>x.id===tg.tid);if(t)who=pName(t,tg.c)+" · "+t.name}
+  $("srcWho").textContent=who;$("srcModal").hidden=false}
+$("srcCam").onclick=()=>{$("srcModal").hidden=true;$("selfCam").click()};
+$("srcGal").onclick=()=>{$("srcModal").hidden=true;$("selfPhoto").click()};
+$("srcCancel").onclick=()=>$("srcModal").hidden=true;
+$("srcModal").onclick=e=>{if(e.target.id==="srcModal")$("srcModal").hidden=true};
+function pickMyPhoto(){S.photoTarget={rut:S.me};S.photoData=null;$("profModal").hidden=true;choosePhoto()}
 $("profPhoto").onclick=pickMyPhoto;$("profPh").onclick=pickMyPhoto;
 $("profClose").onclick=()=>$("profModal").hidden=true;
 $("profModal").onclick=e=>{if(e.target.id==="profModal")$("profModal").hidden=true};
@@ -1021,14 +1042,15 @@ $("profOut").onclick=()=>{$("profModal").hidden=true;S.me=null;S.viewer=false;tr
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-foto]");if(!b)return;e.stopPropagation();
   if(!canScore()){toast("Regístrate con tu RUT para subir tu foto");return}
   const [tid,c]=b.dataset.foto.split("|");const t=S.teams.find(x=>x.id===tid);const rut=t&&t.ruts&&t.ruts[c];
-  S.photoTarget=rut&&S.jug[rut]?{tid,c,rut}:{tid,c};S.photoData=null;$("selfPhoto").click()},true);
+  S.photoTarget=rut&&S.jug[rut]?{tid,c,rut}:{tid,c};S.photoData=null;choosePhoto()},true);
+$("selfCam").onchange=e=>$("selfPhoto").onchange(e);
 $("selfPhoto").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f||!S.photoTarget)return;
   try{S.photoData=await shrink(f)}catch(err){toast("No se pudo leer esa imagen");return}
   if(S.photoTarget.rut&&!S.photoTarget.tid){const j=S.jug[S.photoTarget.rut];$("phPreview").src=S.photoData;$("phWho").textContent=`${j?j.nombre:""} · ${j?j.rut:""}`;$("phModal").hidden=false;return}
   const t=S.teams.find(x=>x.id===S.photoTarget.tid);if(!t)return;
   $("phPreview").src=S.photoData;$("phWho").textContent=`${pName(t,S.photoTarget.c)} · ${t.name} · Categoría ${S.photoTarget.c}`;$("phModal").hidden=false};
 $("phCancel").onclick=()=>{$("phModal").hidden=true;S.photoData=null};
-$("phOther").onclick=()=>$("selfPhoto").click();
+$("phOther").onclick=()=>{$("phModal").hidden=true;choosePhoto()};
 $("phSave").onclick=async()=>{if(!S.photoData||!S.photoTarget||!S.db)return;const {tid,c,rut}=S.photoTarget;
   $("phSave").disabled=true;
   try{await S.db.ref(rut?`jfotos/${rut}`:`fotos/${tid}/${c}`).set(S.photoData);$("phModal").hidden=true;toast("¡Foto guardada!")}
@@ -1212,7 +1234,7 @@ function renderJug(){
   box.innerHTML=!keys.length?`<div class="note">Todavía no hay jugadores. Agrégalos abajo o pega la lista completa.</div>`
    :!list.length?`<div class="note">Nadie coincide con "${esc(q)}".</div>`
    :list.slice(0,60).map(k=>{const t=teamOf(k);return `<div class="pitem jitem"><button type="button" class="jav${S.jfotos[k]?" has":""}" data-jfoto="${k}" title="${S.jfotos[k]?"Cambiar":"Agregar"} foto de ${esc(S.jug[k].nombre)}">${S.jfotos[k]?`<img src="${S.jfotos[k]}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`}</button><span class="n">${esc(S.jug[k].nombre)}<small>${esc(S.jug[k].rut)}</small></span>${t?`<span class="jteam">${esc(t.name)}</span>`:`<span class="jteam free">Sin equipo</span>`}${S.confirmJug===k?`<button class="btn danger" data-jdel="${k}">Confirmar</button><button class="btn" data-jcancel="1">No</button>`:`<button class="btn" data-jask="${k}">Quitar</button>`}</div>`}).join("")+(list.length>60?`<p class="sub">Mostrando 60 de ${list.length}. Usa el buscador.</p>`:"");
-  box.querySelectorAll("[data-jfoto]").forEach(b=>b.onclick=()=>{S.photoTarget={rut:b.dataset.jfoto};S.photoData=null;$("selfPhoto").click()});
+  box.querySelectorAll("[data-jfoto]").forEach(b=>b.onclick=()=>{S.photoTarget={rut:b.dataset.jfoto};S.photoData=null;choosePhoto()});
   box.querySelectorAll("[data-jask]").forEach(b=>b.onclick=()=>{const k=b.dataset.jask,t=teamOf(k);if(t){toast(`Primero sácalo de ${t.name}`);return}S.confirmJug=k;renderJug()});
   box.querySelectorAll("[data-jcancel]").forEach(b=>b.onclick=()=>{S.confirmJug=null;renderJug()});
   box.querySelectorAll("[data-jdel]").forEach(b=>b.onclick=async()=>{S.confirmJug=null;try{await S.db.ref("jugadores/"+b.dataset.jdel).set(null);toast("Jugador quitado")}catch(e){writeErr(e)}});
