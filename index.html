@@ -345,6 +345,32 @@ table.lb th:nth-child(1){width:34px}table.lb th:nth-child(3){width:38px}table.lb
 .pkopt small{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
 .pkopt:hover,.pkopt.on{background:var(--soft)}
 .pkmore{padding:10px 12px;color:var(--muted);font-size:13px}
+/* Campeones pasados */
+nav.tabs button{font-size:15px;padding-left:2px;padding-right:2px}
+@media (max-width:400px){nav.tabs button{font-size:13px;letter-spacing:.02em}}
+.hof-head h2{font:700 26px var(--display);margin:0;letter-spacing:.01em}
+.hof-head{margin-bottom:12px}
+.hof{display:grid;gap:12px}
+.hofcard{display:grid;grid-template-columns:120px minmax(0,1fr);gap:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.hofcard.latest{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.hofimg{width:100%;height:100%;min-height:130px;object-fit:cover;display:block}
+.hofimg.ph{background:var(--green);display:flex;align-items:center;justify-content:center}
+.hofimg.ph span{font:700 30px var(--display);color:var(--green-ink);opacity:.85}
+.hofbody{padding:12px 14px;display:grid;gap:4px;align-content:start;min-width:0}
+.hofyear{font:700 13px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.hofbody h3{margin:0;font:700 22px var(--display);overflow-wrap:anywhere}
+.hofplayers{margin:0;font-size:14px;color:var(--ink);overflow-wrap:anywhere}
+.hofmeta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--muted)}
+.hofnote{margin:2px 0 0;font-size:13px;color:var(--muted);font-style:italic}
+.hofadmin{display:flex;gap:12px;align-items:center;margin-top:4px;flex-wrap:wrap}
+@media (max-width:420px){.hofcard{grid-template-columns:1fr}.hofimg{min-height:0;aspect-ratio:16/10;max-width:100%}.hofimg.ph{aspect-ratio:auto;height:56px}}
+.hofform{margin-bottom:12px}
+.hofgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hofform input{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:9px 10px;font:15px var(--body);width:100%;box-sizing:border-box}
+.hofphoto{display:flex;gap:12px;align-items:center}
+.phbig{width:96px;height:72px;border-radius:10px;border:1.5px dashed var(--muted);display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;overflow:hidden;flex:none}
+.phbig svg{width:26px;height:26px}.phbig img{width:100%;height:100%;object-fit:cover}
+#hofAdminBar{margin-top:12px}
 </style>
 </head>
 <body>
@@ -362,6 +388,7 @@ table.lb th:nth-child(1){width:34px}table.lb th:nth-child(3){width:38px}table.lb
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="tabla" id="t-tabla">Tabla</button>
     <button role="tab" aria-selected="false" data-tab="ingresar" id="t-ingresar">Ingresar</button>
+    <button role="tab" aria-selected="false" data-tab="campeones" id="t-campeones">Campeones</button>
     <button role="tab" aria-selected="false" data-tab="config" id="t-config">Admin</button>
   </nav>
 
@@ -383,6 +410,28 @@ table.lb th:nth-child(1){width:34px}table.lb th:nth-child(3){width:38px}table.lb
 
   <section id="v-ingresar" hidden>
     <div class="panel" id="entry"></div>
+  </section>
+
+  <section id="v-campeones" hidden>
+    <div class="hof-head"><h2>Campeones pasados</h2><p class="sub">Los ganadores de cada edición.</p></div>
+    <div id="hofList"></div>
+    <form class="panel hofform" id="hofForm" hidden>
+      <div class="lbl" id="hofTitle">Agregar campeón</div>
+      <div class="hofgrid">
+        <label class="field"><span class="sub">Año</span><input type="number" id="hofAnio" inputmode="numeric" min="1990" max="2100" placeholder="2025" required></label>
+        <label class="field"><span class="sub">Edición</span><input type="text" id="hofEd" maxlength="30" placeholder="Ej: 5ª edición"></label>
+      </div>
+      <label class="field"><span class="sub">Equipo campeón</span><input type="text" id="hofEquipo" maxlength="40" placeholder="Nombre del equipo" required></label>
+      <label class="field"><span class="sub">Jugadores</span><input type="text" id="hofJug" maxlength="160" placeholder="Ej: Pato Vives, Tomás Cuadrado, Felipe Lagos, Jorge Ossa"></label>
+      <div class="hofgrid">
+        <label class="field"><span class="sub">Resultado</span><input type="text" id="hofRes" maxlength="30" placeholder="Ej: 61,8 neto / −10"></label>
+        <label class="field"><span class="sub">Cancha</span><input type="text" id="hofCancha" maxlength="40" placeholder="Las Rocas de Santo Domingo"></label>
+      </div>
+      <label class="field"><span class="sub">Comentario (opcional)</span><input type="text" id="hofNota" maxlength="120" placeholder="Ej: ganaron en el último hoyo con un birdie"></label>
+      <div class="hofphoto"><label class="phbig" for="hofFile" id="hofPh"></label><input type="file" id="hofFile" accept="image/*" hidden><div><div class="sub">Foto del equipo campeón (opcional)</div><button type="button" class="linkbtn" id="hofPhDel" hidden>Quitar foto</button></div></div>
+      <div class="row2"><button class="btn primary" type="submit" id="hofSave">Guardar campeón</button><button class="btn" type="button" id="hofCancel">Cancelar</button></div>
+    </form>
+    <div class="row2" id="hofAdminBar" hidden><button class="btn primary" id="hofAdd">+ Agregar campeón</button><button class="btn" id="hofCurrent" hidden>Agregar al ganador de este torneo</button></div>
   </section>
 
   <section id="v-config" hidden>
@@ -496,7 +545,7 @@ const DEFAULT_NINES={
   blanca:{name:"Blanca",pars:[4,4,3,5,4,4,4,3,5]}
 };
 const NINE_IDS=["roja","azul","blanca"];
-const S={jug:{},fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
+const S={hof:{},hofForm:null,jug:{},fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
   teams:[],scores:{},salidas:{},mode:"net",open:null,sel:null,hole:0,drive:null,isAdmin:false,db:null,confirmDel:null,draftOrder:null,editId:null};
 const CATS=["A","B","C","D"];
 const REQ_CATS=["C","D"],REQ_PARS=[3,4,5];
@@ -844,12 +893,56 @@ $("phSave").onclick=async()=>{if(!S.photoData||!S.photoTarget||!S.db)return;cons
   try{await S.db.ref(`fotos/${tid}/${c}`).set(S.photoData);$("phModal").hidden=true;toast("¡Foto guardada!")}
   catch(err){toast("No se pudo guardar la foto, intenta de nuevo")}
   $("phSave").disabled=false};
-function renderAll(){renderHeader();renderBoard();renderEntry();renderConfig()}
+// ---------- campeones pasados ----------
+function shrinkTo(file,N,q){return new Promise((ok,bad)=>{const img=new Image();const url=URL.createObjectURL(file);
+  img.onload=()=>{const r=Math.min(1,N/Math.max(img.width,img.height)),w=Math.round(img.width*r),h=Math.round(img.height*r),cv=document.createElement("canvas");cv.width=w;cv.height=h;
+    cv.getContext("2d").drawImage(img,0,0,w,h);URL.revokeObjectURL(url);ok(cv.toDataURL("image/jpeg",q))};
+  img.onerror=()=>{URL.revokeObjectURL(url);bad()};img.src=url})}
+function renderHof(){
+  document.querySelector(".hof-head .sub").textContent=`Los ganadores de cada edición de la ${S.cfg.name||DEFAULT_NAME}.`;
+  const list=Object.keys(S.hof).map(id=>({id,...S.hof[id]})).sort((a,b)=>(b.anio||0)-(a.anio||0));
+  const box=$("hofList");
+  box.innerHTML=!list.length?`<div class="empty"><strong>Todavía no hay campeones cargados</strong>${S.isAdmin?"Agrega el primero con el botón de abajo.":"Pronto aparecerán aquí los ganadores de ediciones anteriores."}</div>`
+   :`<div class="hof">${list.map((c,i)=>`<article class="hofcard${i===0?" latest":""}">
+      ${c.foto?`<img class="hofimg" src="${c.foto}" alt="Equipo campeón ${esc(c.anio||"")}">`:`<div class="hofimg ph"><span>${esc(String(c.anio||""))}</span></div>`}
+      <div class="hofbody"><div class="hofyear">${esc(String(c.anio||""))}${c.edicion?` · ${esc(c.edicion)}`:""}</div>
+      <h3>${esc(c.equipo||"")}</h3>${c.jugadores?`<p class="hofplayers">${esc(c.jugadores)}</p>`:""}
+      <div class="hofmeta">${c.resultado?`<span>🏆 ${esc(c.resultado)}</span>`:""}${c.cancha?`<span>${esc(c.cancha)}</span>`:""}</div>
+      ${c.nota?`<p class="hofnote">${esc(c.nota)}</p>`:""}
+      ${S.isAdmin?`<div class="hofadmin"><button class="linkbtn" data-hedit="${c.id}">Editar</button>${S.hofDel===c.id?`<button class="btn danger" data-hdel="${c.id}">Confirmar borrar</button><button class="btn" data-hno="1">No</button>`:`<button class="linkbtn" data-hask="${c.id}">Borrar</button>`}</div>`:""}</div></article>`).join("")}</div>`;
+  box.querySelectorAll("[data-hedit]").forEach(b=>b.onclick=()=>openHof(b.dataset.hedit));
+  box.querySelectorAll("[data-hask]").forEach(b=>b.onclick=()=>{S.hofDel=b.dataset.hask;renderHof()});
+  box.querySelectorAll("[data-hno]").forEach(b=>b.onclick=()=>{S.hofDel=null;renderHof()});
+  box.querySelectorAll("[data-hdel]").forEach(b=>b.onclick=async()=>{S.hofDel=null;try{await S.db.ref("campeones/"+b.dataset.hdel).set(null);toast("Campeón borrado")}catch(e){writeErr(e)}});
+  const open=!!S.hofForm;$("hofForm").hidden=!open;$("hofAdminBar").hidden=!S.isAdmin||open;
+  $("hofCurrent").hidden=!(S.cfg.estado==="finalizado"&&currentWinner());
+}
+function currentWinner(){const ok=S.teams.map(t=>({t,s:stats(t)})).filter(r=>!isDQ(r.t)&&r.s.thru&&r.s.thru===r.s.total).sort((a,b)=>a.s.net-b.s.net);return ok[0]}
+function setHofPhoto(){const f=S.hofForm&&S.hofForm.foto;$("hofPh").innerHTML=f?`<img src="${f}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;$("hofPhDel").hidden=!f}
+function openHof(id,pre){const c=id?S.hof[id]:(pre||{});S.hofForm={id:id||null,foto:c.foto||""};
+  $("hofTitle").textContent=id?"Editar campeón":"Agregar campeón";
+  $("hofAnio").value=c.anio||"";$("hofEd").value=c.edicion||"";$("hofEquipo").value=c.equipo||"";$("hofJug").value=c.jugadores||"";
+  $("hofRes").value=c.resultado||"";$("hofCancha").value=c.cancha||"";$("hofNota").value=c.nota||"";setHofPhoto();renderHof();$("hofForm").scrollIntoView({behavior:"smooth",block:"start"})}
+$("hofAdd").onclick=()=>openHof(null,{anio:new Date().getFullYear()-1,cancha:"Las Rocas de Santo Domingo"});
+$("hofCurrent").onclick=()=>{const w=currentWinner();if(!w)return;
+  openHof(null,{anio:new Date().getFullYear(),equipo:w.t.name,jugadores:CATS.map(c=>w.t.players&&w.t.players[c]).filter(Boolean).join(", "),resultado:`${dec(w.s.netStrokes)} neto (${fmt(w.s.net)})`,cancha:"Las Rocas de Santo Domingo"})};
+$("hofCancel").onclick=()=>{S.hofForm=null;renderHof()};
+$("hofFile").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f||!S.hofForm)return;try{S.hofForm.foto=await shrinkTo(f,900,.72);setHofPhoto()}catch(err){toast("No se pudo leer esa imagen")}};
+$("hofPhDel").onclick=()=>{S.hofForm.foto="";setHofPhoto()};
+$("hofForm").addEventListener("submit",async e=>{e.preventDefault();if(!S.db||!S.hofForm)return;
+  const anio=parseInt($("hofAnio").value,10);if(!(anio>=1990&&anio<=2100)){toast("Revisa el año");return}
+  const d={anio,edicion:$("hofEd").value.trim(),equipo:$("hofEquipo").value.trim(),jugadores:$("hofJug").value.trim(),resultado:$("hofRes").value.trim(),cancha:$("hofCancha").value.trim(),nota:$("hofNota").value.trim(),foto:S.hofForm.foto||""};
+  if(!d.equipo){toast("Falta el nombre del equipo");return}
+  const id=S.hofForm.id||("c"+anio+"-"+Date.now().toString(36));
+  $("hofSave").disabled=true;
+  try{await S.db.ref("campeones/"+id).set(d);S.hofForm=null;toast(`Campeón ${anio} guardado`);renderHof()}catch(err){writeErr(err)}
+  $("hofSave").disabled=false});
+function renderAll(){renderHeader();renderBoard();renderEntry();renderConfig();renderHof()}
 
 // ---------- tabs ----------
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
-  ["tabla","ingresar","config"].forEach(t=>$("v-"+t).hidden=t!==b.dataset.tab);
+  ["tabla","ingresar","campeones","config"].forEach(t=>$("v-"+t).hidden=t!==b.dataset.tab);
 });
 $("mGross").onclick=()=>{S.mode="gross";$("mGross").setAttribute("aria-pressed",true);$("mNet").setAttribute("aria-pressed",false);renderBoard()};
 $("mNet").onclick=()=>{S.mode="net";$("mNet").setAttribute("aria-pressed",true);$("mGross").setAttribute("aria-pressed",false);renderBoard()};
@@ -1007,6 +1100,8 @@ function startDemo(){
   store.jugadores={};const mk=b=>{let s=0,m=2;const d=String(b);for(let i=d.length-1;i>=0;i--){s+=Number(d[i])*m;m=m===7?2:m+1}const r=11-(s%11);return d+(r===11?"0":r===10?"K":r)};
   const sur=["Pérez","Soto","Rojas","Muñoz","Díaz","Silva","Vega","Fuentes"];
   names.flat().concat(["Tomás Lira","Ignacio Mora","Andrés Bravo","Felipe Rivas"]).forEach((n,i)=>{const k=mk(12000000+i*137911);store.jugadores[k]={rut:fmtRut(k),nombre:n.includes(" ")?n:n+" "+sur[i%sur.length]}});
+  store.campeones={c2025:{anio:2025,edicion:"4ª edición",equipo:"Los Birdies",jugadores:"Ejemplo Uno, Ejemplo Dos, Ejemplo Tres, Ejemplo Cuatro",resultado:"60,4 neto (−11,6)",cancha:"Las Rocas de Santo Domingo",nota:"Ejemplo de la demo",foto:""},
+    c2024:{anio:2024,edicion:"3ª edición",equipo:"Sour Power",jugadores:"Ejemplo Cinco, Ejemplo Seis, Ejemplo Siete, Ejemplo Ocho",resultado:"62,1 neto",cancha:"Las Rocas de Santo Domingo",nota:"",foto:""}};
   const jk=Object.keys(store.jugadores);
   names.forEach((n,i)=>{const id="d"+i;const r={A:jk[i*4],B:jk[i*4+1],C:jk[i*4+2],D:jk[i*4+3]};
     store.equipos[id]={name:"Equipo "+(i+1),hcp:hc[i],players:{A:store.jugadores[r.A].nombre,B:store.jugadores[r.B].nombre,C:store.jugadores[r.C].nombre,D:store.jugadores[r.D].nombre},ruts:r,created:i};
@@ -1016,9 +1111,9 @@ function startDemo(){
       store.ts[id][h.key]=Date.now()-(thru[i]-k)*11*60000})});
   const get=p=>p.split("/").reduce((o,k)=>o&&o[k],store);
   const put=(p,v)=>{const ks=p.split("/");let o=store;ks.slice(0,-1).forEach(k=>{o[k]=o[k]||{};o=o[k]});if(v===null)delete o[ks[ks.length-1]];else o[ks[ks.length-1]]=v};
-  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
+  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores","campeones"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
     S.scores=JSON.parse(JSON.stringify(store.scores));S.salidas=JSON.parse(JSON.stringify(store.salidas));
-    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
+    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));S.hof=JSON.parse(JSON.stringify(store.campeones||{}));applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
   S.db={ref:(p)=>({set:async v=>{put(p,v);sync()},update:async m=>{Object.keys(m).forEach(k=>put(p?p+"/"+k:k,m[k]));sync()},push:async v=>{put(p+"/n"+Date.now(),v);sync()}})};
   S.isAdmin=true;sync();setLive(true,"Demo");showBanner("Modo demo con equipos de ejemplo: puedes probar todo, pero nada se guarda.");
 }
@@ -1052,6 +1147,7 @@ if(location.hash==="#demo"||!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==="P
   db.ref("concursos").on("value",s=>{S.concursos=s.val()||{};renderBoard();renderEntry()});
   db.ref("fotos").on("value",s=>{S.fotos=s.val()||{};renderAll()});
   db.ref("jugadores").on("value",s=>{S.jug=s.val()||{};renderConfig()});
+  db.ref("campeones").on("value",s=>{S.hof=s.val()||{};renderHof()});
 }
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script>
