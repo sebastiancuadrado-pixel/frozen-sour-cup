@@ -500,6 +500,19 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
 @media (max-width:440px){nav.tabs button{flex:0 0 auto;font-size:13px;padding:9px 10px}}
 @media (max-width:380px){nav.tabs button{font-size:12px;padding:9px 8px}}
 @media (min-width:600px){nav.tabs{-webkit-mask-image:none;mask-image:none}}
+/* Juega la próxima fecha */
+.juegaq{display:grid;gap:6px;justify-items:center;font-size:14px;width:100%}
+.juegaq small{color:var(--muted);font-size:12px}
+.ynseg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.segb{border:0;background:transparent;color:var(--ink);font:600 14px var(--body);padding:9px 14px;cursor:pointer}
+.segb+.segb{border-left:1px solid var(--line)}
+.segb.on{background:var(--ok);color:var(--surface)}
+.segb[data-gj="0"].on,.segb[data-pj="0"].on{background:var(--muted)}
+.segb:disabled{cursor:default;opacity:.7}
+.jj{display:inline-block;margin-top:4px;border:1px solid var(--line);border-radius:999px;background:transparent;font:600 11px var(--body);padding:3px 9px;cursor:pointer;color:var(--muted)}
+.jj.jsi{border-color:var(--ok);color:var(--ok)}
+.jj.jno{text-decoration:line-through}
+.insc-pend+.insc-pend{margin-top:6px}
 </style>
 </head>
 <body>
@@ -688,6 +701,7 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
     <h3 id="profName"></h3>
     <p class="sub" id="profInfo" style="margin:0"></p>
     <div class="profhcp" id="profHcpBox"></div>
+    <div class="juegaq" id="profJuega"></div>
     <p class="sub" id="profHint" style="margin:0"></p>
     <div class="row2"><button class="btn primary" id="profPhoto" type="button">Subir mi foto</button><button class="btn" id="profClose" type="button">Cerrar</button></div>
     <button class="linkbtn" id="profOut" type="button">No soy yo · Salir</button>
@@ -705,7 +719,9 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
     <form id="gateHcpForm" class="gateform" hidden>
       <p class="sub" id="gateHcpMsg" style="margin:0"></p>
       <input type="text" id="gateHcp" inputmode="decimal" autocomplete="off" placeholder="Tu índice, ej: 14,2" aria-label="Tu índice">
-      <button class="btn primary big" type="submit">Confirmar índice</button>
+      <div class="juegaq" role="radiogroup" aria-label="¿Juegas la próxima fecha?"><span>¿Juegas la próxima fecha?</span>
+        <div class="ynseg"><button type="button" class="segb" data-gj="1" role="radio" aria-checked="false">Sí, juego</button><button type="button" class="segb" data-gj="0" role="radio" aria-checked="false">No juego</button></div></div>
+      <button class="btn primary big" type="submit">Confirmar</button>
     </form>
     <p class="gateerr" id="gateErr" hidden></p>
     <div class="gatehi" id="gateHi" hidden></div>
@@ -809,8 +825,10 @@ function teamHcpInfo(t){const ks=CATS.map(c=>t.ruts&&t.ruts[c]);const hs=ks.map(
   return {v:Number(t.hcp)||0,auto:false,missing:CATS.filter((c,i)=>hs[i]===null)}}
 function teamHcp(t){return teamHcpInfo(t).v}
 // Categorías por índice: los mejores (índice más bajo) son A, los siguientes B, etc.
-function catSize(){return Math.max(1,Math.ceil(Object.keys(S.jug).length/4))}
-function catMap(){const ks=Object.keys(S.jug).filter(k=>jHcp(k)!==null).sort((a,b)=>jHcp(a)-jHcp(b)||S.jug[a].nombre.localeCompare(S.jug[b].nombre));
+function jJuega(k){const v=S.jug[k]&&S.jug[k].juega;return v===true?true:v===false?false:null}
+function juegan(){return Object.keys(S.jug).filter(k=>jJuega(k)===true)}
+function catSize(){return Math.max(1,Math.ceil(juegan().length/4))}
+function catMap(){const ks=juegan().filter(k=>jHcp(k)!==null).sort((a,b)=>jHcp(a)-jHcp(b)||S.jug[a].nombre.localeCompare(S.jug[b].nombre));
   const n=catSize(),m={};ks.forEach((k,i)=>m[k]={pos:i+1,cat:CATS[Math.min(3,Math.floor(i/n))]});return m}
 function jCat(k){const c=catMap()[k];return c?c.cat:null}
 function catChip(c){return c?`<span class="cat c-${c}">${c}</span>`:`<span class="cat nocat">–</span>`}
@@ -1167,16 +1185,20 @@ $("gateForm").addEventListener("submit",e=>{e.preventDefault();const k=cleanRut(
   err.hidden=true;
   if(hcpOpen()){S.pendingMe=k;const h=jHcp(k);$("gateForm").hidden=true;$("gateHcpForm").hidden=false;
     $("gateHcpMsg").innerHTML=`Hola <b>${esc(S.jug[k].nombre.split(" ")[0])}</b>. ${h!==null?"Confirma o ajusta tu índice:":"Ingresa tu índice actual:"}`;
-    $("gateHcp").value=h!==null?d2(h):"";setTimeout(()=>$("gateHcp").focus(),50);return}
+    $("gateHcp").value=h!==null?d2(h):"";S.gateJuega=jJuega(k);paintGateJuega();setTimeout(()=>$("gateHcp").focus(),50);return}
   finishLogin(k)});
 function finishLogin(k){S.me=k;S.viewer=false;S.pendingMe=null;try{localStorage.setItem("fsc-me",k)}catch(e){}
   $("gateForm").hidden=false;$("gateHcpForm").hidden=true;
   const t=myTeam();if(t){S.sel=t.id;S.hole=firstEmpty(t.id);try{localStorage.setItem("fsc-team",t.id)}catch(e){}}
   const mc=catMap()[k];toast(`¡Hola, ${meName().split(" ")[0]}!${mc?` Quedaste en categoría ${mc.cat}.`:""}`);renderAll();if(!S.jfotos[k])setTimeout(openProfile,400)}
+function paintGateJuega(){document.querySelectorAll("[data-gj]").forEach(b=>{const on=(b.dataset.gj==="1")===S.gateJuega&&S.gateJuega!==null;b.setAttribute("aria-checked",on);b.classList.toggle("on",on)})}
+document.querySelectorAll("[data-gj]").forEach(b=>b.onclick=()=>{S.gateJuega=b.dataset.gj==="1";paintGateJuega()});
 $("gateHcpForm").addEventListener("submit",async e=>{e.preventDefault();const k=S.pendingMe;if(!k)return;const err=$("gateErr");
   const v=parseHcp($("gateHcp").value);if($("gateHcp").value.trim()===""||v===null){err.textContent="Ingresa tu índice, entre 0 y 54.";err.hidden=false;return}
+  if(S.gateJuega===null||S.gateJuega===undefined){err.textContent="Cuéntanos si juegas la próxima fecha.";err.hidden=false;return}
   err.hidden=true;
   if(jHcp(k)!==v){try{await S.db.ref(`jugadores/${k}/hcp`).set(v)}catch(e2){err.textContent="No se pudo guardar tu índice. Intenta de nuevo.";err.hidden=false;return}}
+  if(jJuega(k)!==S.gateJuega){try{await S.db.ref(`jugadores/${k}/juega`).set(S.gateJuega)}catch(e2){err.textContent="No se pudo guardar tu respuesta. Intenta de nuevo.";err.hidden=false;return}}
   finishLogin(k)});
 $("gateView").onclick=()=>{S.viewer=true;try{localStorage.setItem("fsc-me","viewer")}catch(e){}renderAll()};
 $("gateAdmin").onclick=()=>{S.viewer=true;$("gate").hidden=true;document.querySelector('nav.tabs [data-tab="config"]').click();renderMe()};
@@ -1189,8 +1211,11 @@ function openProfile(){if(!S.me||!S.jug[S.me])return;const j=S.jug[S.me],t=myTea
     :`<span>Mi índice: <b>${h!==null?d2(h):"sin ingresar"}</b></span><small>El torneo ya comenzó: solo el administrador puede cambiarlo.</small>`;
   if($("profHcpSave"))$("profHcpSave").onclick=async()=>{const v=parseHcp($("profHcp").value);if($("profHcp").value.trim()===""||v===null){toast("Índice entre 0 y 54");return}
     try{await S.db.ref(`jugadores/${S.me}/hcp`).set(v);toast(`Índice ${d2(v)} guardado`)}catch(e){toast("No se pudo guardar, intenta de nuevo")}};
-  const mc=catMap()[S.me];
-  $("profName").textContent=j.nombre;$("profInfo").textContent=`RUT ${j.rut}${mc?` · Categoría ${mc.cat} (puesto ${mc.pos} por índice)`:" · Sin categoría hasta que ingreses tu índice"}${t?` · ${t.name}`:""}`;
+  const mc=catMap()[S.me],jj=jJuega(S.me);
+  $("profJuega").innerHTML=`<span>¿Juegas la próxima fecha?</span><div class="ynseg">${[[true,"Sí, juego"],[false,"No juego"]].map(([v,l])=>`<button type="button" class="segb${jj===v?" on":""}" data-pj="${v?1:0}" aria-pressed="${jj===v}"${hcpOpen()?"":" disabled"}>${l}</button>`).join("")}</div>`;
+  $("profJuega").querySelectorAll("[data-pj]").forEach(b=>b.onclick=async()=>{const v=b.dataset.pj==="1";if(jJuega(S.me)===v)return;
+    try{await S.db.ref(`jugadores/${S.me}/juega`).set(v);toast(v?"¡Anotado! Juegas la próxima fecha":"Anotado: no juegas esta fecha");openProfile()}catch(e){toast("No se pudo guardar, intenta de nuevo")}});
+  $("profName").textContent=j.nombre;$("profInfo").textContent=`RUT ${j.rut}${jj===false?" · No juegas esta fecha":mc?` · Categoría ${mc.cat} (puesto ${mc.pos} por índice)`:jj===null?" · Responde si juegas para tener categoría":" · Sin categoría hasta que ingreses tu índice"}${t?` · ${t.name}`:""}`;
   $("profHint").textContent=f?"Así te ven los demás en la tabla y en tu equipo.":"Sube una foto para que tus compañeros te reconozcan en la app.";
   $("profPhoto").textContent=f?"Cambiar mi foto":"Subir mi foto";$("profModal").hidden=false}
 function choosePhoto(){const tg=S.photoTarget||{};let who="";
@@ -1322,15 +1347,19 @@ $("shCopy").onclick=async()=>{try{await navigator.clipboard.writeText(APP_URL);t
   const r=document.createRange();r.selectNodeContents($("shLink"));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast("Mantén presionado para copiar")}};
 
 function renderInsc(){const box=$("inscList");if(!box)return;
-  const all=Object.keys(S.jug),m=catMap(),ins=Object.keys(m).sort((a,b)=>m[a].pos-m[b].pos),pend=all.filter(k=>!m[k]).sort((a,b)=>S.jug[a].nombre.localeCompare(S.jug[b].nombre));
-  $("inscSub").textContent=all.length?`${ins.length} de ${all.length} jugadores ya ingresaron su índice. La categoría se ordena sola por índice: los ${catSize()} mejores son A, los siguientes B, y así.`:"Todavía no hay jugadores en la lista.";
+  const all=Object.keys(S.jug),m=catMap(),ins=Object.keys(m).sort((a,b)=>m[a].pos-m[b].pos),byN=(a,b)=>S.jug[a].nombre.localeCompare(S.jug[b].nombre);
+  const si=juegan(),no=all.filter(k=>jJuega(k)===false).sort(byN),nr=all.filter(k=>jJuega(k)===null).sort(byN),sinIdx=si.filter(k=>!m[k]).sort(byN);
+  $("inscSub").innerHTML=all.length?`<b>${si.length}</b> juegan · ${no.length} no juegan · ${nr.length} sin responder.<br>Solo los que juegan entran a las categorías: los ${catSize()} mejores índices son A, los siguientes B, y así.`:"Todavía no hay jugadores en la lista.";
   if(!all.length){box.innerHTML="";return}
   let html="";
   CATS.forEach(c=>{const ks=ins.filter(k=>m[k].cat===c);if(!ks.length)return;
     const lo=jHcp(ks[0]),hi=jHcp(ks[ks.length-1]);
     html+=`<div class="insc-cat"><div class="insc-cathead">${catChip(c)}<b>Categoría ${c}</b><span>${ks.length} · índice ${d2(lo)}${hi!==lo?" a "+d2(hi):""}</span></div>
       ${ks.map(k=>{const f=S.jfotos[k],t=teamOf(k),me=k===S.me;return `<div class="insc-row${me?" me":""}"><span class="insc-pos">${m[k].pos}</span><span class="insc-av">${f?`<img src="${f}" alt="">`:esc(S.jug[k].nombre[0]||"?")}</span><span class="insc-n">${esc(S.jug[k].nombre)}${me?" <em>(tú)</em>":""}${t?`<small>${esc(t.name)}</small>`:""}</span><b class="insc-h">${d2(jHcp(k))}</b></div>`}).join("")}</div>`});
-  if(pend.length)html+=`<details class="insc-pend"><summary>Faltan ${pend.length} por ingresar su índice</summary><p class="sub">${pend.map(k=>esc(S.jug[k].nombre)+(k===S.me?" (tú)":"")).join(" · ")}</p></details>`;
+  const lst=a=>a.map(k=>esc(S.jug[k].nombre)+(k===S.me?" (tú)":"")).join(" · ");
+  if(sinIdx.length)html+=`<details class="insc-pend" open><summary>Juegan pero falta su índice (${sinIdx.length})</summary><p class="sub">${lst(sinIdx)}</p></details>`;
+  if(nr.length)html+=`<details class="insc-pend"><summary>Sin responder si juegan (${nr.length})</summary><p class="sub">${lst(nr)}</p></details>`;
+  if(no.length)html+=`<details class="insc-pend"><summary>No juegan esta fecha (${no.length})</summary><p class="sub">${lst(no)}</p></details>`;
   box.innerHTML=html;
 }
 function renderAll(){renderInsc();showGate();renderMe();renderHeader();renderBoard();renderEntry();renderConfig();renderHof();renderUc()}
@@ -1422,7 +1451,7 @@ const norm=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLo
 function pickOptions(c,q){
   const taken=CATS.filter(x=>x!==c).map(x=>findJug($("p"+x).value)).filter(Boolean);
   const nq=norm(q),dq=cleanRut(q);
-  return Object.keys(S.jug).filter(k=>!teamOf(k,S.editId)&&!taken.includes(k))
+  return Object.keys(S.jug).filter(k=>!teamOf(k,S.editId)&&!taken.includes(k)&&jJuega(k)===true)
     .filter(k=>!nq||norm(S.jug[k].nombre).includes(nq)||(dq.length>=3&&k.includes(dq)))
     .sort((a,b)=>{const m=catMap(),ca=(m[a]||{}).cat===c?0:1,cb=(m[b]||{}).cat===c?0:1;return ca-cb||S.jug[a].nombre.localeCompare(S.jug[b].nombre)});
 }
@@ -1454,7 +1483,7 @@ function renderJug(){
   const keys=Object.keys(S.jug).sort((a,b)=>S.jug[a].nombre.localeCompare(S.jug[b].nombre));
   const free=keys.filter(k=>!teamOf(k)).length;
   const conFoto=keys.filter(k=>S.jfotos[k]).length;
-  $("jugCount").textContent=keys.length?`${keys.length} · ${free} sin equipo · ${conFoto} con foto · ${keys.filter(k=>jHcp(k)!==null).length} con hcp`:"0";
+  $("jugCount").textContent=keys.length?`${keys.length} · ${free} sin equipo · ${conFoto} con foto · ${keys.filter(k=>jHcp(k)!==null).length} con índice · ${juegan().length} juegan`:"0";
   const q=$("jugSearch").value.trim().toLowerCase(),qr=cleanRut(q);
   const list=keys.filter(k=>!q||S.jug[k].nombre.toLowerCase().includes(q)||(qr&&k.includes(qr)));
   const box=$("jlist");
@@ -1462,11 +1491,13 @@ function renderJug(){
   const sinHcp=keys.filter(k=>jHcp(k)===null).length;
   box.innerHTML=!keys.length?`<div class="note">Todavía no hay jugadores. Agrégalos abajo o pega la lista completa.</div>`
    :!list.length?`<div class="note">Nadie coincide con "${esc(q)}".</div>`
-   :list.slice(0,60).map(k=>{const t=teamOf(k);return `<div class="pitem jitem"><button type="button" class="jav${S.jfotos[k]?" has":""}" data-jfoto="${k}" title="${S.jfotos[k]?"Cambiar":"Agregar"} foto de ${esc(S.jug[k].nombre)}">${S.jfotos[k]?`<img src="${S.jfotos[k]}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`}</button><span class="n">${catChip(jCat(k))} ${esc(S.jug[k].nombre)}<small>${esc(S.jug[k].rut)}</small></span><label class="h jh"><span class="jhl">Índice</span><input class="jhin" type="text" inputmode="decimal" id="jh-${k}" data-k="${k}" value="${jHcp(k)!==null?d2(jHcp(k)):""}" placeholder="–"></label>${t?`<span class="jteam">${esc(t.name)}</span>`:`<span class="jteam free">Sin equipo</span>`}${S.confirmJug===k?`<button class="btn danger" data-jdel="${k}">Confirmar</button><button class="btn" data-jcancel="1">No</button>`:`<button class="btn jx" data-jask="${k}" aria-label="Quitar a ${esc(S.jug[k].nombre)} de la lista" title="Quitar">✕</button>`}</div>`}).join("")+(list.length>60?`<p class="sub">Mostrando 60 de ${list.length}. Usa el buscador.</p>`:"");
+   :list.slice(0,60).map(k=>{const t=teamOf(k);return `<div class="pitem jitem"><button type="button" class="jav${S.jfotos[k]?" has":""}" data-jfoto="${k}" title="${S.jfotos[k]?"Cambiar":"Agregar"} foto de ${esc(S.jug[k].nombre)}">${S.jfotos[k]?`<img src="${S.jfotos[k]}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`}</button><span class="n">${catChip(jCat(k))} ${esc(S.jug[k].nombre)}<small>${esc(S.jug[k].rut)}</small><button type="button" class="jj j${jJuega(k)===true?"si":jJuega(k)===false?"no":"nr"}" data-jj="${k}" title="Cambiar si juega la próxima fecha">${jJuega(k)===true?"Juega":jJuega(k)===false?"No juega":"Sin responder"}</button></span><label class="h jh"><span class="jhl">Índice</span><input class="jhin" type="text" inputmode="decimal" id="jh-${k}" data-k="${k}" value="${jHcp(k)!==null?d2(jHcp(k)):""}" placeholder="–"></label>${t?`<span class="jteam">${esc(t.name)}</span>`:`<span class="jteam free">Sin equipo</span>`}${S.confirmJug===k?`<button class="btn danger" data-jdel="${k}">Confirmar</button><button class="btn" data-jcancel="1">No</button>`:`<button class="btn jx" data-jask="${k}" aria-label="Quitar a ${esc(S.jug[k].nombre)} de la lista" title="Quitar">✕</button>`}</div>`}).join("")+(list.length>60?`<p class="sub">Mostrando 60 de ${list.length}. Usa el buscador.</p>`:"");
   box.querySelectorAll(".jhin").forEach(inp=>inp.onchange=async()=>{const k=inp.dataset.k;const raw=inp.value.trim();
     const v=raw===""?null:parseHcp(raw);if(raw!==""&&v===null){toast("Índice entre 0 y 54");return}
     try{await S.db.ref(`jugadores/${k}/hcp`).set(v);toast(`${S.jug[k].nombre}: Índice ${v===null?"borrado":d2(v)}`)}catch(e){writeErr(e)}});
   box.querySelectorAll("[data-jfoto]").forEach(b=>b.onclick=()=>{S.photoTarget={rut:b.dataset.jfoto};S.photoData=null;choosePhoto()});
+  box.querySelectorAll("[data-jj]").forEach(b=>b.onclick=async()=>{const k=b.dataset.jj,v=jJuega(k)!==true;
+    try{await S.db.ref(`jugadores/${k}/juega`).set(v);toast(`${S.jug[k].nombre}: ${v?"juega":"no juega"}`)}catch(e){writeErr(e)}});
   box.querySelectorAll("[data-jask]").forEach(b=>b.onclick=()=>{const k=b.dataset.jask,t=teamOf(k);if(t){toast(`Primero sácalo de ${t.name}`);return}S.confirmJug=k;renderJug()});
   box.querySelectorAll("[data-jcancel]").forEach(b=>b.onclick=()=>{S.confirmJug=null;renderJug()});
   box.querySelectorAll("[data-jdel]").forEach(b=>b.onclick=async()=>{S.confirmJug=null;try{await S.db.ref("jugadores/"+b.dataset.jdel).set(null);toast("Jugador quitado")}catch(e){writeErr(e)}});
@@ -1512,7 +1543,7 @@ function startDemo(){
   const H=holes();let seed=3;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
   store.jugadores={};const mk=b=>{let s=0,m=2;const d=String(b);for(let i=d.length-1;i>=0;i--){s+=Number(d[i])*m;m=m===7?2:m+1}const r=11-(s%11);return d+(r===11?"0":r===10?"K":r)};
   const sur=["Pérez","Soto","Rojas","Muñoz","Díaz","Silva","Vega","Fuentes"];
-  names.flat().concat(["Tomás Lira","Ignacio Mora","Andrés Bravo","Felipe Rivas"]).forEach((n,i)=>{const k=mk(12000000+i*137911);store.jugadores[k]={rut:fmtRut(k),nombre:n.includes(" ")?n:n+" "+sur[i%sur.length],hcp:[4,8,14,20,6,11,17,24,9,12,19,26][i%12]}});
+  names.flat().concat(["Tomás Lira","Ignacio Mora","Andrés Bravo","Felipe Rivas"]).forEach((n,i)=>{const k=mk(12000000+i*137911);store.jugadores[k]={rut:fmtRut(k),nombre:n.includes(" ")?n:n+" "+sur[i%sur.length],hcp:[4,8,14,20,6,11,17,24,9,12,19,26][i%12],juega:i>=26?undefined:i%9!==8}});
   store.campeones={c2025:{anio:2025,edicion:"4ª edición",equipo:"Los Birdies",jugadores:"Ejemplo Uno, Ejemplo Dos, Ejemplo Tres, Ejemplo Cuatro",resultado:"60,4 neto (−11,6)",cancha:"Las Rocas de Santo Domingo",nota:"Ejemplo de la demo",foto:""},
     c2024:{anio:2024,edicion:"3ª edición",equipo:"Sour Power",jugadores:"Ejemplo Cinco, Ejemplo Seis, Ejemplo Siete, Ejemplo Ocho",resultado:"62,1 neto",cancha:"Las Rocas de Santo Domingo",nota:"",foto:""}};
   store.ucornianos={u2025:{anio:2025,edicion:"4ª edición",equipo:"Los Sin Rumbo",jugadores:"Ejemplo Nueve, Ejemplo Diez, Ejemplo Once, Ejemplo Doce",resultado:"79,4 neto (+7,4)",cancha:"Las Rocas de Santo Domingo",nota:"Ejemplo de la demo",foto:""}};
