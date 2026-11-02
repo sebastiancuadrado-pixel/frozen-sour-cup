@@ -635,9 +635,8 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
       </div>
       <div>
         <div class="lbl">Índice del equipo</div>
-        <p class="sub" style="margin:0 0 6px">Índice equipo = <b id="fxSum">10</b>% × (A+B+C+D) + <b id="fxCD">5</b>% × promedio(C, D)</p>
+        <p class="sub" style="margin:0 0 6px">Índice equipo = promedio de los 4 índices (si es mayor que el índice más bajo del equipo, se usa el más bajo) + <b id="fxCD">5</b>% × promedio(C, D), redondeado al entero más cercano</p>
         <div class="cgrid">
-          <label class="field"><span class="sub">% de la suma</span><input type="text" id="cfgPctSum" inputmode="decimal" placeholder="10"></label>
           <label class="field"><span class="sub">% del promedio C y D</span><input type="text" id="cfgPctCD" inputmode="decimal" placeholder="5"></label>
         </div>
       </div>
@@ -821,13 +820,14 @@ function findJug(v){v=String(v||"").trim();if(!v)return null;
   const rk=cleanRut(v.split("·").pop());if(S.jug[rk])return rk;
   const byName=keys.filter(k=>S.jug[k].nombre.toLowerCase()===v.toLowerCase());return byName.length===1?byName[0]:undefined}
 // ---------- índice: jugador y equipo ----------
-// Índice equipo = pctSum% × (A+B+C+D) + pctCD% × promedio(C, D)
+// Índice equipo = el menor entre (promedio de A,B,C,D) y (índice más bajo del equipo) + pctCD% × promedio(C, D)
 function d2(n){n=Math.round(n*100)/100;let t=Number.isInteger(n)?String(n):n.toFixed(2).replace(/0$/,"");return t.replace(".",",")}
 function jHcp(k){const j=S.jug[k];return j&&typeof j.hcp==="number"?j.hcp:null}
 function teamHcpInfo(t){const ks=CATS.map(c=>t.ruts&&t.ruts[c]);const hs=ks.map(k=>k?jHcp(k):null);
-  if(hs.every(h=>h!==null)){const p1=(S.cfg.pctSum??10)/100,p2=(S.cfg.pctCD??5)/100;
-    return {v:Math.round((p1*(hs[0]+hs[1]+hs[2]+hs[3])+p2*((hs[2]+hs[3])/2))*100)/100,auto:true,missing:[]}}
-  return {v:Number(t.hcp)||0,auto:false,missing:CATS.filter((c,i)=>hs[i]===null)}}
+  if(hs.every(h=>h!==null)){const p2=(S.cfg.pctCD??5)/100;
+    const prom=(hs[0]+hs[1]+hs[2]+hs[3])/4,menor=Math.min(...hs),base=prom>menor?menor:prom;
+    return {v:Math.round(base+p2*((hs[2]+hs[3])/2)),auto:true,missing:[]}}
+  return {v:Math.round(Number(t.hcp)||0),auto:false,missing:CATS.filter((c,i)=>hs[i]===null)}}
 function teamHcp(t){return teamHcpInfo(t).v}
 // Categorías por índice: los mejores (índice más bajo) son A, los siguientes B, etc.
 const TALLAS=["S","M","L","XL","XXL"];
@@ -1050,9 +1050,8 @@ function renderConfig(){
   $("ninePick").querySelectorAll(".np").forEach(b=>b.onclick=()=>{
     const o=(S.draftOrder||S.cfg.order).slice();const i=o.indexOf(b.dataset.n);if(i>=0)o.splice(i,1);else o.push(b.dataset.n);
     S.draftOrder=o;renderConfig()});
-  if(document.activeElement!==$("cfgPctSum"))$("cfgPctSum").value=d2(S.cfg.pctSum??10);
   if(document.activeElement!==$("cfgPctCD"))$("cfgPctCD").value=d2(S.cfg.pctCD??5);
-  $("fxSum").textContent=d2(S.cfg.pctSum??10);$("fxCD").textContent=d2(S.cfg.pctCD??5);
+  $("fxCD").textContent=d2(S.cfg.pctCD??5);
   const H=holes();["cLD","cAP"].forEach((sid,i)=>{const sel=$(sid);if(document.activeElement===sel)return;const cur=(S.cfg.contests||{})[i?"approach":"longdrive"]||"";
     sel.innerHTML=`<option value="">Sin concurso</option>`+H.map(h=>`<option value="${h.key}"${h.key===cur?" selected":""}>${esc(holeLabel(h))} · Par ${h.par}</option>`).join("")});
   $("podioBtn").textContent=S.cfg.podio?"Ocultar podio":"Mostrar podio ahora";
@@ -1444,8 +1443,8 @@ $("saveCfg").onclick=async()=>{
   const name=$("cfgName").value.trim()||DEFAULT_NAME;
   const contests={longdrive:$("cLD").value,approach:$("cAP").value};
   const pn=v=>{const n=parseFloat(String(v).replace(",","."));return n>=0&&n<=100?Math.round(n*100)/100:null};
-  const pctSum=pn($("cfgPctSum").value),pctCD=pn($("cfgPctCD").value);if(pctSum===null||pctCD===null){toast("Revisa los porcentajes del índice");return}
-  try{await S.db.ref("config").update({name,order,nines,contests,pctSum,pctCD});S.draftOrder=null;toast("Torneo guardado");renderConfig()}catch(e){writeErr(e)}
+  const pctCD=pn($("cfgPctCD").value);if(pctCD===null){toast("Revisa el porcentaje del índice");return}
+  try{await S.db.ref("config").update({name,order,nines,contests,pctCD});S.draftOrder=null;toast("Torneo guardado");renderConfig()}catch(e){writeErr(e)}
 };
 $("podioBtn").onclick=async()=>{const next=!S.cfg.podio;try{await S.db.ref("config/podio").set(next);toast(next?"Podio visible para todos":"Podio oculto")}catch(e){writeErr(e)}};
 $("addForm").addEventListener("submit",async e=>{
