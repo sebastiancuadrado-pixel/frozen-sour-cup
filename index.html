@@ -475,6 +475,31 @@ nav.tabs button.uctab[aria-selected="true"]{background:#e2589e;color:#fff}
 .jitem .jh{gap:4px}
 .jitem .btn{padding:8px 10px}
 @media (max-width:420px){.jitem .jteam{display:block}.jitem input.jhin{width:50px}}
+/* Inscritos */
+.insc-head h2{font:700 26px var(--display);margin:0}
+.insc-head{margin-bottom:12px;display:grid;gap:4px}
+.insc-head .sub{margin:0}
+.insc-cat{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:12px}
+.insc-cathead{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--soft);font-size:14px}
+.insc-cathead b{font:700 17px var(--display);letter-spacing:.04em}
+.insc-cathead span:last-child{margin-left:auto;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.insc-row{display:grid;grid-template-columns:24px 32px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--line)}
+.insc-row.me{background:color-mix(in srgb,var(--green) 12%,transparent)}
+.insc-pos{font:600 13px var(--display);color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.insc-av{width:32px;height:32px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;overflow:hidden;font:700 13px var(--display)}
+.insc-av img{width:100%;height:100%;object-fit:cover}
+.insc-n{min-width:0;font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.insc-n small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.insc-n em{font-style:normal;font-weight:400;color:var(--green);font-size:13px}
+.insc-h{font:700 18px var(--display);font-variant-numeric:tabular-nums}
+.insc-pend{padding:4px 2px}.insc-pend summary{cursor:pointer;font-weight:600;color:var(--muted);font-size:14px}
+.cat.nocat{background:var(--line);color:var(--muted)}
+.pkopt b .cat,.jitem .n .cat{width:18px;height:18px;font-size:11px;vertical-align:-3px}
+/* 6 pestañas: se deslizan en pantallas chicas */
+nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+@media (max-width:440px){nav.tabs button{flex:0 0 auto;font-size:13px;padding:9px 10px}}
+@media (max-width:380px){nav.tabs button{font-size:12px;padding:9px 8px}}
+@media (min-width:600px){nav.tabs{-webkit-mask-image:none;mask-image:none}}
 </style>
 </head>
 <body>
@@ -493,6 +518,7 @@ nav.tabs button.uctab[aria-selected="true"]{background:#e2589e;color:#fff}
 
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="tabla" id="t-tabla">Tabla</button>
+    <button role="tab" aria-selected="false" data-tab="inscritos" id="t-inscritos">Inscritos</button>
     <button role="tab" aria-selected="false" data-tab="ingresar" id="t-ingresar">Ingresar</button>
     <button role="tab" aria-selected="false" data-tab="campeones" id="t-campeones">Campeones</button>
     <button role="tab" aria-selected="false" data-tab="ucornianos" id="t-ucornianos" class="uctab">Ucornianos</button>
@@ -513,6 +539,11 @@ nav.tabs button.uctab[aria-selected="true"]{background:#e2589e;color:#fff}
     </div>
     <p class="sub" style="margin-top:10px">Toca un equipo para ver su tarjeta. El neto descuenta el índice del equipo en proporción a los hoyos jugados. Las flechas muestran cuántos lugares subió o bajó cada equipo en su último hoyo.</p>
     <div id="holeStats"></div>
+  </section>
+
+  <section id="v-inscritos" hidden>
+    <div class="insc-head"><h2>Inscritos</h2><p class="sub" id="inscSub"></p></div>
+    <div id="inscList"></div>
   </section>
 
   <section id="v-ingresar" hidden>
@@ -777,6 +808,12 @@ function teamHcpInfo(t){const ks=CATS.map(c=>t.ruts&&t.ruts[c]);const hs=ks.map(
     return {v:Math.round((p1*(hs[0]+hs[1]+hs[2]+hs[3])+p2*((hs[2]+hs[3])/2))*100)/100,auto:true,missing:[]}}
   return {v:Number(t.hcp)||0,auto:false,missing:CATS.filter((c,i)=>hs[i]===null)}}
 function teamHcp(t){return teamHcpInfo(t).v}
+// Categorías por índice: los mejores (índice más bajo) son A, los siguientes B, etc.
+function catSize(){return Math.max(1,Math.ceil(Object.keys(S.jug).length/4))}
+function catMap(){const ks=Object.keys(S.jug).filter(k=>jHcp(k)!==null).sort((a,b)=>jHcp(a)-jHcp(b)||S.jug[a].nombre.localeCompare(S.jug[b].nombre));
+  const n=catSize(),m={};ks.forEach((k,i)=>m[k]={pos:i+1,cat:CATS[Math.min(3,Math.floor(i/n))]});return m}
+function jCat(k){const c=catMap()[k];return c?c.cat:null}
+function catChip(c){return c?`<span class="cat c-${c}">${c}</span>`:`<span class="cat nocat">–</span>`}
 function hcpOpen(){return S.cfg.estado==="previo"}
 function shortName(n){const p=String(n||"").trim().split(/\s+/);return p.length>1?`${p[0]} ${p[p.length-1][0]}.`:(p[0]||"")}
 function shortNames(t){return CATS.map(c=>t.players&&t.players[c]).filter(Boolean).map(shortName).join(" · ")}
@@ -1135,7 +1172,7 @@ $("gateForm").addEventListener("submit",e=>{e.preventDefault();const k=cleanRut(
 function finishLogin(k){S.me=k;S.viewer=false;S.pendingMe=null;try{localStorage.setItem("fsc-me",k)}catch(e){}
   $("gateForm").hidden=false;$("gateHcpForm").hidden=true;
   const t=myTeam();if(t){S.sel=t.id;S.hole=firstEmpty(t.id);try{localStorage.setItem("fsc-team",t.id)}catch(e){}}
-  toast(`¡Hola, ${meName().split(" ")[0]}!`);renderAll();if(!S.jfotos[k])setTimeout(openProfile,400)}
+  const mc=catMap()[k];toast(`¡Hola, ${meName().split(" ")[0]}!${mc?` Quedaste en categoría ${mc.cat}.`:""}`);renderAll();if(!S.jfotos[k])setTimeout(openProfile,400)}
 $("gateHcpForm").addEventListener("submit",async e=>{e.preventDefault();const k=S.pendingMe;if(!k)return;const err=$("gateErr");
   const v=parseHcp($("gateHcp").value);if($("gateHcp").value.trim()===""||v===null){err.textContent="Ingresa tu índice, entre 0 y 54.";err.hidden=false;return}
   err.hidden=true;
@@ -1152,7 +1189,8 @@ function openProfile(){if(!S.me||!S.jug[S.me])return;const j=S.jug[S.me],t=myTea
     :`<span>Mi índice: <b>${h!==null?d2(h):"sin ingresar"}</b></span><small>El torneo ya comenzó: solo el administrador puede cambiarlo.</small>`;
   if($("profHcpSave"))$("profHcpSave").onclick=async()=>{const v=parseHcp($("profHcp").value);if($("profHcp").value.trim()===""||v===null){toast("Índice entre 0 y 54");return}
     try{await S.db.ref(`jugadores/${S.me}/hcp`).set(v);toast(`Índice ${d2(v)} guardado`)}catch(e){toast("No se pudo guardar, intenta de nuevo")}};
-  $("profName").textContent=j.nombre;$("profInfo").textContent=`RUT ${j.rut}${t?` · ${t.name}${cat?" · Categoría "+cat:""}`:" · Todavía sin equipo"}`;
+  const mc=catMap()[S.me];
+  $("profName").textContent=j.nombre;$("profInfo").textContent=`RUT ${j.rut}${mc?` · Categoría ${mc.cat} (puesto ${mc.pos} por índice)`:" · Sin categoría hasta que ingreses tu índice"}${t?` · ${t.name}`:""}`;
   $("profHint").textContent=f?"Así te ven los demás en la tabla y en tu equipo.":"Sube una foto para que tus compañeros te reconozcan en la app.";
   $("profPhoto").textContent=f?"Cambiar mi foto":"Subir mi foto";$("profModal").hidden=false}
 function choosePhoto(){const tg=S.photoTarget||{};let who="";
@@ -1283,12 +1321,25 @@ $("shMore").onclick=async()=>{try{await navigator.share({title:S.cfg.name||DEFAU
 $("shCopy").onclick=async()=>{try{await navigator.clipboard.writeText(APP_URL);toast("Link copiado")}catch(e){
   const r=document.createRange();r.selectNodeContents($("shLink"));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast("Mantén presionado para copiar")}};
 
-function renderAll(){showGate();renderMe();renderHeader();renderBoard();renderEntry();renderConfig();renderHof();renderUc()}
+function renderInsc(){const box=$("inscList");if(!box)return;
+  const all=Object.keys(S.jug),m=catMap(),ins=Object.keys(m).sort((a,b)=>m[a].pos-m[b].pos),pend=all.filter(k=>!m[k]).sort((a,b)=>S.jug[a].nombre.localeCompare(S.jug[b].nombre));
+  $("inscSub").textContent=all.length?`${ins.length} de ${all.length} jugadores ya ingresaron su índice. La categoría se ordena sola por índice: los ${catSize()} mejores son A, los siguientes B, y así.`:"Todavía no hay jugadores en la lista.";
+  if(!all.length){box.innerHTML="";return}
+  let html="";
+  CATS.forEach(c=>{const ks=ins.filter(k=>m[k].cat===c);if(!ks.length)return;
+    const lo=jHcp(ks[0]),hi=jHcp(ks[ks.length-1]);
+    html+=`<div class="insc-cat"><div class="insc-cathead">${catChip(c)}<b>Categoría ${c}</b><span>${ks.length} · índice ${d2(lo)}${hi!==lo?" a "+d2(hi):""}</span></div>
+      ${ks.map(k=>{const f=S.jfotos[k],t=teamOf(k),me=k===S.me;return `<div class="insc-row${me?" me":""}"><span class="insc-pos">${m[k].pos}</span><span class="insc-av">${f?`<img src="${f}" alt="">`:esc(S.jug[k].nombre[0]||"?")}</span><span class="insc-n">${esc(S.jug[k].nombre)}${me?" <em>(tú)</em>":""}${t?`<small>${esc(t.name)}</small>`:""}</span><b class="insc-h">${d2(jHcp(k))}</b></div>`}).join("")}</div>`});
+  if(pend.length)html+=`<details class="insc-pend"><summary>Faltan ${pend.length} por ingresar su índice</summary><p class="sub">${pend.map(k=>esc(S.jug[k].nombre)+(k===S.me?" (tú)":"")).join(" · ")}</p></details>`;
+  box.innerHTML=html;
+}
+function renderAll(){renderInsc();showGate();renderMe();renderHeader();renderBoard();renderEntry();renderConfig();renderHof();renderUc()}
 
 // ---------- tabs ----------
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
-  ["tabla","ingresar","campeones","ucornianos","config"].forEach(t=>$("v-"+t).hidden=t!==b.dataset.tab);
+  ["tabla","inscritos","ingresar","campeones","ucornianos","config"].forEach(t=>$("v-"+t).hidden=t!==b.dataset.tab);
+  try{b.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"})}catch(e){}
 });
 $("mGross").onclick=()=>{S.mode="gross";$("mGross").setAttribute("aria-pressed",true);$("mNet").setAttribute("aria-pressed",false);renderBoard()};
 $("mNet").onclick=()=>{S.mode="net";$("mNet").setAttribute("aria-pressed",true);$("mGross").setAttribute("aria-pressed",false);renderBoard()};
@@ -1373,13 +1424,13 @@ function pickOptions(c,q){
   const nq=norm(q),dq=cleanRut(q);
   return Object.keys(S.jug).filter(k=>!teamOf(k,S.editId)&&!taken.includes(k))
     .filter(k=>!nq||norm(S.jug[k].nombre).includes(nq)||(dq.length>=3&&k.includes(dq)))
-    .sort((a,b)=>S.jug[a].nombre.localeCompare(S.jug[b].nombre));
+    .sort((a,b)=>{const m=catMap(),ca=(m[a]||{}).cat===c?0:1,cb=(m[b]||{}).cat===c?0:1;return ca-cb||S.jug[a].nombre.localeCompare(S.jug[b].nombre)});
 }
 function openPick(c,all){const inp=$("p"+c),box=$("pk"+c);
   if(!Object.keys(S.jug).length){box.hidden=true;return}
   const cur=findJug(inp.value);const q=all||cur?"":inp.value;
   const opts=pickOptions(c,q);
-  box.innerHTML=opts.length?opts.slice(0,30).map(k=>`<button type="button" class="pkopt${k===cur?" on":""}" data-k="${k}" role="option"><b>${esc(S.jug[k].nombre)}</b><small>${esc(S.jug[k].rut)}${jHcp(k)!==null?" · Índice "+d2(jHcp(k)):" · sin índice"}</small></button>`).join("")+(opts.length>30?`<span class="pkmore">Escribe para ver más (${opts.length})</span>`:"")
+  box.innerHTML=opts.length?opts.slice(0,30).map(k=>`<button type="button" class="pkopt${k===cur?" on":""}" data-k="${k}" role="option"><b>${catChip(jCat(k))} ${esc(S.jug[k].nombre)}</b><small>${esc(S.jug[k].rut)}${jHcp(k)!==null?" · Índice "+d2(jHcp(k)):" · sin índice"}</small></button>`).join("")+(opts.length>30?`<span class="pkmore">Escribe para ver más (${opts.length})</span>`:"")
     :`<span class="pkmore">${q?`Nadie disponible con "${esc(q)}"`:"No quedan jugadores sin equipo"}</span>`;
   box.hidden=false;inp.setAttribute("aria-expanded","true");
   box.onmousedown=e=>e.preventDefault();
@@ -1411,7 +1462,7 @@ function renderJug(){
   const sinHcp=keys.filter(k=>jHcp(k)===null).length;
   box.innerHTML=!keys.length?`<div class="note">Todavía no hay jugadores. Agrégalos abajo o pega la lista completa.</div>`
    :!list.length?`<div class="note">Nadie coincide con "${esc(q)}".</div>`
-   :list.slice(0,60).map(k=>{const t=teamOf(k);return `<div class="pitem jitem"><button type="button" class="jav${S.jfotos[k]?" has":""}" data-jfoto="${k}" title="${S.jfotos[k]?"Cambiar":"Agregar"} foto de ${esc(S.jug[k].nombre)}">${S.jfotos[k]?`<img src="${S.jfotos[k]}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`}</button><span class="n">${esc(S.jug[k].nombre)}<small>${esc(S.jug[k].rut)}</small></span><label class="h jh"><span class="jhl">Índice</span><input class="jhin" type="text" inputmode="decimal" id="jh-${k}" data-k="${k}" value="${jHcp(k)!==null?d2(jHcp(k)):""}" placeholder="–"></label>${t?`<span class="jteam">${esc(t.name)}</span>`:`<span class="jteam free">Sin equipo</span>`}${S.confirmJug===k?`<button class="btn danger" data-jdel="${k}">Confirmar</button><button class="btn" data-jcancel="1">No</button>`:`<button class="btn jx" data-jask="${k}" aria-label="Quitar a ${esc(S.jug[k].nombre)} de la lista" title="Quitar">✕</button>`}</div>`}).join("")+(list.length>60?`<p class="sub">Mostrando 60 de ${list.length}. Usa el buscador.</p>`:"");
+   :list.slice(0,60).map(k=>{const t=teamOf(k);return `<div class="pitem jitem"><button type="button" class="jav${S.jfotos[k]?" has":""}" data-jfoto="${k}" title="${S.jfotos[k]?"Cambiar":"Agregar"} foto de ${esc(S.jug[k].nombre)}">${S.jfotos[k]?`<img src="${S.jfotos[k]}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`}</button><span class="n">${catChip(jCat(k))} ${esc(S.jug[k].nombre)}<small>${esc(S.jug[k].rut)}</small></span><label class="h jh"><span class="jhl">Índice</span><input class="jhin" type="text" inputmode="decimal" id="jh-${k}" data-k="${k}" value="${jHcp(k)!==null?d2(jHcp(k)):""}" placeholder="–"></label>${t?`<span class="jteam">${esc(t.name)}</span>`:`<span class="jteam free">Sin equipo</span>`}${S.confirmJug===k?`<button class="btn danger" data-jdel="${k}">Confirmar</button><button class="btn" data-jcancel="1">No</button>`:`<button class="btn jx" data-jask="${k}" aria-label="Quitar a ${esc(S.jug[k].nombre)} de la lista" title="Quitar">✕</button>`}</div>`}).join("")+(list.length>60?`<p class="sub">Mostrando 60 de ${list.length}. Usa el buscador.</p>`:"");
   box.querySelectorAll(".jhin").forEach(inp=>inp.onchange=async()=>{const k=inp.dataset.k;const raw=inp.value.trim();
     const v=raw===""?null:parseHcp(raw);if(raw!==""&&v===null){toast("Índice entre 0 y 54");return}
     try{await S.db.ref(`jugadores/${k}/hcp`).set(v);toast(`${S.jug[k].nombre}: Índice ${v===null?"borrado":d2(v)}`)}catch(e){writeErr(e)}});
