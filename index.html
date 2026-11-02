@@ -1340,8 +1340,8 @@ function renderUc(){if(!$("v-ucornianos").hidden)loadHofFotos("ucornianos");
       <div class="hofmeta">${c.resultado?`<span>🦄 ${esc(c.resultado)}</span>`:""}${c.cancha?`<span>${esc(c.cancha)}</span>`:""}</div>
       ${c.nota?`<p class="hofnote">${esc(c.nota)}</p>`:""}
       ${S.isAdmin?`<div class="hofadmin"><button class="linkbtn" data-uedit="${c.id}">Editar</button>${S.ucDel===c.id?`<button class="btn danger" data-udel="${c.id}">Confirmar borrar</button><button class="btn" data-uno="1">No</button>`:`<button class="linkbtn" data-uask="${c.id}">Borrar</button>`}</div>`:""}</div></article>`).join("")}</div>`;
-  box.querySelectorAll("[data-uedit]").forEach(b=>b.onclick=()=>openUc(b.dataset.hedit));
-  box.querySelectorAll("[data-uask]").forEach(b=>b.onclick=()=>{S.ucDel=b.dataset.hask;renderUc()});
+  box.querySelectorAll("[data-uedit]").forEach(b=>b.onclick=()=>openUc(b.dataset.uedit));
+  box.querySelectorAll("[data-uask]").forEach(b=>b.onclick=()=>{S.ucDel=b.dataset.uask;renderUc()});
   box.querySelectorAll("[data-uno]").forEach(b=>b.onclick=()=>{S.ucDel=null;renderUc()});
   box.querySelectorAll("[data-udel]").forEach(b=>b.onclick=async()=>{S.ucDel=null;try{await S.db.ref().update({["ucornianos/"+b.dataset.udel]:null,["hoffotos/ucornianos/"+b.dataset.udel]:null});toast("Ucorniano borrado")}catch(e){writeErr(e)}});
   const open=!!S.ucForm;$("ucForm").hidden=!open;$("ucAdminBar").hidden=!S.isAdmin||open;
