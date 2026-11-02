@@ -1279,14 +1279,14 @@ function hofSaveUpd(kind,id,d,form,prev){const upd={};
   else if(prev&&prev.fv)d.fv=prev.fv;
   upd[`${kind}/${id}`]=d;return upd}
 // El admin, al entrar, ordena las fotos antiguas al formato liviano (una sola vez)
-let migrating=false;
-async function migrateFotos(){if(!S.isAdmin||!S.realDb||migrating)return;migrating=true;
+let migrating=false,migAgain=false;
+async function migrateFotos(){if(!S.isAdmin||!S.realDb)return;if(migrating){migAgain=true;return}migrating=true;migAgain=false;
   try{const upd={};
     [["campeones",S.hof],["ucornianos",S.uc]].forEach(([kind,src])=>Object.keys(src).forEach(id=>{const c=src[id];
       if(c&&typeof c.foto==="string"){if(c.foto){const fv=Date.now();upd[`hoffotos/${kind}/${id}`]=c.foto;upd[`${kind}/${id}/fv`]=fv}upd[`${kind}/${id}/foto`]=null}}));
     if(!lsGet("fsc-jfmig")){const all=await S.dbGet("jfotos")||{};const v=S.jfotov||{};Object.keys(all).forEach(k=>{if(!v[k])upd[`jfotov/${k}`]=Date.now()});lsSet("fsc-jfmig",1)}
     if(Object.keys(upd).length)await S.db.ref().update(upd)}catch(e){}
-  migrating=false}
+  migrating=false;if(migAgain)setTimeout(migrateFotos,300)}
 function renderHof(){if(!$("v-campeones").hidden)loadHofFotos("campeones");
   document.querySelector(".hof-head .sub").textContent=`Los equipos que han levantado la copa de la ${S.cfg.name||DEFAULT_NAME}.`;
   const list=Object.keys(S.hof).map(id=>({id,...S.hof[id]})).sort((a,b)=>(b.anio||0)-(a.anio||0));
