@@ -883,8 +883,8 @@ function stats(t,override){
   const H=holes(),sc=override||(S.scores[t.id]||{});let strokes=0,par=0,thru=0;
   H.forEach(h=>{const v=sc[h.key];if(typeof v==="number"&&v>0){strokes+=v;par+=h.par;thru++}});
   const hcp=teamHcp(t);
-  const hcpPlay=hcp*H.length/18;
-  const hcpUsed=H.length?hcpPlay*thru/H.length:0;
+  const hcpPlay=Math.round(hcp*H.length/18);
+  const hcpUsed=H.length?Math.round(hcpPlay*thru/H.length):0;
   const toPar=strokes-par, net=Math.round((toPar-hcpUsed)*10)/10;
   return {strokes,toPar,thru,net,total:H.length,netStrokes:Math.round((strokes-hcpUsed)*10)/10,hcpPlay};
 }
