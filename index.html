@@ -448,7 +448,7 @@ nav.tabs button.uctab[aria-selected="true"]{background:#e2589e;color:#fff}
 .ucemoji{font-size:110px;line-height:1;flex:none;filter:drop-shadow(0 8px 14px rgba(0,0,0,.25))}
 @media (max-width:440px){nav.tabs{gap:1px;padding:3px}nav.tabs button{flex:1 1 auto;font-size:12px;letter-spacing:0;padding:9px 3px}}
 @media (max-width:380px){nav.tabs button{font-size:11px;padding:9px 2px}}
-/* Handicap */
+/* Índice */
 .phcp{font-style:normal;font-size:11px;color:var(--muted)}
 .hauto{display:grid;justify-items:end;line-height:1.1}.hauto small{font-size:10px;color:var(--ok)}
 .hmiss{display:block;font-size:10px;color:var(--warn)}
@@ -511,7 +511,7 @@ nav.tabs button.uctab[aria-selected="true"]{background:#e2589e;color:#fff}
       </div>
       <div id="lb"></div>
     </div>
-    <p class="sub" style="margin-top:10px">Toca un equipo para ver su tarjeta. El neto descuenta el handicap del equipo en proporción a los hoyos jugados. Las flechas muestran cuántos lugares subió o bajó cada equipo en su último hoyo.</p>
+    <p class="sub" style="margin-top:10px">Toca un equipo para ver su tarjeta. El neto descuenta el índice del equipo en proporción a los hoyos jugados. Las flechas muestran cuántos lugares subió o bajó cada equipo en su último hoyo.</p>
     <div id="holeStats"></div>
   </section>
 
@@ -572,7 +572,7 @@ nav.tabs button.uctab[aria-selected="true"]{background:#e2589e;color:#fff}
         <input type="password" id="adminPin" autocomplete="current-password" placeholder="Clave de administrador" required>
       </div>
       <div class="row2"><button class="btn primary" type="submit" id="loginBtn">Entrar</button></div>
-      <p class="sub">Solo el administrador puede agregar equipos, cambiar handicaps y elegir las vueltas.</p>
+      <p class="sub">Solo el administrador puede agregar equipos, cambiar índices y elegir las vueltas.</p>
     </form>
     <div class="panel" id="adminPanel" hidden>
       <div class="statebox" id="stateBox"></div>
@@ -587,8 +587,8 @@ nav.tabs button.uctab[aria-selected="true"]{background:#e2589e;color:#fff}
         <p class="sub" id="nineSum"></p>
       </div>
       <div>
-        <div class="lbl">Handicap del equipo</div>
-        <p class="sub" style="margin:0 0 6px">Hcp equipo = <b id="fxSum">10</b>% × (A+B+C+D) + <b id="fxCD">5</b>% × promedio(C, D)</p>
+        <div class="lbl">Índice del equipo</div>
+        <p class="sub" style="margin:0 0 6px">Índice equipo = <b id="fxSum">10</b>% × (A+B+C+D) + <b id="fxCD">5</b>% × promedio(C, D)</p>
         <div class="cgrid">
           <label class="field"><span class="sub">% de la suma</span><input type="text" id="cfgPctSum" inputmode="decimal" placeholder="10"></label>
           <label class="field"><span class="sub">% del promedio C y D</span><input type="text" id="cfgPctCD" inputmode="decimal" placeholder="5"></label>
@@ -635,7 +635,7 @@ nav.tabs button.uctab[aria-selected="true"]{background:#e2589e;color:#fff}
         <form class="add" id="addForm" style="margin-top:8px">
           <div class="lbl formtitle" id="formTitle">Nuevo equipo</div>
           <input type="text" id="newName" maxlength="40" placeholder="Nombre del equipo" required>
-          <input type="text" id="newHcp" inputmode="decimal" placeholder="Hcp manual">
+          <input type="text" id="newHcp" inputmode="decimal" placeholder="Índice manual">
           <div class="hcpprev" id="hcpPrev"></div>
           <div class="pl"><label class="phbtn" for="fA" id="phA" title="Foto del jugador A"></label><input type="file" id="fA" accept="image/*" hidden><span class="cat c-A">A</span><span class="pick"><input type="text" id="pA" autocomplete="off" placeholder="Busca por RUT o nombre" role="combobox" aria-expanded="false" aria-controls="pkA"><span class="pkbtn" data-pk="A" aria-hidden="true">▾</span><span class="pklist" id="pkA" role="listbox" hidden></span></span><button type="button" class="phdel" id="phdelA" hidden aria-label="Quitar foto">✕</button></div>
           <div class="pl"><label class="phbtn" for="fB" id="phB" title="Foto del jugador B"></label><input type="file" id="fB" accept="image/*" hidden><span class="cat c-B">B</span><span class="pick"><input type="text" id="pB" autocomplete="off" placeholder="Busca por RUT o nombre" role="combobox" aria-expanded="false" aria-controls="pkB"><span class="pkbtn" data-pk="B" aria-hidden="true">▾</span><span class="pklist" id="pkB" role="listbox" hidden></span></span><button type="button" class="phdel" id="phdelB" hidden aria-label="Quitar foto">✕</button></div>
@@ -673,8 +673,8 @@ nav.tabs button.uctab[aria-selected="true"]{background:#e2589e;color:#fff}
     </form>
     <form id="gateHcpForm" class="gateform" hidden>
       <p class="sub" id="gateHcpMsg" style="margin:0"></p>
-      <input type="text" id="gateHcp" inputmode="decimal" autocomplete="off" placeholder="Tu handicap, ej: 14,2" aria-label="Tu handicap">
-      <button class="btn primary big" type="submit">Confirmar handicap</button>
+      <input type="text" id="gateHcp" inputmode="decimal" autocomplete="off" placeholder="Tu índice, ej: 14,2" aria-label="Tu índice">
+      <button class="btn primary big" type="submit">Confirmar índice</button>
     </form>
     <p class="gateerr" id="gateErr" hidden></p>
     <div class="gatehi" id="gateHi" hidden></div>
@@ -768,8 +768,8 @@ function findJug(v){v=String(v||"").trim();if(!v)return null;
   const keys=Object.keys(S.jug);const byLabel=keys.find(k=>jLabel(k)===v);if(byLabel)return byLabel;
   const rk=cleanRut(v.split("·").pop());if(S.jug[rk])return rk;
   const byName=keys.filter(k=>S.jug[k].nombre.toLowerCase()===v.toLowerCase());return byName.length===1?byName[0]:undefined}
-// ---------- handicap: jugador y equipo ----------
-// Hcp equipo = pctSum% × (A+B+C+D) + pctCD% × promedio(C, D)
+// ---------- índice: jugador y equipo ----------
+// Índice equipo = pctSum% × (A+B+C+D) + pctCD% × promedio(C, D)
 function d2(n){n=Math.round(n*100)/100;let t=Number.isInteger(n)?String(n):n.toFixed(2).replace(/0$/,"");return t.replace(".",",")}
 function jHcp(k){const j=S.jug[k];return j&&typeof j.hcp==="number"?j.hcp:null}
 function teamHcpInfo(t){const ks=CATS.map(c=>t.ruts&&t.ruts[c]);const hs=ks.map(k=>k?jHcp(k):null);
@@ -855,7 +855,7 @@ document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("for
 function scorecard(t,curKey){
   const sc=S.scores[t.id]||{};const sal=S.salidas[t.id]||{};const st=stats(t);let html="";
   html+=teamNameBar(t);
-  html+=`<div class="roster">${CATS.map(c=>`<button type="button" class="rp" data-foto="${esc(t.id)}|${c}" title="Subir o cambiar la foto de ${esc(pName(t,c))}">${av(t,c)}<span>${esc(pName(t,c))}${t.ruts&&jHcp(t.ruts[c])!==null?`<i class="phcp">Hcp ${d2(jHcp(t.ruts[c]))}</i>`:""}${foto(t,c)?"":`<em>+ foto</em>`}</span></button>`).join("")}</div>
+  html+=`<div class="roster">${CATS.map(c=>`<button type="button" class="rp" data-foto="${esc(t.id)}|${c}" title="Subir o cambiar la foto de ${esc(pName(t,c))}">${av(t,c)}<span>${esc(pName(t,c))}${t.ruts&&jHcp(t.ruts[c])!==null?`<i class="phcp">Índice ${d2(jHcp(t.ruts[c]))}</i>`:""}${foto(t,c)?"":`<em>+ foto</em>`}</span></button>`).join("")}</div>
   <p class="sub rphint">Toca tu nombre para subir o cambiar tu foto.</p>`;
   S.cfg.order.forEach(id=>{const n=S.cfg.nines[id];if(!n)return;
     let hh="",pp="",ss="",dd="",ps=0,tot=0,any=false;
@@ -864,7 +864,7 @@ function scorecard(t,curKey){
       dd+=`<td${cc}>${w&&typeof v==="number"?`<span class="dl c-${w}">${w}</span>`:""}</td>`;if(typeof v==="number"){tot+=v;any=true}});
     html+=`<div class="sc"><table><tr class="hole"><th>${esc(n.name)}</th>${hh}<th class="sum">Tot</th></tr><tr><td>Par</td>${pp}<td class="sum">${ps}</td></tr><tr><td>Score</td>${ss}<td class="sum">${any?tot:""}</td></tr><tr><td>Salida</td>${dd}<td class="sum"></td></tr></table></div>`;});
   html+=`<div class="reqwrap">${isDQ(t)&&!curKey?`<div class="dqnote">Descalificado. ${esc(dqReason(t))}.</div>`:""}<div class="lbl">Salidas obligatorias C y D</div>${reqGrid(t)}</div>`;
-  html+=`<div class="netline"><span>Gross <b>${st.thru?st.strokes:"–"}</b></span><span>Hcp equipo <b>${d2(st.hcpPlay)}</b></span><span>Neto <b>${st.thru?dec(st.netStrokes):"–"}</b>${st.thru&&st.thru<st.total?" (parcial)":""}</span></div>`;
+  html+=`<div class="netline"><span>Gross <b>${st.thru?st.strokes:"–"}</b></span><span>Índice equipo <b>${d2(st.hcpPlay)}</b></span><span>Neto <b>${st.thru?dec(st.netStrokes):"–"}</b>${st.thru&&st.thru<st.total?" (parcial)":""}</span></div>`;
   return html;
 }
 function renderBoard(){
@@ -885,7 +885,7 @@ function renderBoard(){
     const thru=r.s.thru===r.s.total?"F":r.s.thru||"–";
     const g=r.s.thru?`<span class="${cls(r.s.toPar)}">${fmt(r.s.toPar)}</span><small>${r.s.strokes}</small>`:"–";
     const n=r.s.thru?`<span class="${cls(r.s.net)}">${fmt(r.s.net)}</span><small>${dec(r.s.netStrokes)}</small>`:"–";
-    html+=`<tr class="row${lead?" lead":""}${r.dq?" dq":""}" data-id="${esc(r.t.id)}"><td class="pos">${pos}${!r.dq&&moves[r.t.id]?`<span class="mv ${moves[r.t.id]>0?"up":"down"}">${moves[r.t.id]>0?"▲":"▼"}${Math.abs(moves[r.t.id])}</span>`:""}</td><td><div class="pname">${hasFotos(r.t)?`<span class="stack">${CATS.map(c=>av(r.t,c,"mini")).join("")}</span>`:""}${esc(r.t.name)}<span class="lbplayers">${esc(shortNames(r.t))}</span><small>Hcp ${d2(teamHcp(r.t))}<span class="mob"> · ${r.s.thru===r.s.total?"Terminó":r.s.thru?"Hoyo "+r.s.thru:"Sin empezar"}</span></small>${r.s.thru?reqBadge(r.t):""}</div></td><td class="thru hcol">${thru}</td><td class="score ${S.mode==="gross"?"big":""}">${g}</td><td class="score ${S.mode==="net"?"big":""}">${n}</td></tr>`;
+    html+=`<tr class="row${lead?" lead":""}${r.dq?" dq":""}" data-id="${esc(r.t.id)}"><td class="pos">${pos}${!r.dq&&moves[r.t.id]?`<span class="mv ${moves[r.t.id]>0?"up":"down"}">${moves[r.t.id]>0?"▲":"▼"}${Math.abs(moves[r.t.id])}</span>`:""}</td><td><div class="pname">${hasFotos(r.t)?`<span class="stack">${CATS.map(c=>av(r.t,c,"mini")).join("")}</span>`:""}${esc(r.t.name)}<span class="lbplayers">${esc(shortNames(r.t))}</span><small>Índice ${d2(teamHcp(r.t))}<span class="mob"> · ${r.s.thru===r.s.total?"Terminó":r.s.thru?"Hoyo "+r.s.thru:"Sin empezar"}</span></small>${r.s.thru?reqBadge(r.t):""}</div></td><td class="thru hcol">${thru}</td><td class="score ${S.mode==="gross"?"big":""}">${g}</td><td class="score ${S.mode==="net"?"big":""}">${n}</td></tr>`;
     if(S.open===r.t.id)html+=`<tr><td colspan="5" class="card-cell">${scorecard(r.t)}</td></tr>`;
   });
   box.innerHTML=html+"</tbody></table>";renderTicker();renderContests();renderHoleStats();renderPodium();
@@ -909,7 +909,7 @@ function renderEntry(){
   const rq=reqStatus(t);const needHere=REQ_CATS.filter(c=>!rq.done[c][h.par]);
   const hint=needHere.length?`<div class="hint">${needHere.map(c=>`<span class="cat c-${c}">${c}</span>`).join("")} todavía ${needHere.length>1?"necesitan":"necesita"} una salida en par ${h.par}${rq.remaining[h.par]>0&&rq.remaining[h.par]<=needHere.length?` · quedan ${rq.remaining[h.par]} par ${h.par}`:""}</div>`:"";
   const drives=`<div class="drives">${CATS.map(c=>`<button class="drv${S.drive===c?" sel":""}${needHere.includes(c)&&!locked?" need":""}" data-c="${c}"${dis}>${av(t,c)}<span class="dn">${esc(pName(t,c))}</span></button>`).join("")}</div>`;
-  const sel=`<select id="teamSel">${S.teams.map(x=>`<option value="${esc(x.id)}"${x.id===S.sel?" selected":""}>${esc(x.name)} · Hcp ${d2(teamHcp(x))}</option>`).join("")}</select>`;
+  const sel=`<select id="teamSel">${S.teams.map(x=>`<option value="${esc(x.id)}"${x.id===S.sel?" selected":""}>${esc(x.name)} · Índice ${d2(teamHcp(x))}</option>`).join("")}</select>`;
   let ninesHtml="";
   S.cfg.order.forEach((id,ni)=>{const n=S.cfg.nines[id];if(!n)return;
     let cells="";n.pars.forEach((p,i)=>{const gi=ni*9+i;const v=sc[id+(i+1)];
@@ -1002,11 +1002,11 @@ function renderConfig(){
   const full=S.teams.length>=MAX_TEAMS&&!S.editId;$("addForm").hidden=full;$("fullNote").hidden=!full;syncForm();
   const pl=$("plist");
   if(pl.contains(document.activeElement)&&document.activeElement.classList.contains("hin"))return;
-  pl.innerHTML=S.teams.length?S.teams.map((t,i)=>`<div class="pitem"><span class="idx">${i+1}</span><span class="n">${hasFotos(t)?`<span class="stack">${CATS.map(c=>av(t,c,"mini")).join("")}</span>`:""}${esc(t.name)}<small>${CATS.map(c=>`${c}: ${esc(pName(t,c))}`).join(" · ")}</small><button class="linkbtn" data-edit="${esc(t.id)}">Editar</button></span>${(()=>{const hi=teamHcpInfo(t);return hi.auto?`<span class="h hauto" title="Calculado con el hcp de cada jugador">Hcp <b>${d2(hi.v)}</b><small>auto</small></span>`:`<label class="h" title="Falta el hcp de ${hi.missing.join(", ")}">Hcp <input class="hin" type="text" inputmode="decimal" id="hcp-${esc(t.id)}" data-id="${esc(t.id)}" value="${dec(Number(t.hcp)||0)}"><small class="hmiss">falta ${hi.missing.join(", ")}</small></label>`})()}${S.confirmDel===t.id?`<button class="btn danger" data-del="${esc(t.id)}">Confirmar</button><button class="btn" data-cancel="1">No</button>`:`<button class="btn" data-ask="${esc(t.id)}">Quitar</button>`}</div>`).join(""):`<div class="note">Sin equipos todavía. Agrega el primero abajo.</div>`;
+  pl.innerHTML=S.teams.length?S.teams.map((t,i)=>`<div class="pitem"><span class="idx">${i+1}</span><span class="n">${hasFotos(t)?`<span class="stack">${CATS.map(c=>av(t,c,"mini")).join("")}</span>`:""}${esc(t.name)}<small>${CATS.map(c=>`${c}: ${esc(pName(t,c))}`).join(" · ")}</small><button class="linkbtn" data-edit="${esc(t.id)}">Editar</button></span>${(()=>{const hi=teamHcpInfo(t);return hi.auto?`<span class="h hauto" title="Calculado con el índice de cada jugador">Índice <b>${d2(hi.v)}</b><small>auto</small></span>`:`<label class="h" title="Falta el índice de ${hi.missing.join(", ")}">Índice <input class="hin" type="text" inputmode="decimal" id="hcp-${esc(t.id)}" data-id="${esc(t.id)}" value="${dec(Number(t.hcp)||0)}"><small class="hmiss">falta ${hi.missing.join(", ")}</small></label>`})()}${S.confirmDel===t.id?`<button class="btn danger" data-del="${esc(t.id)}">Confirmar</button><button class="btn" data-cancel="1">No</button>`:`<button class="btn" data-ask="${esc(t.id)}">Quitar</button>`}</div>`).join(""):`<div class="note">Sin equipos todavía. Agrega el primero abajo.</div>`;
   pl.querySelectorAll(".hin").forEach(inp=>inp.onchange=async()=>{
-    const v=parseHcp(inp.value);if(v===null){toast("Hcp entre 0 y 54");return}
+    const v=parseHcp(inp.value);if(v===null){toast("Índice entre 0 y 54");return}
     const t=S.teams.find(x=>x.id===inp.dataset.id);if(!t||Number(t.hcp)===v)return;
-    try{await S.db.ref("equipos/"+t.id+"/hcp").set(v);toast(`${t.name}: Hcp ${dec(v)}`)}catch(e){writeErr(e)}});
+    try{await S.db.ref("equipos/"+t.id+"/hcp").set(v);toast(`${t.name}: Índice ${dec(v)}`)}catch(e){writeErr(e)}});
   pl.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const t=S.teams.find(x=>x.id===b.dataset.edit);if(!t)return;
     S.editId=t.id;$("newName").value=t.name;$("newHcp").value=dec(Number(t.hcp)||0);CATS.forEach(c=>{const k=t.ruts&&t.ruts[c];$("p"+c).value=k&&S.jug[k]?jLabel(k):(t.players&&t.players[c])||""});S.formFotos={};fillJugList();
     syncForm();$("addForm").hidden=false;$("addForm").scrollIntoView({behavior:"smooth",block:"center"});$("newName").focus()});
@@ -1129,7 +1129,7 @@ $("gateForm").addEventListener("submit",e=>{e.preventDefault();const k=cleanRut(
   if(!S.jug[k]){err.textContent="Tu RUT no está en la lista de jugadores. Pídele al organizador que te agregue, o entra como visita.";err.hidden=false;return}
   err.hidden=true;
   if(hcpOpen()){S.pendingMe=k;const h=jHcp(k);$("gateForm").hidden=true;$("gateHcpForm").hidden=false;
-    $("gateHcpMsg").innerHTML=`Hola <b>${esc(S.jug[k].nombre.split(" ")[0])}</b>. ${h!==null?"Confirma o ajusta tu handicap:":"Ingresa tu handicap actual:"}`;
+    $("gateHcpMsg").innerHTML=`Hola <b>${esc(S.jug[k].nombre.split(" ")[0])}</b>. ${h!==null?"Confirma o ajusta tu índice:":"Ingresa tu índice actual:"}`;
     $("gateHcp").value=h!==null?d2(h):"";setTimeout(()=>$("gateHcp").focus(),50);return}
   finishLogin(k)});
 function finishLogin(k){S.me=k;S.viewer=false;S.pendingMe=null;try{localStorage.setItem("fsc-me",k)}catch(e){}
@@ -1137,9 +1137,9 @@ function finishLogin(k){S.me=k;S.viewer=false;S.pendingMe=null;try{localStorage.
   const t=myTeam();if(t){S.sel=t.id;S.hole=firstEmpty(t.id);try{localStorage.setItem("fsc-team",t.id)}catch(e){}}
   toast(`¡Hola, ${meName().split(" ")[0]}!`);renderAll();if(!S.jfotos[k])setTimeout(openProfile,400)}
 $("gateHcpForm").addEventListener("submit",async e=>{e.preventDefault();const k=S.pendingMe;if(!k)return;const err=$("gateErr");
-  const v=parseHcp($("gateHcp").value);if($("gateHcp").value.trim()===""||v===null){err.textContent="Ingresa tu handicap, entre 0 y 54.";err.hidden=false;return}
+  const v=parseHcp($("gateHcp").value);if($("gateHcp").value.trim()===""||v===null){err.textContent="Ingresa tu índice, entre 0 y 54.";err.hidden=false;return}
   err.hidden=true;
-  if(jHcp(k)!==v){try{await S.db.ref(`jugadores/${k}/hcp`).set(v)}catch(e2){err.textContent="No se pudo guardar tu handicap. Intenta de nuevo.";err.hidden=false;return}}
+  if(jHcp(k)!==v){try{await S.db.ref(`jugadores/${k}/hcp`).set(v)}catch(e2){err.textContent="No se pudo guardar tu índice. Intenta de nuevo.";err.hidden=false;return}}
   finishLogin(k)});
 $("gateView").onclick=()=>{S.viewer=true;try{localStorage.setItem("fsc-me","viewer")}catch(e){}renderAll()};
 $("gateAdmin").onclick=()=>{S.viewer=true;$("gate").hidden=true;document.querySelector('nav.tabs [data-tab="config"]').click();renderMe()};
@@ -1148,10 +1148,10 @@ function openProfile(){if(!S.me||!S.jug[S.me])return;const j=S.jug[S.me],t=myTea
   let cat="";if(t)CATS.forEach(c=>{if(t.ruts[c]===S.me)cat=c});
   $("profPh").innerHTML=f?`<img src="${f}" alt="">`:`<span>${esc(j.nombre[0]||"?")}</span>`;
   const h=jHcp(S.me);
-  $("profHcpBox").innerHTML=hcpOpen()?`<label>Mi handicap <input type="text" id="profHcp" inputmode="decimal" value="${h!==null?d2(h):""}" placeholder="ej: 14,2"></label><button class="btn" id="profHcpSave" type="button">Guardar</button>`
-    :`<span>Mi handicap: <b>${h!==null?d2(h):"sin ingresar"}</b></span><small>El torneo ya comenzó: solo el administrador puede cambiarlo.</small>`;
-  if($("profHcpSave"))$("profHcpSave").onclick=async()=>{const v=parseHcp($("profHcp").value);if($("profHcp").value.trim()===""||v===null){toast("Hcp entre 0 y 54");return}
-    try{await S.db.ref(`jugadores/${S.me}/hcp`).set(v);toast(`Handicap ${d2(v)} guardado`)}catch(e){toast("No se pudo guardar, intenta de nuevo")}};
+  $("profHcpBox").innerHTML=hcpOpen()?`<label>Mi índice <input type="text" id="profHcp" inputmode="decimal" value="${h!==null?d2(h):""}" placeholder="ej: 14,2"></label><button class="btn" id="profHcpSave" type="button">Guardar</button>`
+    :`<span>Mi índice: <b>${h!==null?d2(h):"sin ingresar"}</b></span><small>El torneo ya comenzó: solo el administrador puede cambiarlo.</small>`;
+  if($("profHcpSave"))$("profHcpSave").onclick=async()=>{const v=parseHcp($("profHcp").value);if($("profHcp").value.trim()===""||v===null){toast("Índice entre 0 y 54");return}
+    try{await S.db.ref(`jugadores/${S.me}/hcp`).set(v);toast(`Índice ${d2(v)} guardado`)}catch(e){toast("No se pudo guardar, intenta de nuevo")}};
   $("profName").textContent=j.nombre;$("profInfo").textContent=`RUT ${j.rut}${t?` · ${t.name}${cat?" · Categoría "+cat:""}`:" · Todavía sin equipo"}`;
   $("profHint").textContent=f?"Así te ven los demás en la tabla y en tu equipo.":"Sube una foto para que tus compañeros te reconozcan en la app.";
   $("profPhoto").textContent=f?"Cambiar mi foto":"Subir mi foto";$("profModal").hidden=false}
@@ -1320,7 +1320,7 @@ $("saveCfg").onclick=async()=>{
   const name=$("cfgName").value.trim()||DEFAULT_NAME;
   const contests={longdrive:$("cLD").value,approach:$("cAP").value};
   const pn=v=>{const n=parseFloat(String(v).replace(",","."));return n>=0&&n<=100?Math.round(n*100)/100:null};
-  const pctSum=pn($("cfgPctSum").value),pctCD=pn($("cfgPctCD").value);if(pctSum===null||pctCD===null){toast("Revisa los porcentajes del handicap");return}
+  const pctSum=pn($("cfgPctSum").value),pctCD=pn($("cfgPctCD").value);if(pctSum===null||pctCD===null){toast("Revisa los porcentajes del índice");return}
   try{await S.db.ref("config").update({name,order,nines,contests,pctSum,pctCD});S.draftOrder=null;toast("Torneo guardado");renderConfig()}catch(e){writeErr(e)}
 };
 $("podioBtn").onclick=async()=>{const next=!S.cfg.podio;try{await S.db.ref("config/podio").set(next);toast(next?"Podio visible para todos":"Podio oculto")}catch(e){writeErr(e)}};
@@ -1329,7 +1329,7 @@ $("addForm").addEventListener("submit",async e=>{
   const name=$("newName").value.trim();if(!name)return;
   if(!S.editId&&S.teams.length>=MAX_TEAMS){toast("Máximo "+MAX_TEAMS+" equipos");return}
   if(S.teams.some(t=>t.id!==S.editId&&t.name.toLowerCase()===name.toLowerCase())){toast("Ya existe un equipo con ese nombre");return}
-  const hcp=parseHcp($("newHcp").value);if(hcp===null){toast("Hcp entre 0 y 54");return}
+  const hcp=parseHcp($("newHcp").value);if(hcp===null){toast("Índice entre 0 y 54");return}
   const players={},ruts={};const hasList=Object.keys(S.jug).length>0;
   for(const c of CATS){const v=$("p"+c).value.trim();if(!v){players[c]="";continue}
     if(hasList){const k=findJug(v);
@@ -1360,8 +1360,8 @@ CATS.forEach(c=>{
 });
 function hcpPreview(){const el=$("hcpPrev");if(!el)return;const ks=CATS.map(c=>findJug($("p"+c).value));
   const fake={ruts:{},hcp:0};CATS.forEach((c,i)=>{if(ks[i])fake.ruts[c]=ks[i]});const hi=teamHcpInfo(fake);
-  if(hi.auto){el.innerHTML=`Hcp del equipo: <b>${d2(hi.v)}</b> · calculado con ${CATS.map(c=>c+" "+d2(jHcp(fake.ruts[c]))).join(", ")}`;$("newHcp").hidden=true}
-  else{el.innerHTML=ks.some(Boolean)?`Falta el hcp de ${hi.missing.join(", ")}. Mientras tanto se usa el hcp manual.`:"El hcp del equipo se calcula solo cuando los 4 jugadores tienen su hcp.";$("newHcp").hidden=false}}
+  if(hi.auto){el.innerHTML=`Índice del equipo: <b>${d2(hi.v)}</b> · calculado con ${CATS.map(c=>c+" "+d2(jHcp(fake.ruts[c]))).join(", ")}`;$("newHcp").hidden=true}
+  else{el.innerHTML=ks.some(Boolean)?`Falta el índice de ${hi.missing.join(", ")}. Mientras tanto se usa el índice manual.`:"El índice del equipo se calcula solo cuando los 4 jugadores tienen su índice.";$("newHcp").hidden=false}}
 CATS.forEach(c=>$("p"+c).addEventListener("input",()=>setTimeout(hcpPreview,0)));
 function syncForm(){syncPhotos();hcpPreview();$("formTitle").textContent=S.editId?"Editar equipo":"Nuevo equipo";$("addBtn").textContent=S.editId?"Guardar cambios":"Agregar equipo";$("cancelEdit").hidden=!S.editId}
 $("cancelEdit").onclick=()=>{clearForm();renderConfig()};
@@ -1379,7 +1379,7 @@ function openPick(c,all){const inp=$("p"+c),box=$("pk"+c);
   if(!Object.keys(S.jug).length){box.hidden=true;return}
   const cur=findJug(inp.value);const q=all||cur?"":inp.value;
   const opts=pickOptions(c,q);
-  box.innerHTML=opts.length?opts.slice(0,30).map(k=>`<button type="button" class="pkopt${k===cur?" on":""}" data-k="${k}" role="option"><b>${esc(S.jug[k].nombre)}</b><small>${esc(S.jug[k].rut)}${jHcp(k)!==null?" · Hcp "+d2(jHcp(k)):" · sin hcp"}</small></button>`).join("")+(opts.length>30?`<span class="pkmore">Escribe para ver más (${opts.length})</span>`:"")
+  box.innerHTML=opts.length?opts.slice(0,30).map(k=>`<button type="button" class="pkopt${k===cur?" on":""}" data-k="${k}" role="option"><b>${esc(S.jug[k].nombre)}</b><small>${esc(S.jug[k].rut)}${jHcp(k)!==null?" · Índice "+d2(jHcp(k)):" · sin índice"}</small></button>`).join("")+(opts.length>30?`<span class="pkmore">Escribe para ver más (${opts.length})</span>`:"")
     :`<span class="pkmore">${q?`Nadie disponible con "${esc(q)}"`:"No quedan jugadores sin equipo"}</span>`;
   box.hidden=false;inp.setAttribute("aria-expanded","true");
   box.onmousedown=e=>e.preventDefault();
@@ -1411,10 +1411,10 @@ function renderJug(){
   const sinHcp=keys.filter(k=>jHcp(k)===null).length;
   box.innerHTML=!keys.length?`<div class="note">Todavía no hay jugadores. Agrégalos abajo o pega la lista completa.</div>`
    :!list.length?`<div class="note">Nadie coincide con "${esc(q)}".</div>`
-   :list.slice(0,60).map(k=>{const t=teamOf(k);return `<div class="pitem jitem"><button type="button" class="jav${S.jfotos[k]?" has":""}" data-jfoto="${k}" title="${S.jfotos[k]?"Cambiar":"Agregar"} foto de ${esc(S.jug[k].nombre)}">${S.jfotos[k]?`<img src="${S.jfotos[k]}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`}</button><span class="n">${esc(S.jug[k].nombre)}<small>${esc(S.jug[k].rut)}</small></span><label class="h jh"><span class="jhl">Hcp</span><input class="jhin" type="text" inputmode="decimal" id="jh-${k}" data-k="${k}" value="${jHcp(k)!==null?d2(jHcp(k)):""}" placeholder="–"></label>${t?`<span class="jteam">${esc(t.name)}</span>`:`<span class="jteam free">Sin equipo</span>`}${S.confirmJug===k?`<button class="btn danger" data-jdel="${k}">Confirmar</button><button class="btn" data-jcancel="1">No</button>`:`<button class="btn jx" data-jask="${k}" aria-label="Quitar a ${esc(S.jug[k].nombre)} de la lista" title="Quitar">✕</button>`}</div>`}).join("")+(list.length>60?`<p class="sub">Mostrando 60 de ${list.length}. Usa el buscador.</p>`:"");
+   :list.slice(0,60).map(k=>{const t=teamOf(k);return `<div class="pitem jitem"><button type="button" class="jav${S.jfotos[k]?" has":""}" data-jfoto="${k}" title="${S.jfotos[k]?"Cambiar":"Agregar"} foto de ${esc(S.jug[k].nombre)}">${S.jfotos[k]?`<img src="${S.jfotos[k]}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`}</button><span class="n">${esc(S.jug[k].nombre)}<small>${esc(S.jug[k].rut)}</small></span><label class="h jh"><span class="jhl">Índice</span><input class="jhin" type="text" inputmode="decimal" id="jh-${k}" data-k="${k}" value="${jHcp(k)!==null?d2(jHcp(k)):""}" placeholder="–"></label>${t?`<span class="jteam">${esc(t.name)}</span>`:`<span class="jteam free">Sin equipo</span>`}${S.confirmJug===k?`<button class="btn danger" data-jdel="${k}">Confirmar</button><button class="btn" data-jcancel="1">No</button>`:`<button class="btn jx" data-jask="${k}" aria-label="Quitar a ${esc(S.jug[k].nombre)} de la lista" title="Quitar">✕</button>`}</div>`}).join("")+(list.length>60?`<p class="sub">Mostrando 60 de ${list.length}. Usa el buscador.</p>`:"");
   box.querySelectorAll(".jhin").forEach(inp=>inp.onchange=async()=>{const k=inp.dataset.k;const raw=inp.value.trim();
-    const v=raw===""?null:parseHcp(raw);if(raw!==""&&v===null){toast("Hcp entre 0 y 54");return}
-    try{await S.db.ref(`jugadores/${k}/hcp`).set(v);toast(`${S.jug[k].nombre}: Hcp ${v===null?"borrado":d2(v)}`)}catch(e){writeErr(e)}});
+    const v=raw===""?null:parseHcp(raw);if(raw!==""&&v===null){toast("Índice entre 0 y 54");return}
+    try{await S.db.ref(`jugadores/${k}/hcp`).set(v);toast(`${S.jug[k].nombre}: Índice ${v===null?"borrado":d2(v)}`)}catch(e){writeErr(e)}});
   box.querySelectorAll("[data-jfoto]").forEach(b=>b.onclick=()=>{S.photoTarget={rut:b.dataset.jfoto};S.photoData=null;choosePhoto()});
   box.querySelectorAll("[data-jask]").forEach(b=>b.onclick=()=>{const k=b.dataset.jask,t=teamOf(k);if(t){toast(`Primero sácalo de ${t.name}`);return}S.confirmJug=k;renderJug()});
   box.querySelectorAll("[data-jcancel]").forEach(b=>b.onclick=()=>{S.confirmJug=null;renderJug()});
