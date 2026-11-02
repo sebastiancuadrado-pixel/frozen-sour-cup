@@ -513,6 +513,9 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
 .jj.jsi{border-color:var(--ok);color:var(--ok)}
 .jj.jno{text-decoration:line-through}
 .insc-pend+.insc-pend{margin-top:6px}
+.jtalla{display:inline-block;margin:4px 0 0 6px;font-size:11px;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 8px}
+.tallasum{margin:2px 0 8px;font-size:13px}.tallasum .muted{color:var(--muted)}
+#profTalla .segb{padding:9px 12px;min-width:44px}
 </style>
 </head>
 <body>
@@ -658,6 +661,7 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
       <div>
         <div class="jugsec">
           <div class="lbl" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px"><span>Lista de jugadores</span><span id="jugCount">0</span></div>
+          <p class="sub tallasum" id="tallaSum"></p>
           <p class="sub" style="margin:-4px 0 0">Toca el círculo de la cámara para agregar o cambiar la foto de cada jugador.</p>
           <input type="search" id="jugSearch" placeholder="Buscar por RUT o nombre" autocomplete="off">
           <div class="plist jlist" id="jlist"></div>
@@ -702,6 +706,7 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
     <p class="sub" id="profInfo" style="margin:0"></p>
     <div class="profhcp" id="profHcpBox"></div>
     <div class="juegaq" id="profJuega"></div>
+    <div class="juegaq" id="profTalla"></div>
     <p class="sub" id="profHint" style="margin:0"></p>
     <div class="row2"><button class="btn primary" id="profPhoto" type="button">Subir mi foto</button><button class="btn" id="profClose" type="button">Cerrar</button></div>
     <button class="linkbtn" id="profOut" type="button">No soy yo · Salir</button>
@@ -825,6 +830,7 @@ function teamHcpInfo(t){const ks=CATS.map(c=>t.ruts&&t.ruts[c]);const hs=ks.map(
   return {v:Number(t.hcp)||0,auto:false,missing:CATS.filter((c,i)=>hs[i]===null)}}
 function teamHcp(t){return teamHcpInfo(t).v}
 // Categorías por índice: los mejores (índice más bajo) son A, los siguientes B, etc.
+const TALLAS=["S","M","L","XL","XXL"];
 function jJuega(k){const v=S.jug[k]&&S.jug[k].juega;return v===true?true:v===false?false:null}
 function juegan(){return Object.keys(S.jug).filter(k=>jJuega(k)===true)}
 function catSize(){return Math.max(1,Math.ceil(juegan().length/4))}
@@ -1215,6 +1221,10 @@ function openProfile(){if(!S.me||!S.jug[S.me])return;const j=S.jug[S.me],t=myTea
   $("profJuega").innerHTML=`<span>¿Juegas la próxima fecha?</span><div class="ynseg">${[[true,"Sí, juego"],[false,"No juego"]].map(([v,l])=>`<button type="button" class="segb${jj===v?" on":""}" data-pj="${v?1:0}" aria-pressed="${jj===v}"${hcpOpen()?"":" disabled"}>${l}</button>`).join("")}</div>`;
   $("profJuega").querySelectorAll("[data-pj]").forEach(b=>b.onclick=async()=>{const v=b.dataset.pj==="1";if(jJuega(S.me)===v)return;
     try{await S.db.ref(`jugadores/${S.me}/juega`).set(v);toast(v?"¡Anotado! Juegas la próxima fecha":"Anotado: no juegas esta fecha");openProfile()}catch(e){toast("No se pudo guardar, intenta de nuevo")}});
+  const tl=j.talla||"";
+  $("profTalla").innerHTML=`<span>Talla de polera</span><div class="ynseg">${TALLAS.map(x=>`<button type="button" class="segb${tl===x?" on":""}" data-pt="${x}" aria-pressed="${tl===x}">${x}</button>`).join("")}</div>`;
+  $("profTalla").querySelectorAll("[data-pt]").forEach(b=>b.onclick=async()=>{const v=b.dataset.pt;if((S.jug[S.me]||{}).talla===v)return;
+    try{await S.db.ref(`jugadores/${S.me}/talla`).set(v);if(S.jug[S.me])S.jug[S.me].talla=v;toast(`Talla ${v} guardada`);openProfile()}catch(e){toast("No se pudo guardar, intenta de nuevo")}});
   $("profName").textContent=j.nombre;$("profInfo").textContent=`RUT ${j.rut}${jj===false?" · No juegas esta fecha":mc?` · Categoría ${mc.cat} (puesto ${mc.pos} por índice)`:jj===null?" · Responde si juegas para tener categoría":" · Sin categoría hasta que ingreses tu índice"}${t?` · ${t.name}`:""}`;
   $("profHint").textContent=f?"Así te ven los demás en la tabla y en tu equipo.":"Sube una foto para que tus compañeros te reconozcan en la app.";
   $("profPhoto").textContent=f?"Cambiar mi foto":"Subir mi foto";$("profModal").hidden=false}
@@ -1518,6 +1528,8 @@ function renderJug(){
   const free=keys.filter(k=>!teamOf(k)).length;
   const conFoto=keys.filter(k=>S.jfotos[k]).length;
   $("jugCount").textContent=keys.length?`${keys.length} · ${free} sin equipo · ${conFoto} con foto · ${keys.filter(k=>jHcp(k)!==null).length} con índice · ${juegan().length} juegan`:"0";
+  const tc={};keys.forEach(k=>{const t=S.jug[k].talla;if(t)tc[t]=(tc[t]||0)+1});const nt=keys.filter(k=>!S.jug[k].talla).length;
+  if($("tallaSum"))$("tallaSum").innerHTML=keys.length?`<b>Poleras:</b> ${TALLAS.map(t=>`${t} <b>${tc[t]||0}</b>`).join(" · ")}${nt?` · <span class="muted">${nt} sin talla</span>`:""}`:"";
   const q=$("jugSearch").value.trim().toLowerCase(),qr=cleanRut(q);
   const list=keys.filter(k=>!q||S.jug[k].nombre.toLowerCase().includes(q)||(qr&&k.includes(qr)));
   const box=$("jlist");
@@ -1525,7 +1537,7 @@ function renderJug(){
   const sinHcp=keys.filter(k=>jHcp(k)===null).length;
   box.innerHTML=!keys.length?`<div class="note">Todavía no hay jugadores. Agrégalos abajo o pega la lista completa.</div>`
    :!list.length?`<div class="note">Nadie coincide con "${esc(q)}".</div>`
-   :list.slice(0,60).map(k=>{const t=teamOf(k);return `<div class="pitem jitem"><button type="button" class="jav${S.jfotos[k]?" has":""}" data-jfoto="${k}" title="${S.jfotos[k]?"Cambiar":"Agregar"} foto de ${esc(S.jug[k].nombre)}">${S.jfotos[k]?`<img src="${S.jfotos[k]}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`}</button><span class="n">${catChip(jCat(k))} ${esc(S.jug[k].nombre)}<small>${esc(S.jug[k].rut)}</small><button type="button" class="jj j${jJuega(k)===true?"si":jJuega(k)===false?"no":"nr"}" data-jj="${k}" title="Cambiar si juega la próxima fecha">${jJuega(k)===true?"Juega":jJuega(k)===false?"No juega":"Sin responder"}</button></span><label class="h jh"><span class="jhl">Índice</span><input class="jhin" type="text" inputmode="decimal" id="jh-${k}" data-k="${k}" value="${jHcp(k)!==null?d2(jHcp(k)):""}" placeholder="–"></label>${t?`<span class="jteam">${esc(t.name)}</span>`:`<span class="jteam free">Sin equipo</span>`}${S.confirmJug===k?`<button class="btn danger" data-jdel="${k}">Confirmar</button><button class="btn" data-jcancel="1">No</button>`:`<button class="btn jx" data-jask="${k}" aria-label="Quitar a ${esc(S.jug[k].nombre)} de la lista" title="Quitar">✕</button>`}</div>`}).join("")+(list.length>60?`<p class="sub">Mostrando 60 de ${list.length}. Usa el buscador.</p>`:"");
+   :list.slice(0,60).map(k=>{const t=teamOf(k);return `<div class="pitem jitem"><button type="button" class="jav${S.jfotos[k]?" has":""}" data-jfoto="${k}" title="${S.jfotos[k]?"Cambiar":"Agregar"} foto de ${esc(S.jug[k].nombre)}">${S.jfotos[k]?`<img src="${S.jfotos[k]}" alt="">`:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`}</button><span class="n">${catChip(jCat(k))} ${esc(S.jug[k].nombre)}<small>${esc(S.jug[k].rut)}</small><button type="button" class="jj j${jJuega(k)===true?"si":jJuega(k)===false?"no":"nr"}" data-jj="${k}" title="Cambiar si juega la próxima fecha">${jJuega(k)===true?"Juega":jJuega(k)===false?"No juega":"Sin responder"}</button>${S.jug[k].talla?`<span class="jtalla" title="Talla de polera">Polera ${esc(S.jug[k].talla)}</span>`:""}</span><label class="h jh"><span class="jhl">Índice</span><input class="jhin" type="text" inputmode="decimal" id="jh-${k}" data-k="${k}" value="${jHcp(k)!==null?d2(jHcp(k)):""}" placeholder="–"></label>${t?`<span class="jteam">${esc(t.name)}</span>`:`<span class="jteam free">Sin equipo</span>`}${S.confirmJug===k?`<button class="btn danger" data-jdel="${k}">Confirmar</button><button class="btn" data-jcancel="1">No</button>`:`<button class="btn jx" data-jask="${k}" aria-label="Quitar a ${esc(S.jug[k].nombre)} de la lista" title="Quitar">✕</button>`}</div>`}).join("")+(list.length>60?`<p class="sub">Mostrando 60 de ${list.length}. Usa el buscador.</p>`:"");
   box.querySelectorAll(".jhin").forEach(inp=>inp.onchange=async()=>{const k=inp.dataset.k;const raw=inp.value.trim();
     const v=raw===""?null:parseHcp(raw);if(raw!==""&&v===null){toast("Índice entre 0 y 54");return}
     try{await S.db.ref(`jugadores/${k}/hcp`).set(v);toast(`${S.jug[k].nombre}: Índice ${v===null?"borrado":d2(v)}`)}catch(e){writeErr(e)}});
