@@ -523,6 +523,11 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
 .pubrow input{margin-top:3px;width:18px;height:18px;flex:none}
 .pubrow b{display:block;font-size:15px}.pubrow small{display:block;color:var(--muted);font-size:13px}
 #pubList{display:grid;gap:8px}
+.puc{position:relative;display:flex;align-items:center;gap:12px;margin-top:12px;padding:10px 12px;border-radius:12px;background:#d63c8a;color:#fff}
+.puc img{width:44px;height:44px;object-fit:contain;flex:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+.puctxt{flex:1;min-width:0}.puctxt b{display:block;font:700 18px var(--display)}.puctxt small{display:block;font-size:12px;opacity:.9;overflow-wrap:anywhere}
+.puclbl{display:block;font:700 11px var(--display);letter-spacing:.14em;text-transform:uppercase;opacity:.9}
+.pucnet{font:700 24px var(--display);text-align:right}.pucnet small{display:block;font:400 11px var(--body);opacity:.85}
 </style>
 </head>
 <body>
@@ -1174,10 +1179,11 @@ function renderPodium(){
   const ok=live.filter(r=>!r.dq&&r.s.thru).sort((a,b)=>a.s.net-b.s.net||a.s.toPar-b.s.toPar);
   if(!ok.length){box.innerHTML="";return}
   const g=ok.slice().sort((a,b)=>a.s.toPar-b.s.toPar)[0];
+  const uc=ok.length>3?ok[ok.length-1]:null;
   const step=(r,place)=>r?`<div class="pstep p${place}"><div class="pname2">${esc(r.t.name)}</div><div class="pnet ${cls(r.s.net)}">${fmt(r.s.net)}</div><div class="pblock">${place}</div></div>`:`<div class="pstep p${place}"></div>`;
   const extras=[`<span>Mejor gross <b>${esc(g.t.name)}</b> ${fmt(g.s.toPar)} (${g.s.strokes})</span>`].concat(contestList().filter(c=>c.lead).map(c=>`<span>${c.title} <b>${esc(c.leadName)}</b>${c.lead.dist?" · "+esc(String(c.lead.dist).replace(".",","))+(c.id==="longdrive"?" yd":" m"):""}</span>`));
   box.innerHTML=`<div class="podium"><canvas id="confetti" aria-hidden="true"></canvas><div class="ptitle">${ended||allDone?"Campeones":"Podio provisorio"} · ${esc(S.cfg.name||DEFAULT_NAME)}</div>
-    <div class="psteps">${step(ok[1],2)}${step(ok[0],1)}${step(ok[2],3)}</div><div class="pextras">${extras.join("")}</div></div>`;
+    <div class="psteps">${step(ok[1],2)}${step(ok[0],1)}${step(ok[2],3)}</div><div class="pextras">${extras.join("")}</div>${uc?`<div class="puc"><img src="unicornio.webp" alt="" onerror="this.hidden=true"><div class="puctxt"><span class="puclbl">Ucornianos</span><b>${esc(uc.t.name)}</b><small>${esc(shortNames(uc.t))}</small></div><div class="pucnet">${fmt(uc.s.net)}<small>${uc.s.thru===uc.s.total?"":"Hoyo "+uc.s.thru}</small></div></div>`:""}</div>`;
   if(!S.confettiDone){S.confettiDone=true;confetti()}
 }
 function confetti(){
