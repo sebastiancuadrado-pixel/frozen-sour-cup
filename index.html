@@ -518,6 +518,11 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
 #profTalla .segb{padding:9px 12px;min-width:44px}
 .myteam{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:16px}
 .myteam small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.pubcard{display:grid;gap:12px;max-width:420px}
+.pubrow{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);text-align:left;cursor:pointer}
+.pubrow input{margin-top:3px;width:18px;height:18px;flex:none}
+.pubrow b{display:block;font-size:15px}.pubrow small{display:block;color:var(--muted);font-size:13px}
+#pubList{display:grid;gap:8px}
 </style>
 </head>
 <body>
@@ -744,6 +749,14 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
     <button class="btn primary big srcbtn" id="srcCam" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>Tomar foto</button>
     <button class="btn big srcbtn" id="srcGal" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M4 17l5-4.5 3.5 3 3-2.5 4.5 4"/></svg>Elegir de la galería</button>
     <button class="btn" id="srcCancel" type="button">Cancelar</button>
+  </div>
+</div>
+<div class="phmodal" id="pubModal" hidden role="dialog" aria-modal="true" aria-labelledby="pubTitle">
+  <div class="phcard pubcard">
+    <div class="lbl" id="pubTitle">¿Publicar resultados?</div>
+    <p class="sub" style="margin:0">El torneo terminó. ¿Quieres agregar al campeón y a los ucornianos a sus pestañas?</p>
+    <div id="pubList"></div>
+    <div class="row2"><button class="btn primary" id="pubYes" type="button">Publicar</button><button class="btn" id="pubNo" type="button">Ahora no</button></div>
   </div>
 </div>
 <div class="phmodal" id="shareModal" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle">
@@ -1029,19 +1042,20 @@ function renderStateBox(){
     <button class="btn danger" id="rsAll">Borrar todo<small>Scores, equipos, jugadores y fotos</small></button>
     <button class="btn" id="rsNo">Cancelar</button></div>`;
     $("rsNo").onclick=()=>{S.confirmReset=false;renderStateBox()};
-    const doReset=async all=>{const u={scores:null,salidas:null,ts:null,por:null,concursos:null,"config/estado":"previo","config/inicio":0,"config/fin":0,"config/podio":false};
+    const doReset=async all=>{const u={scores:null,salidas:null,ts:null,por:null,concursos:null,"config/estado":"previo","config/inicio":0,"config/fin":0,"config/podio":false,"config/publicado":null};
       if(all){u.equipos=null;u.fotos=null}
       S.confirmReset=false;try{await S.db.ref().update(u);toast(all?"Torneo borrado por completo":"Scores borrados, equipos intactos")}catch(e){writeErr(e)}renderStateBox()};
     $("rsScores").onclick=()=>doReset(false);$("rsAll").onclick=()=>doReset(true);return}
   box.innerHTML=S.confirmState?`<div class="lbl">¿${action[0]}?</div><p class="sub" style="margin:0">${action[2]}</p>
     <div class="row2"><button class="btn primary" id="stYes">Sí, ${action[0].toLowerCase()}</button><button class="btn" id="stNo">Cancelar</button></div>`
-   :`<div class="strow"><div><div class="lbl">Estado del torneo</div><div class="stlabel s-${st}">${label}</div></div><button class="btn ${st==="en_juego"?"danger":"primary"} stbtn" id="stGo">${action[0]}</button></div><p class="sub" style="margin:0">${info}</p><button class="linkbtn" id="resetGo">Reiniciar torneo…</button>`;
+   :`<div class="strow"><div><div class="lbl">Estado del torneo</div><div class="stlabel s-${st}">${label}</div></div><button class="btn ${st==="en_juego"?"danger":"primary"} stbtn" id="stGo">${action[0]}</button></div><p class="sub" style="margin:0">${info}</p>${st==="finalizado"&&(currentWinner()||currentLoser())?`<button class="btn" id="pubGo">${S.cfg.publicado?"Volver a publicar campeón y ucornianos":"Publicar campeón y ucornianos"}</button>`:""}<button class="linkbtn" id="resetGo">Reiniciar torneo…</button>`;
   if($("resetGo"))$("resetGo").onclick=()=>{S.confirmReset=true;renderStateBox()};
   if($("stGo"))$("stGo").onclick=()=>{S.confirmState=true;renderStateBox()};
   if($("stNo"))$("stNo").onclick=()=>{S.confirmState=false;renderStateBox()};
   if($("stYes"))$("stYes").onclick=async()=>{const next=action[1];const upd={estado:next};
     if(next==="en_juego"&&st==="previo")upd.inicio=firebaseTime();if(next==="finalizado")upd.fin=firebaseTime();if(st==="finalizado")upd.fin=0;
-    S.confirmState=false;try{await S.db.ref("config").update(upd);toast({en_juego:st==="finalizado"?"Torneo reabierto":"¡Torneo iniciado!",finalizado:"Torneo finalizado"}[next])}catch(e){writeErr(e)}};
+    S.confirmState=false;try{await S.db.ref("config").update(upd);toast({en_juego:st==="finalizado"?"Torneo reabierto":"¡Torneo iniciado!",finalizado:"Torneo finalizado"}[next]);if(next==="finalizado")setTimeout(openPublish,600)}catch(e){writeErr(e)}};
+  if($("pubGo"))$("pubGo").onclick=openPublish;
 }
 function renderConfig(){
   $("loginForm").hidden=S.isAdmin;$("adminPanel").hidden=!S.isAdmin;
@@ -1344,6 +1358,20 @@ $("hofForm").addEventListener("submit",async e=>{e.preventDefault();if(!S.db||!S
   try{await S.db.ref().update(hofSaveUpd("campeones",id,d,S.hofForm,S.hofForm.id?S.hof[id]:null));S.hofForm=null;toast(`Campeón ${anio} guardado`);renderHof()}catch(err){writeErr(err)}
   $("hofSave").disabled=false});
 // ---------- ucornianos (últimos de cada edición) ----------
+function pubEntry(w){return {anio:new Date().getFullYear(),edicion:"",equipo:w.t.name,jugadores:CATS.map(c=>w.t.players&&w.t.players[c]).filter(Boolean).join(", "),resultado:`${dec(w.s.netStrokes)} neto (${fmt(w.s.net)})`,cancha:"Las Rocas de Santo Domingo",nota:""}}
+function openPublish(){if(!S.isAdmin)return;const w=currentWinner(),l=currentLoser();const lo=l&&w&&l.t.id===w.t.id?null:l;
+  if(!w&&!lo){toast("No hay equipos que hayan terminado los 18 hoyos sin descalificación");return}
+  S.pub={w,l:lo};const p=S.cfg.publicado||{};
+  const row=(k,ic,ttl,x)=>x?`<label class="pubrow"><input type="checkbox" id="pub-${k}" checked><span><b>${ic} ${ttl}: ${esc(x.t.name)}</b><small>${esc(pubEntry(x).jugadores)}</small><small>${esc(pubEntry(x).resultado)}</small></span></label>`:`<p class="sub">${ic} ${ttl}: no hay un equipo que haya terminado sin descalificación.</p>`;
+  $("pubList").innerHTML=row("w","🏆","Campeón",w)+row("l","🦄","Ucornianos",lo)+(p.ts?`<p class="sub" style="margin:0">Ya publicaste antes: se reemplazarán esas tarjetas, no se duplican.</p>`:"");
+  $("pubModal").hidden=false}
+$("pubNo").onclick=()=>{$("pubModal").hidden=true;toast("Puedes publicarlo después desde Admin")};
+$("pubYes").onclick=async()=>{const {w,l}=S.pub||{};const p=S.cfg.publicado||{};const upd={};const y=new Date().getFullYear(),tag=Date.now().toString(36);let hid=p.hof||null,uid=p.uc||null;
+  if(w&&$("pub-w")&&$("pub-w").checked){hid=hid||("c"+y+"-"+tag);upd["campeones/"+hid]=pubEntry(w)}
+  if(l&&$("pub-l")&&$("pub-l").checked){uid=uid||("u"+y+"-"+tag);upd["ucornianos/"+uid]=pubEntry(l)}
+  if(!Object.keys(upd).length){$("pubModal").hidden=true;return}
+  upd["config/publicado"]={hof:hid,uc:uid,ts:Date.now()};
+  $("pubYes").disabled=true;try{await S.db.ref().update(upd);$("pubModal").hidden=true;toast("¡Publicado en Campeones y Ucornianos!")}catch(e){writeErr(e)}$("pubYes").disabled=false};
 function currentLoser(){const ok=S.teams.map(t=>({t,s:stats(t)})).filter(r=>!isDQ(r.t)&&r.s.thru&&r.s.thru===r.s.total).sort((a,b)=>b.s.net-a.s.net);return ok[0]}
 function renderUc(){if(!$("v-ucornianos").hidden)loadHofFotos("ucornianos");
   document.querySelector("#v-ucornianos .hof-head .sub").textContent=`Los equipos que terminaron últimos en la ${S.cfg.name||DEFAULT_NAME}.`;
@@ -1625,7 +1653,7 @@ function applyConfig(d){
   const order=Array.isArray(d.order)?d.order.filter(id=>NINE_IDS.includes(id)):["roja","azul"];
   const c=d.contests||{};
   S.cfg={name:d.name||DEFAULT_NAME,order:order.length?order:["roja","azul"],nines,contests:{longdrive:c.longdrive||"",approach:c.approach||""},podio:!!d.podio,pctSum:typeof d.pctSum==="number"?d.pctSum:10,pctCD:typeof d.pctCD==="number"?d.pctCD:5,
-    estado:["previo","en_juego","finalizado"].includes(d.estado)?d.estado:"previo",inicio:d.inicio||0,fin:d.fin||0};
+    estado:["previo","en_juego","finalizado"].includes(d.estado)?d.estado:"previo",inicio:d.inicio||0,fin:d.fin||0,publicado:d.publicado||null};
 }
 // ---------- live data ----------
 function setLive(on,txt){$("live").classList.toggle("off",!on);$("liveTxt").textContent=txt}
