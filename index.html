@@ -1191,6 +1191,7 @@ $("gateRut").onblur=()=>{const k=cleanRut($("gateRut").value);if(validRut(k))$("
 $("gateForm").addEventListener("submit",e=>{e.preventDefault();const k=cleanRut($("gateRut").value);const err=$("gateErr");
   if(!k){err.textContent="Escribe tu RUT.";err.hidden=false;return}
   if(!validRut(k)){err.textContent="Ese RUT no es válido. Revisa el dígito verificador.";err.hidden=false;return}
+  if(k===VIEWER_RUT){err.hidden=true;S.me=null;S.viewer=true;try{localStorage.setItem("fsc-me","viewer")}catch(e){}$("gateRut").value="";renderAll();toast("Modo consulta: puedes ver todo, pero no editar");return}
   if(!S.jugLoaded){err.textContent="Cargando la lista de jugadores, intenta en un segundo.";err.hidden=false;return}
   if(!S.jug[k]){err.textContent="Tu RUT no está en la lista de jugadores. Pídele al organizador que te agregue, o entra como visita.";err.hidden=false;return}
   err.hidden=true;
@@ -1213,6 +1214,7 @@ $("gateHcpForm").addEventListener("submit",async e=>{e.preventDefault();const k=
   finishLogin(k)});
 $("gateView").onclick=()=>{S.viewer=true;try{localStorage.setItem("fsc-me","viewer")}catch(e){}renderAll()};
 $("gateAdmin").onclick=()=>{S.viewer=true;$("gate").hidden=true;document.querySelector('nav.tabs [data-tab="config"]').click();renderMe()};
+const VIEWER_RUT="111111111";
 function canScore(){return S.isAdmin||!!(S.me&&S.jug[S.me])}
 function openProfile(){if(!S.me||!S.jug[S.me])return;const j=S.jug[S.me],t=myTeam(),f=S.jfotos[S.me];
   let cat="";if(t)CATS.forEach(c=>{if(t.ruts[c]===S.me)cat=c});
