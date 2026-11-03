@@ -516,6 +516,8 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
 .jtalla{display:inline-block;margin:4px 0 0 6px;font-size:11px;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 8px}
 .tallasum{margin:2px 0 8px;font-size:13px}.tallasum .muted{color:var(--muted)}
 #profTalla .segb{padding:9px 12px;min-width:44px}
+.myteam{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:16px}
+.myteam small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 </style>
 </head>
 <body>
@@ -961,6 +963,9 @@ function renderEntry(){
   const adminNote=S.cfg.estado!=="en_juego"?`<div class="note">${S.cfg.estado==="previo"?"El torneo no ha comenzado":"El torneo está finalizado"}: solo tú, como administrador, puedes anotar o corregir scores.</div>`:"";
   if(!canScore()){box.innerHTML=`<div class="empty"><strong>Regístrate para anotar</strong>Estás en modo visita: puedes ver la tabla, pero para anotar scores tienes que entrar con tu RUT.<div style="margin-top:12px"><button class="btn primary" id="toGate">Registrarme con mi RUT</button></div></div>`;
     $("toGate").onclick=()=>{S.viewer=false;try{localStorage.removeItem("fsc-me")}catch(e){}renderAll()};return}
+  if(!S.isAdmin){const mt=myTeam();
+    if(!mt){box.innerHTML=`<div class="empty"><strong>No estás en ningún equipo</strong>Solo los jugadores de un equipo pueden anotar sus scores. Si crees que es un error, avísale al administrador.</div>`;return}
+    if(S.sel!==mt.id){S.sel=mt.id;S.hole=firstEmpty(mt.id)}}
   if(!S.teams.find(t=>t.id===S.sel)){let saved=null;try{saved=localStorage.getItem("fsc-team")}catch(e){}const mt=myTeam();S.sel=mt?mt.id:S.teams.find(t=>t.id===saved)?saved:S.teams[0].id;S.hole=firstEmpty(S.sel)}
   if(S.hole>=H.length)S.hole=H.length-1;
   const t=S.teams.find(x=>x.id===S.sel);const sc=S.scores[t.id]||{};const sal=S.salidas[t.id]||{};const h=H[S.hole];const cur=sc[h.key];
@@ -970,7 +975,7 @@ function renderEntry(){
   const rq=reqStatus(t);const needHere=REQ_CATS.filter(c=>!rq.done[c][h.par]);
   const hint=needHere.length?`<div class="hint">${needHere.map(c=>`<span class="cat c-${c}">${c}</span>`).join("")} todavía ${needHere.length>1?"necesitan":"necesita"} una salida en par ${h.par}${rq.remaining[h.par]>0&&rq.remaining[h.par]<=needHere.length?` · quedan ${rq.remaining[h.par]} par ${h.par}`:""}</div>`:"";
   const drives=`<div class="drives">${CATS.map(c=>`<button class="drv${S.drive===c?" sel":""}${needHere.includes(c)&&!locked?" need":""}" data-c="${c}"${dis}>${av(t,c)}<span class="dn">${esc(pName(t,c))}</span></button>`).join("")}</div>`;
-  const sel=`<select id="teamSel">${S.teams.map(x=>`<option value="${esc(x.id)}"${x.id===S.sel?" selected":""}>${esc(x.name)} · Índice ${d2(teamHcp(x))}</option>`).join("")}</select>`;
+  const sel=!S.isAdmin?`<div class="myteam"><b>${esc(t.name)}</b> · Índice ${d2(teamHcp(t))}<small>Solo puedes anotar en tu equipo</small></div>`:`<select id="teamSel">${S.teams.map(x=>`<option value="${esc(x.id)}"${x.id===S.sel?" selected":""}>${esc(x.name)} · Índice ${d2(teamHcp(x))}</option>`).join("")}</select>`;
   let ninesHtml="";
   S.cfg.order.forEach((id,ni)=>{const n=S.cfg.nines[id];if(!n)return;
     let cells="";n.pars.forEach((p,i)=>{const gi=ni*9+i;const v=sc[id+(i+1)];
@@ -992,7 +997,7 @@ function renderEntry(){
   <div class="navrow"><button class="btn" id="prevH" ${S.hole===0?"disabled":""}>‹ Anterior</button><button class="btn" id="nextH" ${S.hole===H.length-1?"disabled":""}>Siguiente ›</button>${saved?`<button class="btn${S.editing?"":" edit"}" id="editH">${S.editing?"Cancelar":"✎ Editar hoyo"}</button>`:""}</div>
   ${contestForm(t,h)}
   <div><div class="lbl">Tarjeta de ${esc(t.name)}</div><div class="cardbox">${scorecard(t,h.key)}</div></div>`;
-  $("teamSel").onchange=e=>{S.sel=e.target.value;try{localStorage.setItem("fsc-team",S.sel)}catch(err){}S.hole=firstEmpty(S.sel);renderEntry()};
+  if($("teamSel"))$("teamSel").onchange=e=>{S.sel=e.target.value;try{localStorage.setItem("fsc-team",S.sel)}catch(err){}S.hole=firstEmpty(S.sel);renderEntry()};
   box.querySelectorAll(".hb").forEach(b=>b.onclick=()=>{S.hole=+b.dataset.i;renderEntry()});
   box.querySelectorAll(".drv").forEach(b=>b.onclick=()=>{S.drive=b.dataset.c;renderEntry()});
   box.querySelectorAll(".nb").forEach(b=>b.onclick=()=>{S.draftN=+b.dataset.n;renderEntry()});
@@ -1422,6 +1427,7 @@ function firebaseTime(){return (window.firebase&&firebase.database&&firebase.dat
 function writeErr(e){const c=String(e&&(e.code||e.message)||"");toast(/permission/i.test(c)?"Solo el administrador puede hacer esto":"No se pudo guardar, intenta de nuevo")}
 function saveStroke(tid,key,v,drive,stay){
   if(!S.db)return;
+  if(!S.isAdmin){const mt=myTeam();if(!mt||mt.id!==tid){toast("Solo puedes anotar en tu equipo");return}}
   const t=S.teams.find(x=>x.id===tid);if(!t)return;
   S.scores[tid]=Object.assign({},S.scores[tid],{[key]:v});S.salidas[tid]=Object.assign({},S.salidas[tid],{[key]:drive});
   if(v===null){delete S.scores[tid][key];delete S.salidas[tid][key];S.drive=null}
