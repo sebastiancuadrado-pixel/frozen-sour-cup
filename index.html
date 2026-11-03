@@ -1000,16 +1000,17 @@ function renderEntry(){
     saveStroke(t.id,h.key,S.draftN,S.drive)};
   $("prevH").onclick=()=>{S.hole--;renderEntry()};$("nextH").onclick=()=>{S.hole++;renderEntry()};
   if($("cSave"))$("cSave").onclick=async()=>{if(!canScore()){toast("Regístrate para registrar concursos");return}const cat=$("cCat").value;const dist=parseFloat(String($("cDist").value).replace(",","."));
-    if(!(dist>0&&dist<1000)){toast("Ingresa la distancia en metros");return}
-    const c=$("cSave").dataset.c;try{await S.db.ref("concursos/"+c).set({team:t.id,cat,dist:Math.round(dist*100)/100,ts:firebaseTime()});toast(`${pName(t,cat)} es el nuevo líder`)}catch(e){writeErr(e)}};
+    const c=$("cSave").dataset.c;
+    if(!(dist>0&&dist<1000)){toast(c==="longdrive"?"Ingresa la distancia en yardas":"Ingresa la distancia en metros");return}
+try{await S.db.ref("concursos/"+c).set({team:t.id,cat,dist:Math.round(dist*100)/100,ts:firebaseTime()});toast(`${pName(t,cat)} es el nuevo líder`)}catch(e){writeErr(e)}};
   if($("editH"))$("editH").onclick=()=>{if(S.editing){S.editing=false;S.drive=sal[h.key]||null;S.draftN=cur}else{S.editing=true;toast("Ya puedes cambiar la salida o los golpes")}renderEntry()};
 }
 function contestForm(t,h){
   const c=contestList().find(x=>x.h.key===h.key);if(!c)return "";
   return `<div class="cform"><div class="lbl">Concurso ${c.title} en este hoyo</div>
-    <p class="sub" style="margin:0 0 8px">${c.lead?`Va ganando <b>${esc(c.leadName)}</b>${c.lead.dist?" · "+esc(String(c.lead.dist).replace(".",","))+" m":""}.`:"Nadie ha registrado todavía."} ${c.id==="longdrive"?"Registra si alguien de tu equipo pegó más largo.":"Registra si alguien de tu equipo quedó más cerca de la bandera."}</p>
+    <p class="sub" style="margin:0 0 8px">${c.lead?`Va ganando <b>${esc(c.leadName)}</b>${c.lead.dist?" · "+esc(String(c.lead.dist).replace(".",","))+(c.id==="longdrive"?" yd":" m"):""}.`:"Nadie ha registrado todavía."} ${c.id==="longdrive"?"Registra si alguien de tu equipo pegó más largo.":"Registra si alguien de tu equipo quedó más cerca de la bandera."}</p>
     <div class="cfrow"><select id="cCat">${CATS.map(k=>`<option value="${k}">${k} · ${esc(pName(t,k))}</option>`).join("")}</select>
-    <input type="text" id="cDist" inputmode="decimal" placeholder="${c.id==="longdrive"?"Metros, ej: 245":"Metros, ej: 1,8"}">
+    <input type="text" id="cDist" inputmode="decimal" placeholder="${c.id==="longdrive"?"Yardas, ej: 265":"Metros, ej: 1,8"}">
     <button class="btn primary" id="cSave" data-c="${c.id}">Registrar líder</button></div></div>`;
 }
 function renderStateBox(){
@@ -1109,7 +1110,7 @@ function renderTicker(){
   const items=rows.map((r,i)=>{if(r.s.net!==lastVal){lastPos=i+1;lastVal=r.s.net}
     const thru=r.s.thru===r.s.total?"F":"H"+r.s.thru;
     return `<span class="tk${lastPos===1?" first":""}"><b class="tp">${lastPos}</b><span class="tn">${esc(r.t.name)}</span><b class="tv ${cls(r.s.net)}">${fmt(r.s.net)}</b><span class="tt">${thru}</span></span>`}).join("");
-  const ct=contestList().filter(c=>c.lead).map(c=>`<span class="tk hl"><b class="hlk">${c.title}</b><span class="tn">${esc(c.leadName)}</span><span class="tt">${c.lead.dist?esc(String(c.lead.dist).replace(".",","))+" m":""}</span></span>`).join("");
+  const ct=contestList().filter(c=>c.lead).map(c=>`<span class="tk hl"><b class="hlk">${c.title}</b><span class="tn">${esc(c.leadName)}</span><span class="tt">${c.lead.dist?esc(String(c.lead.dist).replace(".",","))+(c.id==="longdrive"?" yd":" m"):""}</span></span>`).join("");
   const all=ct+items;
   tr.innerHTML=`<div class="tk-set">${all}</div><div class="tk-set" aria-hidden="true">${all}</div>`;
   const dur=Math.max(14,(rows.length+contestList().filter(c=>c.lead).length)*3.2)+"s";if(tr.style.animationDuration!==dur)tr.style.animationDuration=dur;
@@ -1121,7 +1122,7 @@ function contestList(){const H=holes();return CONTESTS.map(c=>{const key=(S.cfg.
 function renderContests(){
   const list=contestList();const box=$("contestBox");
   if(!list.length){box.innerHTML="";return}
-  box.innerHTML=`<div class="contests">${list.map(c=>`<div class="ccard"><div class="ct">${c.title} · ${esc(holeLabel(c.h))}</div>${c.lead?`<div class="cl">${esc(c.leadName)}</div><div class="cd">${c.lead.dist?esc(String(c.lead.dist).replace(".",","))+" m":""}</div>`:`<div class="cd">Sin líder todavía</div>`}</div>`).join("")}</div>`;
+  box.innerHTML=`<div class="contests">${list.map(c=>`<div class="ccard"><div class="ct">${c.title} · ${esc(holeLabel(c.h))}</div>${c.lead?`<div class="cl">${esc(c.leadName)}</div><div class="cd">${c.lead.dist?esc(String(c.lead.dist).replace(".",","))+(c.id==="longdrive"?" yd":" m"):""}</div>`:`<div class="cd">Sin líder todavía</div>`}</div>`).join("")}</div>`;
 }
 // ---------- estadísticas de hoyos ----------
 function renderHoleStats(){
@@ -1155,7 +1156,7 @@ function renderPodium(){
   if(!ok.length){box.innerHTML="";return}
   const g=ok.slice().sort((a,b)=>a.s.toPar-b.s.toPar)[0];
   const step=(r,place)=>r?`<div class="pstep p${place}"><div class="pname2">${esc(r.t.name)}</div><div class="pnet ${cls(r.s.net)}">${fmt(r.s.net)}</div><div class="pblock">${place}</div></div>`:`<div class="pstep p${place}"></div>`;
-  const extras=[`<span>Mejor gross <b>${esc(g.t.name)}</b> ${fmt(g.s.toPar)} (${g.s.strokes})</span>`].concat(contestList().filter(c=>c.lead).map(c=>`<span>${c.title} <b>${esc(c.leadName)}</b>${c.lead.dist?" · "+esc(String(c.lead.dist).replace(".",","))+" m":""}</span>`));
+  const extras=[`<span>Mejor gross <b>${esc(g.t.name)}</b> ${fmt(g.s.toPar)} (${g.s.strokes})</span>`].concat(contestList().filter(c=>c.lead).map(c=>`<span>${c.title} <b>${esc(c.leadName)}</b>${c.lead.dist?" · "+esc(String(c.lead.dist).replace(".",","))+(c.id==="longdrive"?" yd":" m"):""}</span>`));
   box.innerHTML=`<div class="podium"><canvas id="confetti" aria-hidden="true"></canvas><div class="ptitle">${ended||allDone?"Campeones":"Podio provisorio"} · ${esc(S.cfg.name||DEFAULT_NAME)}</div>
     <div class="psteps">${step(ok[1],2)}${step(ok[0],1)}${step(ok[2],3)}</div><div class="pextras">${extras.join("")}</div></div>`;
   if(!S.confettiDone){S.confettiDone=true;confetti()}
@@ -1581,7 +1582,7 @@ $("logoutBtn").onclick=()=>firebase.auth().signOut();
 
 // ---------- modo demo (#demo): datos de ejemplo en memoria, nada se guarda ----------
 function startDemo(){
-  const store={equipos:{},scores:{},salidas:{},ts:{},concursos:{longdrive:{team:"d1",cat:"A",dist:248,ts:Date.now()-3e5}},
+  const store={equipos:{},scores:{},salidas:{},ts:{},concursos:{longdrive:{team:"d1",cat:"A",dist:271,ts:Date.now()-3e5}},
     config:{name:DEFAULT_NAME,order:["roja","azul"],nines:DEFAULT_NINES,contests:{longdrive:"roja3",approach:"roja6"},podio:false,estado:"en_juego",inicio:Date.now()-2.2*3600e3}};
   const names=[["Pato","Nico","Felipe","Tomás"],["Juan","Rodrigo","Matías","Andrés"],["Diego","Pablo","Cristián","José"],["Seba","Ignacio","Gonzalo","Martín"],["Benja","Javier","Álvaro","Raúl"],["Max","Vicente","Joaquín","Carlos"]];
   const hc=[6.2,8.5,4,11.3,9.8,7.1];const thru=[18,14,12,9,6,3];
