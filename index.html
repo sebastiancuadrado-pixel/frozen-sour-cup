@@ -557,6 +557,15 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
 .bettbl th{font:700 12px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
 .bettbl tr:last-child td{border-bottom:0}
 .bettbl .bt-h{color:var(--muted);font-variant-numeric:tabular-nums}
+.bcharts{display:grid;gap:14px;padding-top:4px;border-top:1px solid var(--line)}
+.bchart{margin:0;display:grid;gap:8px}
+.bchart figcaption{font:700 15px var(--display);letter-spacing:.04em;margin-top:8px}
+.bc-row{display:grid;grid-template-columns:minmax(0,9.5em) minmax(0,1fr) 2em;align-items:center;gap:10px;font-size:14px}
+.bc-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bc-track{height:14px;border-radius:7px;background:var(--soft);overflow:hidden}
+.bc-bar{display:block;height:100%;border-radius:7px}
+.bc-gold .bc-bar{background:#e2b53e}.bc-pink .bc-bar{background:#e2589e}
+.bc-n{font:700 16px var(--display);text-align:right;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -1024,6 +1033,11 @@ function renderBets(){renderBetAdmin();const box=$("betBox");if(!box)return;
   const tn=id=>{const t=S.teams.find(x=>x.id===id);return t?t.name:"—"};
   const nm=k=>esc(S.jug[k].nombre)+(k===me?" (tú)":"");
   let html=`<div class="bets"><div class="bets-head"><h2>Apuestas</h2><span class="sub">${keys.length} ${keys.length===1?"pronóstico":"pronósticos"}</span></div>`;
+  const chart=(f,ttl,cls)=>{const m={};keys.forEach(k=>{const id=A[k][f];if(id&&S.teams.find(t=>t.id===id))m[id]=(m[id]||0)+1});
+    const rows=Object.entries(m).sort((a,b)=>b[1]-a[1]||tn(a[0]).localeCompare(tn(b[0]),undefined,{numeric:true}));
+    if(!rows.length)return "";const max=rows[0][1];
+    return `<figure class="bchart ${cls}" aria-label="${ttl}"><figcaption>${ttl}</figcaption>${rows.map(([id,n])=>`<div class="bc-row"><span class="bc-name">${esc(tn(id))}</span><span class="bc-track"><span class="bc-bar" style="width:${Math.max(6,Math.round(n/max*100))}%"></span></span><b class="bc-n">${n}</b></div>`).join("")}</figure>`};
+  const charts=chart("gana","🏆 Favoritos para ganar","bc-gold")+chart("uc","🦄 Candidatos a Ucornianos","bc-pink");
   if(open){
     if(me){
       const d=S.betDraft||{gana:mine?mine.gana:"",uc:mine?mine.uc:""};S.betDraft=d;
@@ -1049,6 +1063,7 @@ function renderBets(){renderBetAdmin();const box=$("betBox");if(!box)return;
     if(mine)html+=`<p class="sub" style="margin:0">Tu pronóstico: 🏆 ${esc(tn(mine.gana))} · 🦄 ${esc(tn(mine.uc))}</p>`;
     html+=`<details class="bet-det"${est==="finalizado"?"":" open"}><summary>Ver todos los pronósticos</summary>${block("gana","🏆","Ganador",wid)}${block("uc","🦄","Ucornianos",lid)}</details>`;
   }
+  if(charts)html+=`<div class="bcharts">${charts}</div>`;
   html+=`</div>`;box.innerHTML=html;
   if($("betGana")){$("betGana").onchange=e=>S.betDraft.gana=e.target.value;$("betUc").onchange=e=>S.betDraft.uc=e.target.value;
     $("betSave").onclick=async()=>{const d=S.betDraft;if(!d.gana||!d.uc){toast("Elige un equipo para cada pronóstico");return}
