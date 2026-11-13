@@ -550,6 +550,13 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
 .hfijo{color:var(--gold)!important;font-size:10px}
 .hunfix{font-size:11px;padding:0;min-height:0}
 .betclosed{margin:0;font-size:13px;color:var(--muted);padding:8px 10px;border:1px dashed var(--line);border-radius:10px}
+.betadm{margin-bottom:18px}
+.bettbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+.bettbl table{width:100%;border-collapse:collapse;font-size:14px}
+.bettbl th,.bettbl td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+.bettbl th{font:700 12px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+.bettbl tr:last-child td{border-bottom:0}
+.bettbl .bt-h{color:var(--muted);font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -697,6 +704,10 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
         <button class="btn" id="podioBtn">Mostrar podio ahora</button>
       </div>
       <div>
+        <div class="betadm">
+          <div class="lbl" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px"><span>Apuestas · solo admin</span><span id="betAdmCount"></span></div>
+          <div id="betAdmin"></div>
+        </div>
         <div class="jugsec">
           <div class="lbl" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px"><span>Lista de jugadores</span><span id="jugCount">0</span></div>
           <p class="sub tallasum" id="tallaSum"></p>
@@ -997,7 +1008,15 @@ async function exportInscritos(){if(!S.isAdmin)return;const ks=Object.keys(S.jug
   catch(e){toast("No se pudo generar el Excel. Revisa tu conexión e intenta de nuevo")}
   b.disabled=false;b.textContent=old}
 if($("xlsGo"))$("xlsGo").onclick=exportInscritos;
-function renderBets(){const box=$("betBox");if(!box)return;
+function renderBetAdmin(){const box=$("betAdmin");if(!box)return;if(!S.isAdmin){box.innerHTML="";return}
+  const A=S.apuestas||{},tn=id=>{const t=S.teams.find(x=>x.id===id);return t?t.name:"—"};
+  const ks=Object.keys(A).filter(k=>A[k]&&S.jug[k]).sort((a,b)=>S.jug[a].nombre.localeCompare(S.jug[b].nombre));
+  const total=juegan().length||Object.keys(S.jug).length;
+  $("betAdmCount").textContent=`${ks.length} de ${total} apostaron`;
+  if(!ks.length){box.innerHTML=`<p class="sub" style="margin:0">Todavía nadie ha apostado.</p>`;return}
+  const hm2=ts=>{if(!ts)return "";const d=new Date(ts);return d.toLocaleDateString("es-CL",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit"})};
+  box.innerHTML=`<div class="bettbl"><table><thead><tr><th scope="col">Jugador</th><th scope="col">🏆 Ganador</th><th scope="col">🦄 Ucornianos</th><th scope="col">Hora</th></tr></thead><tbody>${ks.map(k=>`<tr><td>${esc(S.jug[k].nombre)}</td><td>${esc(tn(A[k].gana))}</td><td>${esc(tn(A[k].uc))}</td><td class="bt-h">${hm2(A[k].ts)}</td></tr>`).join("")}</tbody></table></div>`}
+function renderBets(){renderBetAdmin();const box=$("betBox");if(!box)return;
   const teams=S.teams.slice().sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
   if(!teams.length){box.innerHTML="";return}
   const A=S.apuestas||{},keys=Object.keys(A).filter(k=>S.jug[k]&&A[k]&&(S.teams.find(t=>t.id===A[k].gana)||S.teams.find(t=>t.id===A[k].uc)));
