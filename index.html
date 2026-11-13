@@ -532,6 +532,24 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
 .ptrophy{height:88px;width:auto;max-width:90%;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.3))}
 .p1 .pnum{position:absolute;right:6px;bottom:4px;font:700 18px var(--display);line-height:1;background:rgba(58,42,0,.12);border-radius:6px;padding:3px 7px}
 .ptrophy[hidden]+.pnum{position:static;background:none;font-size:26px;padding:0}
+/* Pronósticos */
+.bets{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px;margin-bottom:12px}
+.bets-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.bets-head h2{margin:0;font:700 20px var(--display);letter-spacing:.06em;text-transform:uppercase}
+.bets select{width:100%}
+.bet-grp{display:grid;gap:6px;margin-top:8px}
+.bet-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+.bet-row small{grid-column:1/-1;color:var(--muted);font-size:12px}
+.bet-row.hit{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.bet-team{font-weight:600}.bet-n{font:700 18px var(--display);font-variant-numeric:tabular-nums}
+.bet-res{display:grid;gap:4px;font-size:14px}
+.bet-det summary{cursor:pointer;font-weight:600;color:var(--muted);font-size:14px}
+.pitem .h.hfx{display:grid;grid-template-columns:auto 44px;justify-items:end;align-items:center;gap:2px 6px;white-space:nowrap}
+.pitem .h.hfx small,.pitem .h.hfx .hunfix{grid-column:1/-1}
+.hfix{width:44px!important;text-align:center;padding:6px 4px}
+.hfijo{color:var(--gold)!important;font-size:10px}
+.hunfix{font-size:11px;padding:0;min-height:0}
+.betclosed{margin:0;font-size:13px;color:var(--muted);padding:8px 10px;border:1px dashed var(--line);border-radius:10px}
 </style>
 </head>
 <body>
@@ -552,6 +570,7 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
     <button role="tab" aria-selected="true" data-tab="tabla" id="t-tabla">Tabla</button>
     <button role="tab" aria-selected="false" data-tab="inscritos" id="t-inscritos">Inscritos</button>
     <button role="tab" aria-selected="false" data-tab="ingresar" id="t-ingresar">Ingresar</button>
+    <button role="tab" aria-selected="false" data-tab="apuestas" id="t-apuestas">Apuestas</button>
     <button role="tab" aria-selected="false" data-tab="campeones" id="t-campeones">Campeones</button>
     <button role="tab" aria-selected="false" data-tab="ucornianos" id="t-ucornianos" class="uctab">Ucornianos</button>
     <button role="tab" aria-selected="false" data-tab="config" id="t-config">Admin</button>
@@ -576,6 +595,10 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
   <section id="v-inscritos" hidden>
     <div class="insc-head"><h2>Inscritos</h2><p class="sub" id="inscSub"></p></div>
     <div id="inscList"></div>
+  </section>
+
+  <section id="v-apuestas" hidden>
+    <div id="betBox"></div>
   </section>
 
   <section id="v-ingresar" hidden>
@@ -677,6 +700,7 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
         <div class="jugsec">
           <div class="lbl" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 12px"><span>Lista de jugadores</span><span id="jugCount">0</span></div>
           <p class="sub tallasum" id="tallaSum"></p>
+          <button class="btn" type="button" id="xlsGo">Descargar Excel de inscritos</button>
           <p class="sub" style="margin:-4px 0 0">Toca el círculo de la cámara para agregar o cambiar la foto de cada jugador.</p>
           <input type="search" id="jugSearch" placeholder="Buscar por RUT o nombre" autocomplete="off">
           <div class="plist jlist" id="jlist"></div>
@@ -847,7 +871,8 @@ function findJug(v){v=String(v||"").trim();if(!v)return null;
 // Índice equipo = el menor entre (promedio de A,B,C,D) y (índice más bajo del equipo) + pctCD% × promedio(C, D)
 function d2(n){n=Math.round(n*100)/100;let t=Number.isInteger(n)?String(n):n.toFixed(2).replace(/0$/,"");return t.replace(".",",")}
 function jHcp(k){const j=S.jug[k];return j&&typeof j.hcp==="number"?j.hcp:null}
-function teamHcpInfo(t){const ks=CATS.map(c=>t.ruts&&t.ruts[c]);const hs=ks.map(k=>k?jHcp(k):null);
+function teamHcpInfo(t){const c=teamHcpCalc(t);if(typeof t.hcpFijo==="number")return {v:Math.round(t.hcpFijo),auto:false,fijo:true,calc:c,missing:[]};return c}
+function teamHcpCalc(t){const ks=CATS.map(c=>t.ruts&&t.ruts[c]);const hs=ks.map(k=>k?jHcp(k):null);
   if(hs.every(h=>h!==null)){const p2=(S.cfg.pctCD??5)/100;
     const prom=(hs[0]+hs[1]+hs[2]+hs[3])/4,menor=Math.min(...hs),base=prom>menor?menor:prom;
     return {v:Math.round(base+p2*((hs[2]+hs[3])/2)),auto:true,missing:[]}}
@@ -952,6 +977,65 @@ function scorecard(t,curKey){
   html+=`<div class="netline"><span>Gross <b>${st.thru?st.strokes:"–"}</b></span><span>Índice equipo <b>${d2(st.hcpPlay)}</b></span><span>Neto <b>${st.thru?dec(st.netStrokes):"–"}</b>${st.thru&&st.thru<st.total?" (parcial)":""}</span></div>`;
   return html;
 }
+// ---------- Pronósticos (sin plata): ganador y Ucornianos ----------
+S.apuestas=S.apuestas||{};S.betDraft=null;S.betOpen=false;
+function betsOpen(){const e=S.cfg.estado||"previo";return e==="previo"}
+// ---------- Excel de inscritos (solo admin) ----------
+function loadXlsx(){if(window.XLSX)return Promise.resolve(window.XLSX);return new Promise((ok,ko)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";sc.onload=()=>window.XLSX?ok(window.XLSX):ko();sc.onerror=ko;document.head.appendChild(sc)})}
+async function exportInscritos(){if(!S.isAdmin)return;const ks=Object.keys(S.jug);if(!ks.length){toast("No hay jugadores en la lista");return}
+  const b=$("xlsGo");b.disabled=true;const old=b.textContent;b.textContent="Preparando Excel…";
+  try{const X=await loadXlsx();const m=catMap();
+    const rows=ks.sort((a,c)=>S.jug[a].nombre.localeCompare(S.jug[c].nombre)).map(k=>{const j=S.jug[k],h=jHcp(k),jj=jJuega(k),t=teamOf(k);
+      return {"Nombre":j.nombre,"RUT":j.rut||fmtRut(k),"Índice":h===null?"":h,"Talla polera":j.talla||"","Categoría":m[k]?m[k].cat:"","¿Juega?":jj===true?"Sí":jj===false?"No":"Sin responder","Equipo":t?t.name:""}});
+    const ws=X.utils.json_to_sheet(rows);ws["!cols"]=[{wch:30},{wch:14},{wch:8},{wch:12},{wch:10},{wch:14},{wch:16}];ws["!autofilter"]={ref:ws["!ref"]};
+    const tc={};ks.forEach(k=>{const t=S.jug[k].talla;if(t)tc[t]=(tc[t]||0)+1});
+    const sum=[...TALLAS.map(t=>({"Talla":t,"Cantidad":tc[t]||0})),{"Talla":"Sin talla","Cantidad":ks.filter(k=>!S.jug[k].talla).length},{"Talla":"Total","Cantidad":ks.length}];
+    const ws2=X.utils.json_to_sheet(sum);ws2["!cols"]=[{wch:12},{wch:10}];
+    const wb=X.utils.book_new();X.utils.book_append_sheet(wb,ws,"Inscritos");X.utils.book_append_sheet(wb,ws2,"Poleras");
+    const d=new Date(),f=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    X.writeFile(wb,`Inscritos Frozen Sour Cup ${f}.xlsx`);toast("Excel descargado")}
+  catch(e){toast("No se pudo generar el Excel. Revisa tu conexión e intenta de nuevo")}
+  b.disabled=false;b.textContent=old}
+if($("xlsGo"))$("xlsGo").onclick=exportInscritos;
+function renderBets(){const box=$("betBox");if(!box)return;
+  const teams=S.teams.slice().sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+  if(!teams.length){box.innerHTML="";return}
+  const A=S.apuestas||{},keys=Object.keys(A).filter(k=>S.jug[k]&&A[k]&&(S.teams.find(t=>t.id===A[k].gana)||S.teams.find(t=>t.id===A[k].uc)));
+  const est=S.cfg.estado||"previo",open=betsOpen(),me=S.me&&S.jug[S.me]?S.me:null,mine=me?A[me]:null;
+  const tn=id=>{const t=S.teams.find(x=>x.id===id);return t?t.name:"—"};
+  const nm=k=>esc(S.jug[k].nombre)+(k===me?" (tú)":"");
+  let html=`<div class="bets"><div class="bets-head"><h2>Apuestas</h2><span class="sub">${keys.length} ${keys.length===1?"pronóstico":"pronósticos"}</span></div>`;
+  if(open){
+    if(me){
+      const d=S.betDraft||{gana:mine?mine.gana:"",uc:mine?mine.uc:""};S.betDraft=d;
+      const opt=sel=>`<option value="">Elige un equipo…</option>`+teams.map(t=>`<option value="${t.id}"${sel===t.id?" selected":""}>${esc(t.name)} · ${esc(shortNames(t))}</option>`).join("");
+      html+=`<p class="sub" style="margin:0">¿Quién gana y quién se lleva el unicornio? Es solo un pronóstico, sin plata de por medio: la app muestra quién la achunta. Puedes cambiarlo hasta que empiece el torneo.</p>
+      <label class="field"><span class="sub">🏆 Equipo ganador</span><select id="betGana">${opt(d.gana)}</select></label>
+      <label class="field"><span class="sub">🦄 Ucornianos (último lugar)</span><select id="betUc">${opt(d.uc)}</select></label>
+      <button class="btn primary" id="betSave" type="button">${mine?"Actualizar mi pronóstico":"Guardar mi pronóstico"}</button>
+      ${mine?`<p class="sub" style="margin:0">Tu pronóstico: 🏆 ${esc(tn(mine.gana))} · 🦄 ${esc(tn(mine.uc))}</p>`:""}`;
+    }else html+=`<p class="sub" style="margin:0">Regístrate con tu RUT para dejar tu pronóstico.</p>`;
+    html+=`<p class="sub" style="margin:0">Los pronósticos de cada uno se muestran cuando parte el torneo.</p>`;
+  }else{
+    html+=`<p class="betclosed">🔒 Las apuestas se cerraron cuando partió el torneo. Cada jugador apuesta en esta pestaña mientras el torneo está "Por comenzar".</p>`;
+    const W=est==="finalizado"?currentWinner():null,L=est==="finalizado"?currentLoser():null;
+    const wid=W&&W.t.id,lid=L&&W&&L.t.id!==W.t.id?L.t.id:null;
+    const tally=f=>{const m={};keys.forEach(k=>{const id=A[k][f];if(id)(m[id]=m[id]||[]).push(k)});return Object.entries(m).sort((a,b)=>b[1].length-a[1].length)};
+    const block=(f,ic,ttl,hit)=>{const tl=tally(f);if(!tl.length)return `<p class="sub">${ic} ${ttl}: nadie apostó.</p>`;
+      return `<div class="bet-grp"><b>${ic} ${ttl}</b>${tl.map(([id,ks])=>`<div class="bet-row${hit===id?" hit":""}"><span class="bet-team">${esc(tn(id))}${hit===id?" ✓":""}</span><span class="bet-n">${ks.length}</span><small>${ks.map(nm).join(" · ")}</small></div>`).join("")}</div>`};
+    if(est==="finalizado"){
+      const both=keys.filter(k=>wid&&lid&&A[k].gana===wid&&A[k].uc===lid),g1=keys.filter(k=>wid&&A[k].gana===wid),u1=keys.filter(k=>lid&&A[k].uc===lid);
+      html+=`<div class="bet-res">${both.length?`<p style="margin:0"><b>🎯 Achuntaron las dos:</b> ${both.map(nm).join(", ")}</p>`:""}<p style="margin:0"><b>🏆 Acertaron al ganador${wid?` (${esc(tn(wid))})`:""}:</b> ${g1.length?g1.map(nm).join(", "):"nadie"}</p><p style="margin:0"><b>🦄 Acertaron a los Ucornianos${lid?` (${esc(tn(lid))})`:""}:</b> ${u1.length?u1.map(nm).join(", "):"nadie"}</p></div>`;
+    }
+    if(mine)html+=`<p class="sub" style="margin:0">Tu pronóstico: 🏆 ${esc(tn(mine.gana))} · 🦄 ${esc(tn(mine.uc))}</p>`;
+    html+=`<details class="bet-det"${est==="finalizado"?"":" open"}><summary>Ver todos los pronósticos</summary>${block("gana","🏆","Ganador",wid)}${block("uc","🦄","Ucornianos",lid)}</details>`;
+  }
+  html+=`</div>`;box.innerHTML=html;
+  if($("betGana")){$("betGana").onchange=e=>S.betDraft.gana=e.target.value;$("betUc").onchange=e=>S.betDraft.uc=e.target.value;
+    $("betSave").onclick=async()=>{const d=S.betDraft;if(!d.gana||!d.uc){toast("Elige un equipo para cada pronóstico");return}
+      if(d.gana===d.uc){toast("El mismo equipo no puede ganar y ser último");return}
+      $("betSave").disabled=true;try{await S.db.ref("apuestas/"+S.me).set({gana:d.gana,uc:d.uc,ts:Date.now()});toast("¡Pronóstico guardado!")}catch(e){toast(betsOpen()?"No se pudo guardar, intenta de nuevo":"Los pronósticos ya cerraron")}$("betSave").disabled=false}}
+}
 function renderBoard(){
   const box=$("lb");
   if(!S.teams.length){box.innerHTML=`<div class="empty"><strong>Aún no hay equipos</strong>${S.isAdmin?"Agrégalos en la pestaña Admin.":"Cuando el administrador agregue los equipos aparecerán aquí."}</div>`;return}
@@ -1051,7 +1135,7 @@ function renderStateBox(){
     <button class="btn danger" id="rsAll">Borrar todo<small>Scores, equipos, jugadores y fotos</small></button>
     <button class="btn" id="rsNo">Cancelar</button></div>`;
     $("rsNo").onclick=()=>{S.confirmReset=false;renderStateBox()};
-    const doReset=async all=>{const u={scores:null,salidas:null,ts:null,por:null,concursos:null,"config/estado":"previo","config/inicio":0,"config/fin":0,"config/podio":false,"config/publicado":null};
+    const doReset=async all=>{const u={scores:null,salidas:null,ts:null,por:null,concursos:null,apuestas:null,"config/estado":"previo","config/inicio":0,"config/fin":0,"config/podio":false,"config/publicado":null};
       if(all){u.equipos=null;u.fotos=null}
       S.confirmReset=false;try{await S.db.ref().update(u);toast(all?"Torneo borrado por completo":"Scores borrados, equipos intactos")}catch(e){writeErr(e)}renderStateBox()};
     $("rsScores").onclick=()=>doReset(false);$("rsAll").onclick=()=>doReset(true);return}
@@ -1091,8 +1175,15 @@ function renderConfig(){
   const full=S.teams.length>=MAX_TEAMS&&!S.editId;$("addForm").hidden=full;$("fullNote").hidden=!full;syncForm();
   const pl=$("plist");
   if(pl.contains(document.activeElement)&&document.activeElement.classList.contains("hin"))return;
-  pl.innerHTML=S.teams.length?S.teams.map((t,i)=>`<div class="pitem"><span class="idx">${i+1}</span><span class="n">${hasFotos(t)?`<span class="stack">${CATS.map(c=>av(t,c,"mini")).join("")}</span>`:""}${esc(t.name)}<small>${CATS.map(c=>`${c}: ${esc(pName(t,c))}`).join(" · ")}</small><button class="linkbtn" data-edit="${esc(t.id)}">Editar</button></span>${(()=>{const hi=teamHcpInfo(t);return hi.auto?`<span class="h hauto" title="Calculado con el índice de cada jugador">Índice <b>${d2(hi.v)}</b><small>auto</small></span>`:`<label class="h" title="Falta el índice de ${hi.missing.join(", ")}">Índice <input class="hin" type="text" inputmode="decimal" id="hcp-${esc(t.id)}" data-id="${esc(t.id)}" value="${dec(Number(t.hcp)||0)}"><small class="hmiss">falta ${hi.missing.join(", ")}</small></label>`})()}${S.confirmDel===t.id?`<button class="btn danger" data-del="${esc(t.id)}">Confirmar</button><button class="btn" data-cancel="1">No</button>`:`<button class="btn" data-ask="${esc(t.id)}">Quitar</button>`}</div>`).join(""):`<div class="note">Sin equipos todavía. Agrega el primero abajo.</div>`;
-  pl.querySelectorAll(".hin").forEach(inp=>inp.onchange=async()=>{
+  pl.innerHTML=S.teams.length?S.teams.map((t,i)=>`<div class="pitem"><span class="idx">${i+1}</span><span class="n">${hasFotos(t)?`<span class="stack">${CATS.map(c=>av(t,c,"mini")).join("")}</span>`:""}${esc(t.name)}<small>${CATS.map(c=>`${c}: ${esc(pName(t,c))}`).join(" · ")}</small><button class="linkbtn" data-edit="${esc(t.id)}">Editar</button></span>${(()=>{const hi=teamHcpInfo(t);return hi.fijo?`<label class="h hauto hfx" title="Índice fijado por el admin${hi.calc.auto?" (el calculado sería "+d2(hi.calc.v)+")":""}">Índice <input class="hin hfix" type="text" inputmode="numeric" data-id="${esc(t.id)}" value="${hi.v}" aria-label="Índice de ${esc(t.name)}"><small class="hfijo">fijo</small><button type="button" class="linkbtn hunfix" data-unfix="${esc(t.id)}">↺ auto${hi.calc.auto?" "+d2(hi.calc.v):""}</button></label>`:hi.auto?`<label class="h hauto hfx" title="Calculado con el índice de cada jugador. Cámbialo para fijarlo a mano.">Índice <input class="hin hfix" type="text" inputmode="numeric" data-id="${esc(t.id)}" value="${hi.v}" aria-label="Índice de ${esc(t.name)}"><small>auto</small></label>`:`<label class="h" title="Falta el índice de ${hi.missing.join(", ")}">Índice <input class="hin" type="text" inputmode="decimal" id="hcp-${esc(t.id)}" data-id="${esc(t.id)}" value="${dec(Number(t.hcp)||0)}"><small class="hmiss">falta ${hi.missing.join(", ")}</small></label>`})()}${S.confirmDel===t.id?`<button class="btn danger" data-del="${esc(t.id)}">Confirmar</button><button class="btn" data-cancel="1">No</button>`:`<button class="btn" data-ask="${esc(t.id)}">Quitar</button>`}</div>`).join(""):`<div class="note">Sin equipos todavía. Agrega el primero abajo.</div>`;
+  pl.querySelectorAll(".hfix").forEach(inp=>inp.onchange=async()=>{
+    const v0=parseHcp(inp.value);if(v0===null){toast("Índice entre 0 y 54");inp.value=teamHcp(S.teams.find(x=>x.id===inp.dataset.id));return}
+    const v=Math.round(v0),t=S.teams.find(x=>x.id===inp.dataset.id);if(!t)return;const hi=teamHcpInfo(t);
+    if(hi.v===v){inp.value=v;return}
+    try{await S.db.ref("equipos/"+t.id+"/hcpFijo").set(v);toast(`${t.name}: índice fijado en ${v}`)}catch(e){writeErr(e)}});
+  pl.querySelectorAll("[data-unfix]").forEach(b=>b.onclick=async e=>{e.preventDefault();const t=S.teams.find(x=>x.id===b.dataset.unfix);if(!t)return;
+    try{await S.db.ref("equipos/"+t.id+"/hcpFijo").set(null);toast(`${t.name}: índice automático (${d2(teamHcpCalc(t).v)})`)}catch(e2){writeErr(e2)}});
+  pl.querySelectorAll(".hin:not(.hfix)").forEach(inp=>inp.onchange=async()=>{
     const v=parseHcp(inp.value);if(v===null){toast("Índice entre 0 y 54");return}
     const t=S.teams.find(x=>x.id===inp.dataset.id);if(!t||Number(t.hcp)===v)return;
     try{await S.db.ref("equipos/"+t.id+"/hcp").set(v);toast(`${t.name}: Índice ${dec(v)}`)}catch(e){writeErr(e)}});
@@ -1450,12 +1541,12 @@ function renderInsc(){const box=$("inscList");if(!box)return;
   if(no.length)html+=`<details class="insc-pend"><summary>No juegan esta fecha (${no.length})</summary><p class="sub">${lst(no)}</p></details>`;
   box.innerHTML=html;
 }
-function renderAll(){renderInsc();showGate();renderMe();renderHeader();renderBoard();renderEntry();renderConfig();renderHof();renderUc()}
+function renderAll(){renderInsc();renderBets();showGate();renderMe();renderHeader();renderBoard();renderEntry();renderConfig();renderHof();renderUc()}
 
 // ---------- tabs ----------
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
-  ["tabla","inscritos","ingresar","campeones","ucornianos","config"].forEach(t=>$("v-"+t).hidden=t!==b.dataset.tab);
+  ["tabla","inscritos","ingresar","apuestas","campeones","ucornianos","config"].forEach(t=>$("v-"+t).hidden=t!==b.dataset.tab);
   try{b.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"})}catch(e){}
   if(b.dataset.tab==="campeones")renderHof();if(b.dataset.tab==="ucornianos")renderUc();
 });
@@ -1531,7 +1622,8 @@ CATS.forEach(c=>{
 function hcpPreview(){const el=$("hcpPrev");if(!el)return;const ks=CATS.map(c=>findJug($("p"+c).value));
   const fake={ruts:{},hcp:0};CATS.forEach((c,i)=>{if(ks[i])fake.ruts[c]=ks[i]});const hi=teamHcpInfo(fake);
   if(hi.auto){el.innerHTML=`Índice del equipo: <b>${d2(hi.v)}</b> · calculado con ${CATS.map(c=>c+" "+d2(jHcp(fake.ruts[c]))).join(", ")}`;$("newHcp").hidden=true}
-  else{el.innerHTML=ks.some(Boolean)?`Falta el índice de ${hi.missing.join(", ")}. Mientras tanto se usa el índice manual.`:"El índice del equipo se calcula solo cuando los 4 jugadores tienen su índice.";$("newHcp").hidden=false}}
+  else{el.innerHTML=ks.some(Boolean)?`Falta el índice de ${hi.missing.join(", ")}. Mientras tanto se usa el índice manual.`:"El índice del equipo se calcula solo cuando los 4 jugadores tienen su índice.";$("newHcp").hidden=false}
+  const et=S.editId&&S.teams.find(x=>x.id===S.editId);if(et&&typeof et.hcpFijo==="number")el.innerHTML+=`<br><b>Fijado por el admin en ${Math.round(et.hcpFijo)}</b>: se usa ese valor. Para volver al automático, usa "volver a auto" en la lista de equipos.`}
 CATS.forEach(c=>$("p"+c).addEventListener("input",()=>setTimeout(hcpPreview,0)));
 function syncForm(){syncPhotos();hcpPreview();$("formTitle").textContent=S.editId?"Editar equipo":"Nuevo equipo";$("addBtn").textContent=S.editId?"Guardar cambios":"Agregar equipo";$("cancelEdit").hidden=!S.editId}
 $("cancelEdit").onclick=()=>{clearForm();renderConfig()};
@@ -1648,9 +1740,9 @@ function startDemo(){
       store.ts[id][h.key]=Date.now()-(thru[i]-k)*11*60000})});
   const get=p=>p.split("/").reduce((o,k)=>o&&o[k],store);
   const put=(p,v)=>{const ks=p.split("/");let o=store;ks.slice(0,-1).forEach(k=>{o[k]=o[k]||{};o=o[k]});if(v===null)delete o[ks[ks.length-1]];else o[ks[ks.length-1]]=v};
-  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores","campeones","jfotos","por","ucornianos"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
+  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores","campeones","jfotos","por","ucornianos"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,hcpFijo:v[id].hcpFijo,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
     S.scores=JSON.parse(JSON.stringify(store.scores));S.salidas=JSON.parse(JSON.stringify(store.salidas));
-    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));S.hof=JSON.parse(JSON.stringify(store.campeones||{}));S.jfotos=JSON.parse(JSON.stringify(store.jfotos||{}));S.por=JSON.parse(JSON.stringify(store.por||{}));S.uc=JSON.parse(JSON.stringify(store.ucornianos||{}));S.jugLoaded=true;applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
+    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.apuestas=JSON.parse(JSON.stringify(store.apuestas||{}));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));S.hof=JSON.parse(JSON.stringify(store.campeones||{}));S.jfotos=JSON.parse(JSON.stringify(store.jfotos||{}));S.por=JSON.parse(JSON.stringify(store.por||{}));S.uc=JSON.parse(JSON.stringify(store.ucornianos||{}));S.jugLoaded=true;applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
   S.db={ref:(p)=>({set:async v=>{put(p,v);sync()},update:async m=>{Object.keys(m).forEach(k=>put(p?p+"/"+k:k,m[k]));sync()},push:async v=>{put(p+"/n"+Date.now(),v);sync()}})};
   S.dbGet=async p=>JSON.parse(JSON.stringify(get(p)??null));
   S.isAdmin=true;sync();setLive(true,"Demo");showBanner("Modo demo con equipos de ejemplo: puedes probar todo, pero nada se guarda.");
@@ -1677,12 +1769,13 @@ if(location.hash==="#demo"||!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==="P
   db.ref(".info/connected").on("value",s=>setLive(!!s.val(),s.val()?"En vivo":"Sin señal · se guarda igual"));
   db.ref("config").on("value",s=>{applyConfig(s.val());renderAll()});
   db.ref("equipos").on("value",s=>{const v=s.val()||{};
-    S.teams=Object.keys(v).map(id=>({id,name:String(v[id].name||"Equipo"),hcp:v[id].hcp,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created||0})).sort((a,b)=>a.created-b.created);
+    S.teams=Object.keys(v).map(id=>({id,name:String(v[id].name||"Equipo"),hcp:v[id].hcp,hcpFijo:typeof v[id].hcpFijo==="number"?v[id].hcpFijo:undefined,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created||0})).sort((a,b)=>a.created-b.created);
     renderAll()});
   db.ref("scores").on("value",s=>{S.scores=s.val()||{};renderBoard();renderEntry()});
   db.ref("salidas").on("value",s=>{S.salidas=s.val()||{};renderBoard();renderEntry()});
   db.ref("ts").on("value",s=>{S.ts=s.val()||{};renderBoard()});
   db.ref("concursos").on("value",s=>{S.concursos=s.val()||{};renderBoard();renderEntry()});
+  db.ref("apuestas").on("value",s=>{S.apuestas=s.val()||{};renderBets()});
   db.ref("fotos").on("value",s=>{S.fotos=s.val()||{};renderAll()});
   db.ref("jugadores").on("value",s=>{S.jug=s.val()||{};S.jugLoaded=true;
     if(S.me&&!S.jug[S.me]){S.me=null;try{localStorage.removeItem("fsc-me")}catch(e){}}renderAll()});
