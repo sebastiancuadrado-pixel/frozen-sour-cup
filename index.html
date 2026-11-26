@@ -586,6 +586,10 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
 .wronghole{display:grid;gap:8px;padding:12px 14px;border-radius:12px;border:2px solid #e2a23e;background:color-mix(in srgb,#e2a23e 14%,transparent);font-size:14px}
 .wronghole .btn{justify-self:start}
 .hb.start{box-shadow:inset 0 0 0 2px #e2b53e}
+.hb{position:relative}.hb i.pal{position:absolute;top:2px;right:3px;font-style:normal;font-size:11px;line-height:1;color:#f0b54a;letter-spacing:-1px}
+.sc td.palo{color:#f0b54a;font-weight:700}.sc tr.vrow td{font-size:11px;color:var(--muted)}
+.palnote{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,#f0b54a 18%,transparent);color:var(--ink);font-size:13px;font-weight:600}
+.pars.vents input{border-color:color-mix(in srgb,#f0b54a 50%,var(--line))}
 .hb.start b{font-size:12px}
 .salpick{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:4px 0;white-space:nowrap;min-width:0}
 .salpick select{font-size:13px;padding:4px 6px;width:auto!important;min-width:0;max-width:120px}
@@ -895,6 +899,8 @@ const DEFAULT_NINES={
   blanca:{name:"Blanca",pars:[4,4,3,5,4,4,4,3,5]}
 };
 const NINE_IDS=["roja","azul","blanca"];
+// Ventaja de cada hoyo dentro de su vuelta (1 = más difícil). Fuente: tarjeta publicada de Las Rocas (Roja y Azul).
+const DEFAULT_SI={roja:[7,5,3,6,1,9,4,8,2],azul:[2,4,9,7,6,3,1,8,5],blanca:null};
 const S={cierre:{},tjDraft:{},tjCache:{},uc:{},ucForm:null,me:null,viewer:false,por:{},jugLoaded:false,jfotos:{},hof:{},hofForm:null,jug:{},fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
   teams:[],scores:{},salidas:{},mode:"net",open:null,sel:null,hole:0,drive:null,isAdmin:false,db:null,confirmDel:null,draftOrder:null,editId:null};
 const CATS=["A","B","C","D"];
@@ -979,6 +985,12 @@ function showBanner(t){const b=$("banner");b.textContent=t;b.hidden=false}
 
 // ---------- course ----------
 function holes(){const out=[];S.cfg.order.forEach(id=>{const n=S.cfg.nines[id];if(!n)return;n.pars.forEach((p,i)=>out.push({key:id+(i+1),nine:id,num:i+1,par:p}))});return out}
+function ventajas(){const H=holes(),n=H.length,cu=S.cfg.ventajas||{},out={};const n9=S.cfg.order.length;
+  H.forEach(h=>{let v=cu[h.key];if(!(Number.isInteger(v)&&v>=1&&v<=n)){const r=(DEFAULT_SI[h.nine]||[])[h.num-1];const oi=S.cfg.order.indexOf(h.nine);v=r?(n9===1?r:r*2-(oi===0?1:0)):null}out[h.key]=v});
+  const vals=Object.values(out);const ok=vals.every(v=>v)&&new Set(vals).size===vals.length;return {map:out,ok}}
+function palosOf(hp){const H=holes(),n=H.length,V=ventajas(),out={};if(!n)return {map:out,ok:false};const base=Math.floor(Math.max(0,hp)/n),rem=Math.max(0,hp)%n;
+  H.forEach(h=>{const v=V.map[h.key];out[h.key]=base+(v&&v<=rem?1:0)});return {map:out,ok:V.ok}}
+function palos(t){return palosOf(stats(t).hcpPlay)}
 function coursePar(){return holes().reduce((a,h)=>a+h.par,0)}
 
 // ---------- scoring ----------
@@ -987,7 +999,8 @@ function stats(t,override){
   H.forEach(h=>{const v=sc[h.key];if(typeof v==="number"&&v>0){strokes+=v;par+=h.par;thru++}});
   const hcp=teamHcp(t);
   const hcpPlay=Math.round(hcp*H.length/18);
-  const hcpUsed=H.length?Math.round(hcpPlay*thru/H.length):0;
+  const PL=palosOf(hcpPlay);
+  const hcpUsed=!H.length?0:PL.ok?H.reduce((a,h)=>a+(typeof sc[h.key]==="number"&&sc[h.key]>0?PL.map[h.key]:0),0):Math.round(hcpPlay*thru/H.length);
   const toPar=strokes-par, net=Math.round((toPar-hcpUsed)*10)/10;
   return {strokes,toPar,thru,net,total:H.length,netStrokes:Math.round((strokes-hcpUsed)*10)/10,hcpPlay};
 }
@@ -1017,16 +1030,17 @@ document.addEventListener("submit",async e=>{const f=e.target.closest&&e.target.
   try{await S.db.ref(`equipos/${id}/name`).set(name);S.renaming=null;toast(`Ahora son "${name}"`)}catch(err){toast("No se pudo cambiar el nombre")}});
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("form[data-rn]"))e.stopPropagation()},true);
 function scorecard(t,curKey){
-  const sc=S.scores[t.id]||{};const sal=S.salidas[t.id]||{};const st=stats(t);let html="";
+  const sc=S.scores[t.id]||{};const sal=S.salidas[t.id]||{};const st=stats(t);let html="";const PL=palosOf(st.hcpPlay),VN=ventajas();
   html+=teamNameBar(t);
   html+=`<div class="roster">${CATS.map(c=>`<button type="button" class="rp" data-foto="${esc(t.id)}|${c}" title="Subir o cambiar la foto de ${esc(pName(t,c))}">${av(t,c)}<span>${esc(pName(t,c))}${t.ruts&&jHcp(t.ruts[c])!==null?`<i class="phcp">Índice ${d2(jHcp(t.ruts[c]))}</i>`:""}${foto(t,c)?"":`<em>+ foto</em>`}</span></button>`).join("")}</div>
   <p class="sub rphint">Toca tu nombre para subir o cambiar tu foto.</p>`;
   S.cfg.order.forEach(id=>{const n=S.cfg.nines[id];if(!n)return;
-    let hh="",pp="",ss="",dd="",ps=0,tot=0,any=false;
-    n.pars.forEach((p,i)=>{const v=sc[id+(i+1)];const w=sal[id+(i+1)];const k=id+(i+1),cc=k===curKey?' class="curcol"':"";hh+=`<th${cc}>${i+1}</th>`;pp+=`<td${cc}>${p}</td>`;ps+=p;
+    let hh="",pp="",ss="",dd="",vv="",kk="",ps=0,tot=0,any=false,pt=0;
+    n.pars.forEach((p,i)=>{const v=sc[id+(i+1)];const w=sal[id+(i+1)];const k=id+(i+1),cc=k===curKey?' class="curcol"':"";hh+=`<th${cc}>${i+1}</th>`;pp+=`<td${cc}>${p}</td>`;ps+=p;const pk=PL.map[k]||0;pt+=pk;
+      vv+=`<td${cc}>${VN.map[k]||""}</td>`;kk+=`<td class="${pk?"palo":""}${k===curKey?" curcol":""}">${pk?"●".repeat(Math.min(pk,3)):""}</td>`;
       ss+=`<td${cc}>${typeof v==="number"?`<span class="mark ${markClass(v,p)}">${v}</span>`:""}</td>`;
       dd+=`<td${cc}>${w&&typeof v==="number"?`<span class="dl c-${w}">${w}</span>`:""}</td>`;if(typeof v==="number"){tot+=v;any=true}});
-    html+=`<div class="sc"><table><tr class="hole"><th>${esc(n.name)}</th>${hh}<th class="sum">Tot</th></tr><tr><td>Par</td>${pp}<td class="sum">${ps}</td></tr><tr><td>Score</td>${ss}<td class="sum">${any?tot:""}</td></tr><tr><td>Salida</td>${dd}<td class="sum"></td></tr></table></div>`;});
+    html+=`<div class="sc"><table><tr class="hole"><th>${esc(n.name)}</th>${hh}<th class="sum">Tot</th></tr><tr><td>Par</td>${pp}<td class="sum">${ps}</td></tr><tr class="vrow"><td>Vent.</td>${vv}<td class="sum"></td></tr><tr><td>Palos</td>${kk}<td class="sum">${pt||""}</td></tr><tr><td>Score</td>${ss}<td class="sum">${any?tot:""}</td></tr><tr><td>Salida</td>${dd}<td class="sum"></td></tr></table></div>`;});
   html+=`<div class="reqwrap">${isDQ(t)&&!curKey?`<div class="dqnote">Descalificado. ${esc(dqReason(t))}.</div>`:""}<div class="lbl">Salidas obligatorias C y D</div>${reqGrid(t)}</div>`;
   html+=`<div class="netline"><span>Gross <b>${st.thru?st.strokes:"–"}</b></span><span>Índice equipo <b>${d2(st.hcpPlay)}</b></span><span>Neto <b>${st.thru?dec(st.netStrokes):"–"}</b>${st.thru&&st.thru<st.total?" (parcial)":""}</span></div>`;
   return html;
@@ -1162,10 +1176,11 @@ function renderEntry(){
   const drives=`<div class="drives">${CATS.map(c=>`<button class="drv${S.drive===c?" sel":""}${needHere.includes(c)&&!locked?" need":""}" data-c="${c}"${dis}>${av(t,c)}<span class="dn">${esc(pName(t,c))}</span></button>`).join("")}</div>`;
   const sel=!S.isAdmin?`<div class="myteam"><b>${esc(t.name)}</b> · Índice ${d2(teamHcp(t))}<small>Solo puedes anotar en tu equipo</small></div>`:`<select id="teamSel">${S.teams.map(x=>`<option value="${esc(x.id)}"${x.id===S.sel?" selected":""}>${esc(x.name)} · Índice ${d2(teamHcp(x))}</option>`).join("")}</select>`;
   let ninesHtml="";
+  const PL=palos(t),VN=ventajas();
   S.cfg.order.forEach((id,ni)=>{const n=S.cfg.nines[id];if(!n)return;
-    let cells="";n.pars.forEach((p,i)=>{const gi=ni*9+i;const v=sc[id+(i+1)];
-      const st=t.salida===id+(i+1);
-      cells+=`<button class="hb${typeof v==="number"?" done":""}${st?" start":""}" data-i="${gi}" aria-pressed="${gi===S.hole}"${st?' title="Hoyo de salida"':""}><b>${st?"🚩":""}${i+1}</b><span>${typeof v==="number"?v:"·"}</span></button>`});
+    let cells="";n.pars.forEach((p,i)=>{const v=sc[id+(i+1)];const gi=ni*9+i;
+      const st=t.salida===id+(i+1);const pk=PL.map[id+(i+1)]||0;
+      cells+=`<button class="hb${typeof v==="number"?" done":""}${st?" start":""}" data-i="${gi}" aria-pressed="${gi===S.hole}" title="${st?"Hoyo de salida · ":""}${pk?(pk>1?pk+" palos":"Tienen palo"):"Sin palo"}">${pk?`<i class="pal" aria-hidden="true">${"●".repeat(Math.min(pk,3))}</i>`:""}<b>${st?"🚩":""}${i+1}</b><span>${typeof v==="number"?v:"·"}</span></button>`});
     ninesHtml+=`<div class="ninerow"><div class="ninelbl n-${id}">${esc(n.name)}</div><div class="holes">${cells}</div></div>`});
   const names={"-3":"Albatros","-2":"Eagle","-1":"Birdie","0":"Par","1":"Bogey","2":"Doble","3":"Triple"};
   let nums="";for(let n=1;n<=10;n++){const d=n-h.par;nums+=`<button class="nb${d===0?" par":""}${S.draftN===n?" sel":""}" data-n="${n}"${dis}><b>${n}</b><span>${n===1?"Hoyo en uno":(names[d]||(d>0?"+"+d:""))}</span></button>`}
@@ -1178,7 +1193,7 @@ function renderEntry(){
   box.innerHTML=`${adminNote}${salBanner}${allDone||cl?cierreBox:""}<div><div class="lbl">Equipo</div>${sel}</div>
   <div><div class="lbl">Hoyo</div>${ninesHtml}</div>
   ${wrongHole}
-  <div class="cur"><h3>${esc(S.cfg.nines[h.nine].name)} ${h.num} · Par ${h.par}</h3><div class="meta">${s.thru?`Gross ${fmt(s.toPar)} · Neto ${fmt(s.net)} tras ${s.thru}`:"Sin scores"}</div></div>
+  <div class="cur"><h3>${esc(S.cfg.nines[h.nine].name)} ${h.num} · Par ${h.par}</h3>${VN.map[h.key]?`<div class="meta">Ventaja ${VN.map[h.key]} · ${(PL.map[h.key]||0)?`<span class="palnote">● ${PL.map[h.key]>1?PL.map[h.key]+" palos":"Tienen palo"} en este hoyo</span>`:"Sin palo en este hoyo"}</div>`:""}<div class="meta">${s.thru?`Gross ${fmt(s.toPar)} · Neto ${fmt(s.net)} tras ${s.thru}`:"Sin scores"}</div></div>
   ${(()=>{const who=(S.por[t.id]||{})[h.key];const tsv=(S.ts[t.id]||{})[h.key];if(typeof cur!=="number"||!who)return "";const n=who==="admin"?"el administrador":(S.jug[who]?S.jug[who].nombre:"");return n?`<div class="porline">Anotado por ${esc(n)}${tsv?" · "+new Date(tsv).toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit",hour12:false}):""}</div>`:""})()}
   <div><div class="lbl">1 · ¿De quién fue la salida?</div>${drives}${hint}</div>
   <div><div class="lbl">2 · Golpes del equipo</div><div class="nums">${nums}</div></div>
@@ -1301,7 +1316,8 @@ function renderConfig(){
   $("podioBtn").textContent=S.cfg.podio?"Ocultar podio":"Mostrar podio ahora";
   const pe=$("cfgPars");
   if(!pe.contains(document.activeElement)){pe.innerHTML=NINE_IDS.map(id=>{const n=S.cfg.nines[id];
-    return `<div class="parnine"><div class="ninelbl n-${id}">${esc(n.name)}</div><div class="pars">${n.pars.map((v,i)=>`<label>${i+1}<input type="number" id="par-${id}-${i+1}" min="3" max="6" value="${v}"></label>`).join("")}</div></div>`}).join("")}
+    const VN=ventajas().map,on=S.cfg.order.includes(id);
+    return `<div class="parnine"><div class="ninelbl n-${id}">${esc(n.name)}</div><div class="pars">${n.pars.map((v,i)=>`<label>${i+1}<input type="number" id="par-${id}-${i+1}" min="3" max="6" value="${v}"></label>`).join("")}</div>${on?`<div class="sub" style="margin:4px 0 0;font-size:12px">Ventaja (1 = hoyo más difícil de los ${holes().length})</div><div class="pars vents">${n.pars.map((v,i)=>`<label>V${i+1}<input type="number" id="si-${id}-${i+1}" min="1" max="${holes().length}" value="${VN[id+(i+1)]||""}"></label>`).join("")}</div>`:""}</div>`}).join("")}
   $("teamCount").textContent=`${S.teams.length} de ${MAX_TEAMS}`;
   const full=S.teams.length>=MAX_TEAMS&&!S.editId;$("addForm").hidden=full;$("fullNote").hidden=!full;syncForm();
   const pl=$("plist");
@@ -1712,11 +1728,14 @@ $("saveCfg").onclick=async()=>{
   const nines={};NINE_IDS.forEach(id=>{const base=S.cfg.nines[id];const pars=[];
     for(let i=1;i<=9;i++){const el=$(`par-${id}-${i}`);let v=el?parseInt(el.value,10):base.pars[i-1];if(!(v>=3&&v<=6))v=base.pars[i-1];pars.push(v)}
     nines[id]={name:base.name,pars}});
+  let ventajasCfg=null;{const sameOrder=JSON.stringify(order)===JSON.stringify(S.cfg.order);
+    if(sameOrder){const vals={};let bad=false;order.forEach(id=>{for(let i=1;i<=9;i++){const el=$(`si-${id}-${i}`);const v=el?parseInt(el.value,10):NaN;if(!(v>=1&&v<=order.length*9))bad=true;vals[id+i]=v}});
+      if(bad||new Set(Object.values(vals)).size!==order.length*9){toast(`Las ventajas deben ser los números del 1 al ${order.length*9}, sin repetir`);return}ventajasCfg=vals}}
   const name=$("cfgName").value.trim()||DEFAULT_NAME;
   const contests={longdrive:$("cLD").value,approach:$("cAP").value};
   const pn=v=>{const n=parseFloat(String(v).replace(",","."));return n>=0&&n<=100?Math.round(n*100)/100:null};
   const pctCD=pn($("cfgPctCD").value);if(pctCD===null){toast("Revisa el porcentaje del índice");return}
-  try{await S.db.ref("config").update({name,order,nines,contests,pctCD});S.draftOrder=null;toast("Torneo guardado");renderConfig()}catch(e){writeErr(e)}
+  try{await S.db.ref("config").update({name,order,nines,contests,pctCD,ventajas:ventajasCfg});S.draftOrder=null;toast("Torneo guardado");renderConfig()}catch(e){writeErr(e)}
 };
 $("podioBtn").onclick=async()=>{const next=!S.cfg.podio;try{await S.db.ref("config/podio").set(next);toast(next?"Podio visible para todos":"Podio oculto")}catch(e){writeErr(e)}};
 $("addForm").addEventListener("submit",async e=>{
@@ -1889,7 +1908,7 @@ function applyConfig(d){
   const order=Array.isArray(d.order)?d.order.filter(id=>NINE_IDS.includes(id)):["roja","azul"];
   const c=d.contests||{};
   S.cfg={name:d.name||DEFAULT_NAME,order:order.length?order:["roja","azul"],nines,contests:{longdrive:c.longdrive||"",approach:c.approach||""},podio:!!d.podio,pctSum:typeof d.pctSum==="number"?d.pctSum:10,pctCD:typeof d.pctCD==="number"?d.pctCD:5,
-    estado:["previo","en_juego","finalizado"].includes(d.estado)?d.estado:"previo",inicio:d.inicio||0,fin:d.fin||0,publicado:d.publicado||null};
+    estado:["previo","en_juego","finalizado"].includes(d.estado)?d.estado:"previo",inicio:d.inicio||0,fin:d.fin||0,publicado:d.publicado||null,ventajas:d.ventajas&&typeof d.ventajas==="object"?d.ventajas:null};
 }
 // ---------- live data ----------
 function setLive(on,txt){$("live").classList.toggle("off",!on);$("liveTxt").textContent=txt}
