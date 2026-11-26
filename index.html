@@ -566,6 +566,30 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
 .bc-bar{display:block;height:100%;border-radius:7px}
 .bc-gold .bc-bar{background:#e2b53e}.bc-pink .bc-bar{background:#e2589e}
 .bc-n{font:700 16px var(--display);text-align:right;font-variant-numeric:tabular-nums}
+/* Salida simultánea */
+.salbanner{display:flex;gap:12px;align-items:center;padding:14px 16px;border-radius:14px;background:#f3cf6e;color:#2e2200}
+.salbanner .salflag{font-size:30px;line-height:1}
+.salbanner b{display:block;font:700 20px var(--display);letter-spacing:.02em}
+.salbanner span:not(.salflag){display:block;font-size:14px;margin-top:2px}
+.cierre{display:grid;gap:10px;padding:14px 16px;border-radius:14px;border:1px solid var(--line);font-size:14px}
+.cierre b.ct{display:block;font:700 19px var(--display);letter-spacing:.02em}
+.cierre.ready{background:color-mix(in srgb,var(--ok) 16%,transparent);border:2px solid var(--ok)}
+.cierre.done{background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.cierre.off{opacity:.75}
+.cierre .row2{display:flex;flex-wrap:wrap;gap:8px}
+.cierre img.tjprev{max-width:100%;max-height:260px;border-radius:10px;justify-self:start;border:1px solid var(--line)}
+.tjrow{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+.tjrow span{flex:1}.tjrow small{color:var(--muted)}
+#tjImg{max-width:100%;max-height:70vh;border-radius:10px;display:block;margin:0 auto}
+.salmini{font-size:14px;color:var(--muted);padding:2px 2px 0}
+.salmini b{color:var(--ink)}
+.wronghole{display:grid;gap:8px;padding:12px 14px;border-radius:12px;border:2px solid #e2a23e;background:color-mix(in srgb,#e2a23e 14%,transparent);font-size:14px}
+.wronghole .btn{justify-self:start}
+.hb.start{box-shadow:inset 0 0 0 2px #e2b53e}
+.hb.start b{font-size:12px}
+.salpick{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:4px 0;white-space:nowrap;min-width:0}
+.salpick select{font-size:13px;padding:4px 6px;width:auto!important;min-width:0;max-width:120px}
+.salauto{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 8px}
 </style>
 </head>
 <body>
@@ -738,6 +762,7 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
         </div>
         <datalist id="jugList"></datalist>
         <div class="lbl" style="display:flex;justify-content:space-between;margin-top:18px"><span>Equipos</span><span id="teamCount">0 de 39</span></div>
+        <div class="salauto"><button class="btn" type="button" id="salAuto">🚩 Repartir hoyos de salida</button><span class="sub" id="salInfo"></span></div>
         <div class="plist" id="plist"></div>
         <form class="add" id="addForm" style="margin-top:8px">
           <div class="lbl formtitle" id="formTitle">Nuevo equipo</div>
@@ -794,6 +819,7 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
   </div>
 </div>
 <input type="file" id="selfPhoto" accept="image/*" hidden>
+<input type="file" id="tjFile" accept="image/*" hidden>
 <input type="file" id="selfCam" accept="image/*" capture="user" hidden>
 <div class="phmodal" id="srcModal" hidden role="dialog" aria-modal="true" aria-labelledby="srcTitle">
   <div class="phcard srccard">
@@ -824,6 +850,14 @@ nav.tabs{overflow-x:auto;-webkit-mask-image:linear-gradient(90deg,#000 88%,trans
       <button class="btn" id="shMore" type="button" hidden>Más opciones</button>
     </div>
     <button class="btn" id="shClose" type="button">Cerrar</button>
+  </div>
+</div>
+<div class="phmodal" id="tjModal" hidden role="dialog" aria-modal="true" aria-labelledby="tjTitle">
+  <div class="phcard">
+    <div class="lbl" id="tjTitle">Tarjeta</div>
+    <img id="tjImg" alt="Foto de la tarjeta física">
+    <p class="sub" id="tjWho"></p>
+    <div class="row2"><button class="btn" id="tjClose" type="button">Cerrar</button></div>
   </div>
 </div>
 <div class="phmodal" id="phModal" hidden role="dialog" aria-modal="true" aria-labelledby="phTitle">
@@ -861,7 +895,7 @@ const DEFAULT_NINES={
   blanca:{name:"Blanca",pars:[4,4,3,5,4,4,4,3,5]}
 };
 const NINE_IDS=["roja","azul","blanca"];
-const S={uc:{},ucForm:null,me:null,viewer:false,por:{},jugLoaded:false,jfotos:{},hof:{},hofForm:null,jug:{},fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
+const S={cierre:{},tjDraft:{},tjCache:{},uc:{},ucForm:null,me:null,viewer:false,por:{},jugLoaded:false,jfotos:{},hof:{},hofForm:null,jug:{},fotos:{},formFotos:{},ts:{},concursos:{},seenTs:Date.now(),cfg:{name:DEFAULT_NAME,order:["roja","azul"],nines:JSON.parse(JSON.stringify(DEFAULT_NINES)),contests:{longdrive:"",approach:""},podio:false,estado:"previo",inicio:0,fin:0},
   teams:[],scores:{},salidas:{},mode:"net",open:null,sel:null,hole:0,drive:null,isAdmin:false,db:null,confirmDel:null,draftOrder:null,editId:null};
 const CATS=["A","B","C","D"];
 const REQ_CATS=["C","D"],REQ_PARS=[3,4,5];
@@ -1017,6 +1051,11 @@ async function exportInscritos(){if(!S.isAdmin)return;const ks=Object.keys(S.jug
   catch(e){toast("No se pudo generar el Excel. Revisa tu conexión e intenta de nuevo")}
   b.disabled=false;b.textContent=old}
 if($("xlsGo"))$("xlsGo").onclick=exportInscritos;
+if($("salAuto"))$("salAuto").onclick=async()=>{if(!S.isAdmin)return;const H=holes(),T=S.teams.slice().sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+  if(!T.length||!H.length){toast("Primero carga los equipos y las vueltas");return}
+  if(S.teams.some(t=>t.salida)&&!S.salConfirm){S.salConfirm=true;toast("Ya hay hoyos asignados. Aprieta de nuevo para repartirlos otra vez");setTimeout(()=>S.salConfirm=false,5000);return}
+  S.salConfirm=false;const upd={};T.forEach((t,i)=>{upd[`equipos/${t.id}/salida`]=H[Math.floor(i*H.length/T.length)%H.length].key});
+  try{await S.db.ref().update(upd);toast(`Hoyos de salida repartidos entre ${T.length} equipos`)}catch(e){writeErr(e)}};
 function renderBetAdmin(){const box=$("betAdmin");if(!box)return;if(!S.isAdmin){box.innerHTML="";return}
   const A=S.apuestas||{},tn=id=>{const t=S.teams.find(x=>x.id===id);return t?t.name:"—"};
   const ks=Object.keys(A).filter(k=>A[k]&&S.jug[k]).sort((a,b)=>S.jug[a].nombre.localeCompare(S.jug[b].nombre));
@@ -1088,13 +1127,18 @@ function renderBoard(){
     const thru=r.s.thru===r.s.total?"F":r.s.thru||"–";
     const g=r.s.thru?`<span class="${cls(r.s.toPar)}">${fmt(r.s.toPar)}</span><small>${r.s.strokes}</small>`:"–";
     const n=r.s.thru?`<span class="${cls(r.s.net)}">${fmt(r.s.net)}</span><small>${dec(r.s.netStrokes)}</small>`:"–";
-    html+=`<tr class="row${lead?" lead":""}${r.dq?" dq":""}" data-id="${esc(r.t.id)}"><td class="pos">${pos}${!r.dq&&moves[r.t.id]?`<span class="mv ${moves[r.t.id]>0?"up":"down"}">${moves[r.t.id]>0?"▲":"▼"}${Math.abs(moves[r.t.id])}</span>`:""}</td><td><div class="pname">${hasFotos(r.t)?`<span class="stack">${CATS.map(c=>av(r.t,c,"mini")).join("")}</span>`:""}${esc(r.t.name)}<span class="lbplayers">${esc(shortNames(r.t))}</span><small>Índice ${d2(teamHcp(r.t))}<span class="mob"> · ${r.s.thru===r.s.total?"Terminó":r.s.thru?"Hoyo "+r.s.thru:"Sin empezar"}</span></small>${r.s.thru?reqBadge(r.t):""}</div></td><td class="thru hcol">${thru}</td><td class="score ${S.mode==="gross"?"big":""}">${g}</td><td class="score ${S.mode==="net"?"big":""}">${n}</td></tr>`;
+    html+=`<tr class="row${lead?" lead":""}${r.dq?" dq":""}" data-id="${esc(r.t.id)}"><td class="pos">${pos}${!r.dq&&moves[r.t.id]?`<span class="mv ${moves[r.t.id]>0?"up":"down"}">${moves[r.t.id]>0?"▲":"▼"}${Math.abs(moves[r.t.id])}</span>`:""}</td><td><div class="pname">${hasFotos(r.t)?`<span class="stack">${CATS.map(c=>av(r.t,c,"mini")).join("")}</span>`:""}${esc(r.t.name)}<span class="lbplayers">${esc(shortNames(r.t))}</span><small>Índice ${d2(teamHcp(r.t))}<span class="mob"> · ${r.s.thru===r.s.total?(S.cierre[r.t.id]?"Terminó ✓":"Falta cerrar ronda"):r.s.thru?"Hoyo "+r.s.thru:r.t.salida?"Sale en "+salidaLabel(r.t):"Sin empezar"}</span></small>${r.s.thru?reqBadge(r.t):""}</div></td><td class="thru hcol">${thru}</td><td class="score ${S.mode==="gross"?"big":""}">${g}</td><td class="score ${S.mode==="net"?"big":""}">${n}</td></tr>`;
     if(S.open===r.t.id)html+=`<tr><td colspan="5" class="card-cell">${scorecard(r.t)}</td></tr>`;
   });
   box.innerHTML=html+"</tbody></table>";renderTicker();renderContests();renderHoleStats();renderPodium();
   box.querySelectorAll("tr.row").forEach(tr=>tr.onclick=()=>{S.open=S.open===tr.dataset.id?null:tr.dataset.id;renderBoard()});
 }
-function firstEmpty(tid){const H=holes(),sc=S.scores[tid]||{};const i=H.findIndex(h=>typeof sc[h.key]!=="number");return i<0?H.length-1:i}
+// Salida simultánea: cada equipo parte en su hoyo y sigue en orden, dando la vuelta
+function startIdx(t){const H=holes();const i=t&&t.salida?H.findIndex(h=>h.key===t.salida):-1;return i<0?0:i}
+function rotOrder(t){const H=holes(),s=startIdx(t);return H.map((_,i)=>(s+i)%H.length)}
+function salidaLabel(t){const H=holes();const h=t&&t.salida?H.find(x=>x.key===t.salida):null;return h?holeLabel(h):""}
+function firstEmpty(tid){const H=holes(),sc=S.scores[tid]||{},t=S.teams.find(x=>x.id===tid);const o=rotOrder(t);const i=o.find(k=>typeof sc[H[k].key]!=="number");return i===undefined?o[o.length-1]:i}
+function stepHole(t,cur,dir){const o=rotOrder(t);const p=o.indexOf(cur);const q=p+dir;return q<0||q>=o.length?null:o[q]}
 function renderEntry(){
   const box=$("entry");
   if(!S.teams.length){box.innerHTML=`<div class="empty"><strong>Todavía no hay equipos</strong>${S.isAdmin?"Agrégalos en la pestaña Admin.":"El administrador debe cargarlos primero."}</div>`;return}
@@ -1110,7 +1154,8 @@ function renderEntry(){
   if(S.hole>=H.length)S.hole=H.length-1;
   const t=S.teams.find(x=>x.id===S.sel);const sc=S.scores[t.id]||{};const sal=S.salidas[t.id]||{};const h=H[S.hole];const cur=sc[h.key];
   if(S.driveFor!==t.id+h.key){S.drive=sal[h.key]||null;S.draftN=typeof cur==="number"?cur:null;S.driveFor=t.id+h.key;S.editing=false}
-  const saved=typeof cur==="number";const locked=saved&&!S.editing;const dis=locked?" disabled":"";
+  const cl=S.cierre[t.id]||null,rLock=!!cl&&!S.isAdmin;
+  const saved=typeof cur==="number";const locked=(saved&&!S.editing)||rLock;const dis=locked?" disabled":"";
   const dirty=S.drive!==(sal[h.key]||null)||S.draftN!==(typeof cur==="number"?cur:null);const ready=!!(S.drive&&S.draftN);
   const rq=reqStatus(t);const needHere=REQ_CATS.filter(c=>!rq.done[c][h.par]);
   const hint=needHere.length?`<div class="hint">${needHere.map(c=>`<span class="cat c-${c}">${c}</span>`).join("")} todavía ${needHere.length>1?"necesitan":"necesita"} una salida en par ${h.par}${rq.remaining[h.par]>0&&rq.remaining[h.par]<=needHere.length?` · quedan ${rq.remaining[h.par]} par ${h.par}`:""}</div>`:"";
@@ -1119,13 +1164,20 @@ function renderEntry(){
   let ninesHtml="";
   S.cfg.order.forEach((id,ni)=>{const n=S.cfg.nines[id];if(!n)return;
     let cells="";n.pars.forEach((p,i)=>{const gi=ni*9+i;const v=sc[id+(i+1)];
-      cells+=`<button class="hb${typeof v==="number"?" done":""}" data-i="${gi}" aria-pressed="${gi===S.hole}"><b>${i+1}</b><span>${typeof v==="number"?v:"·"}</span></button>`});
+      const st=t.salida===id+(i+1);
+      cells+=`<button class="hb${typeof v==="number"?" done":""}${st?" start":""}" data-i="${gi}" aria-pressed="${gi===S.hole}"${st?' title="Hoyo de salida"':""}><b>${st?"🚩":""}${i+1}</b><span>${typeof v==="number"?v:"·"}</span></button>`});
     ninesHtml+=`<div class="ninerow"><div class="ninelbl n-${id}">${esc(n.name)}</div><div class="holes">${cells}</div></div>`});
   const names={"-3":"Albatros","-2":"Eagle","-1":"Birdie","0":"Par","1":"Bogey","2":"Doble","3":"Triple"};
   let nums="";for(let n=1;n<=10;n++){const d=n-h.par;nums+=`<button class="nb${d===0?" par":""}${S.draftN===n?" sel":""}" data-n="${n}"${dis}><b>${n}</b><span>${n===1?"Hoyo en uno":(names[d]||(d>0?"+"+d:""))}</span></button>`}
   const s=stats(t);
-  box.innerHTML=`${adminNote}<div><div class="lbl">Equipo</div>${sel}</div>
+  const expIdx=firstEmpty(t.id),allDone=s.thru===s.total;
+  const salBanner=t.salida?(s.thru===0?`<div class="salbanner"><span class="salflag">🚩</span><div><b>Tu equipo sale en el hoyo ${esc(salidaLabel(t))}.</b><span>Empieza anotando ahí y sigue en orden: al terminar el último hoyo vuelves al primero.</span></div></div>`:`<div class="salmini">🚩 Salida: <b>${esc(salidaLabel(t))}</b>${allDone?" · ¡Terminaron los 18!":` · Siguiente: <b>${esc(holeLabel(H[expIdx]))}</b>`}</div>`):"";
+  const wrongHole=!saved&&!allDone&&S.hole!==expIdx?`<div class="wronghole"><span>⚠ El siguiente hoyo de tu equipo es <b>${esc(holeLabel(H[expIdx]))}</b>. ¿Seguro que quieres anotar <b>${esc(holeLabel(h))}</b>?</span><button type="button" class="btn" id="goExp">Ir a ${esc(holeLabel(H[expIdx]))}</button></div>`:"";
+  const prevI=stepHole(t,S.hole,-1),nextI=stepHole(t,S.hole,1);
+  const cierreBox=cierreHtml(t,s,cl);
+  box.innerHTML=`${adminNote}${salBanner}${allDone||cl?cierreBox:""}<div><div class="lbl">Equipo</div>${sel}</div>
   <div><div class="lbl">Hoyo</div>${ninesHtml}</div>
+  ${wrongHole}
   <div class="cur"><h3>${esc(S.cfg.nines[h.nine].name)} ${h.num} · Par ${h.par}</h3><div class="meta">${s.thru?`Gross ${fmt(s.toPar)} · Neto ${fmt(s.net)} tras ${s.thru}`:"Sin scores"}</div></div>
   ${(()=>{const who=(S.por[t.id]||{})[h.key];const tsv=(S.ts[t.id]||{})[h.key];if(typeof cur!=="number"||!who)return "";const n=who==="admin"?"el administrador":(S.jug[who]?S.jug[who].nombre:"");return n?`<div class="porline">Anotado por ${esc(n)}${tsv?" · "+new Date(tsv).toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit",hour12:false}):""}</div>`:""})()}
   <div><div class="lbl">1 · ¿De quién fue la salida?</div>${drives}${hint}</div>
@@ -1134,22 +1186,66 @@ function renderEntry(){
     <div class="csum">${ready?`<span class="cat c-${S.drive}">${S.drive}</span><span>Salida de <b>${esc(pName(t,S.drive))}</b> · <b>${S.draftN}</b> golpes${(()=>{const d=S.draftN-h.par;return names[d]?" ("+names[d].toLowerCase()+")":""})()}</span>`:`<span class="muted">${!S.drive&&!S.draftN?"Elige la salida y los golpes":!S.drive?"Falta elegir de quién fue la salida":"Falta elegir los golpes"}</span>`}</div>
     <button class="btn primary big" id="saveH" ${ready&&dirty?"":"disabled"}>${saved&&!dirty?"✓ Guardado":saved?"Confirmar cambio":"Confirmar y guardar"}</button>
   </div>
-  <div class="navrow"><button class="btn" id="prevH" ${S.hole===0?"disabled":""}>‹ Anterior</button><button class="btn" id="nextH" ${S.hole===H.length-1?"disabled":""}>Siguiente ›</button>${saved?`<button class="btn${S.editing?"":" edit"}" id="editH">${S.editing?"Cancelar":"✎ Editar hoyo"}</button>`:""}</div>
+  <div class="navrow"><button class="btn" id="prevH" ${prevI===null?"disabled":""}>‹ Anterior</button><button class="btn" id="nextH" ${nextI===null?"disabled":""}>Siguiente ›</button>${saved&&!rLock?`<button class="btn${S.editing?"":" edit"}" id="editH">${S.editing?"Cancelar":"✎ Editar hoyo"}</button>`:""}</div>
+  ${allDone||cl?"":cierreBox}
   ${contestForm(t,h)}
   <div><div class="lbl">Tarjeta de ${esc(t.name)}</div><div class="cardbox">${scorecard(t,h.key)}</div></div>`;
   if($("teamSel"))$("teamSel").onchange=e=>{S.sel=e.target.value;try{localStorage.setItem("fsc-team",S.sel)}catch(err){}S.hole=firstEmpty(S.sel);renderEntry()};
   box.querySelectorAll(".hb").forEach(b=>b.onclick=()=>{S.hole=+b.dataset.i;renderEntry()});
   box.querySelectorAll(".drv").forEach(b=>b.onclick=()=>{S.drive=b.dataset.c;renderEntry()});
   box.querySelectorAll(".nb").forEach(b=>b.onclick=()=>{S.draftN=+b.dataset.n;renderEntry()});
-  $("saveH").onclick=()=>{if(!S.drive){toast("Falta elegir de quién fue la salida");return}if(!S.draftN){toast("Falta elegir los golpes");return}
+  $("saveH").onclick=()=>{if(rLock){toast("La ronda ya está terminada");return}if(!S.drive){toast("Falta elegir de quién fue la salida");return}if(!S.draftN){toast("Falta elegir los golpes");return}
     saveStroke(t.id,h.key,S.draftN,S.drive)};
-  $("prevH").onclick=()=>{S.hole--;renderEntry()};$("nextH").onclick=()=>{S.hole++;renderEntry()};
+  $("prevH").onclick=()=>{if(prevI!==null){S.hole=prevI;renderEntry()}};$("nextH").onclick=()=>{if(nextI!==null){S.hole=nextI;renderEntry()}};
+  if($("goExp"))$("goExp").onclick=()=>{S.hole=expIdx;renderEntry()};
+  bindCierre(t);
   if($("cSave"))$("cSave").onclick=async()=>{if(!canScore()){toast("Regístrate para registrar concursos");return}const cat=$("cCat").value;const dist=parseFloat(String($("cDist").value).replace(",","."));
     const c=$("cSave").dataset.c;
     if(!(dist>0&&dist<1000)){toast(c==="longdrive"?"Ingresa la distancia en yardas":"Ingresa la distancia en metros");return}
 try{await S.db.ref("concursos/"+c).set({team:t.id,cat,dist:Math.round(dist*100)/100,ts:firebaseTime()});toast(`${pName(t,cat)} es el nuevo líder`)}catch(e){writeErr(e)}};
   if($("editH"))$("editH").onclick=()=>{if(S.editing){S.editing=false;S.drive=sal[h.key]||null;S.draftN=cur}else{S.editing=true;toast("Ya puedes cambiar la salida o los golpes")}renderEntry()};
 }
+function hmS(t){return t?new Date(t).toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit",hour12:false}):""}
+function porName(by){return by==="admin"?"el administrador":(S.jug[by]?S.jug[by].nombre:"")}
+function cierreHtml(t,s,cl){
+  if(cl){const who=porName(cl.por);
+    return `<div class="cierre done"><b class="ct">✅ Ronda terminada</b><span>${cl.ts?"A las "+hmS(cl.ts):""}${who?" · cerrada por "+esc(who):""} · tarjeta física entregada.${S.isAdmin?"":" Los scores quedaron cerrados; si hay un error, avísale al administrador."}</span>
+      <div class="row2"><button type="button" class="btn" id="tjVer">📄 Ver foto de la tarjeta</button>${S.isAdmin?(S.confirmReopen===t.id?`<button type="button" class="btn danger" id="tjReopen">Confirmar: reabrir ronda</button><button type="button" class="btn" id="tjNo">No</button>`:`<button type="button" class="btn" id="tjReopen">Reabrir ronda</button>`):""}</div></div>`}
+  const falta=s.total-s.thru;
+  if(falta>0)return `<div class="cierre off"><b class="ct">🏁 Terminar ronda</b><span>Faltan ${falta} ${falta===1?"hoyo":"hoyos"}. Cuando anoten los ${s.total} hoyos podrán terminar la ronda subiendo una foto de la tarjeta física.</span></div>`;
+  const d=S.tjDraft[t.id];
+  return `<div class="cierre ready"><b class="ct">🏁 ¡Anotaron los ${s.total} hoyos!</b><span>Revisen que la tarjeta de abajo coincida con la tarjeta física. Para terminar la ronda, saquen una foto de la tarjeta física firmada${d?" y aprieten <b>Terminar ronda</b>":""}.</span>
+    ${d?`<img class="tjprev" src="${d}" alt="Foto de la tarjeta">`:""}
+    <div class="row2"><button type="button" class="btn${d?"":" primary"}" id="tjFoto">📷 ${d?"Cambiar foto":"Foto de la tarjeta física"}</button><button type="button" class="btn primary" id="tjEnd"${d?"":" disabled"}>Terminar ronda</button></div></div>`}
+function bindCierre(t){
+  if($("tjFoto"))$("tjFoto").onclick=()=>{S.tjFor=t.id;$("tjFile").click()};
+  if($("tjEnd"))$("tjEnd").onclick=()=>terminarRonda(t);
+  if($("tjVer"))$("tjVer").onclick=()=>verTarjeta(t);
+  if($("tjNo"))$("tjNo").onclick=()=>{S.confirmReopen=null;renderEntry()};
+  if($("tjReopen"))$("tjReopen").onclick=async()=>{if(S.confirmReopen!==t.id){S.confirmReopen=t.id;renderEntry();return}
+    S.confirmReopen=null;try{await S.db.ref("cierre/"+t.id).set(null);toast(`Ronda de ${t.name} reabierta`)}catch(e){writeErr(e)}};
+}
+$("tjFile").onchange=async e=>{const f=e.target.files[0];e.target.value="";const tid=S.tjFor;if(!f||!tid)return;
+  try{S.tjDraft[tid]=await shrinkTo(f,1600,.7)}catch(err){toast("No se pudo leer esa imagen");return}
+  if(S.tjDraft[tid].length>1400000){try{S.tjDraft[tid]=await shrinkTo(f,1200,.6)}catch(err){}}
+  renderEntry()};
+async function terminarRonda(t){
+  if(!S.db)return;
+  if(!S.isAdmin){const mt=myTeam();if(!mt||mt.id!==t.id){toast("Solo puedes terminar la ronda de tu equipo");return}}
+  const s=stats(t);if(s.thru<s.total){toast("Faltan hoyos por anotar");return}
+  const d=S.tjDraft[t.id];if(!d){toast("Falta la foto de la tarjeta física");return}
+  const by=S.me&&S.jug[S.me]?S.me:(S.isAdmin?"admin":null);
+  $("tjEnd").disabled=true;
+  try{await S.db.ref().update({[`tarjetas/${t.id}`]:d,[`cierre/${t.id}`]:{ts:firebaseTime(),por:by||""}});
+    S.tjCache[t.id]=d;delete S.tjDraft[t.id];S.cierre[t.id]=S.cierre[t.id]||{ts:Date.now(),por:by||""};toast("¡Ronda terminada! Tarjeta entregada");renderEntry();renderBoard()}
+  catch(e){toast(/permission/i.test(String(e&&(e.code||e.message)))?"No se pudo terminar la ronda (¿ya estaba cerrada o el torneo no está en juego?)":"No se pudo guardar, revisa la señal e intenta de nuevo");if($("tjEnd"))$("tjEnd").disabled=false}}
+async function verTarjeta(t){
+  $("tjTitle").textContent="Tarjeta de "+t.name;const cl=S.cierre[t.id];
+  $("tjWho").textContent=cl?`Entregada${cl.ts?" a las "+hmS(cl.ts):""}${porName(cl.por)?" por "+porName(cl.por):""}`:"";
+  $("tjImg").removeAttribute("src");$("tjModal").hidden=false;
+  let d=S.tjCache[t.id];if(!d){try{d=await S.dbGet("tarjetas/"+t.id)}catch(e){}if(d)S.tjCache[t.id]=d}
+  if(d)$("tjImg").src=d;else $("tjWho").textContent="No se encontró la foto de la tarjeta."}
+$("tjClose").onclick=()=>{$("tjModal").hidden=true};
 function contestForm(t,h){
   const c=contestList().find(x=>x.h.key===h.key);if(!c)return "";
   return `<div class="cform"><div class="lbl">Concurso ${c.title} en este hoyo</div>
@@ -1160,23 +1256,24 @@ function contestForm(t,h){
 }
 function renderStateBox(){
   const st=S.cfg.estado,box=$("stateBox"),hm=t=>t?new Date(t).toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit",hour12:false}):"";
-  const played=S.teams.filter(t=>stats(t).thru).length,done=S.teams.filter(t=>{const x=stats(t);return x.thru&&x.thru===x.total}).length;
-  const info=st==="previo"?"Los equipos todavía no pueden anotar scores.":st==="en_juego"?`Comenzó a las ${hm(S.cfg.inicio)} · ${played} de ${S.teams.length} equipos en cancha · ${done} terminaron.`:`Finalizó a las ${hm(S.cfg.fin)}. Los scores quedaron cerrados y el podio está visible para todos.`;
-  const action={previo:["Iniciar torneo","en_juego","Desde ese momento todos pueden anotar scores."],en_juego:["Finalizar torneo","finalizado",done<S.teams.length?`Aún faltan ${S.teams.length-done} equipos por terminar. Se cerrarán los scores y se mostrará el podio.`:"Se cerrarán los scores y se mostrará el podio."],finalizado:["Reabrir torneo","en_juego","Los equipos podrán volver a anotar y corregir scores."]}[st];
+  const played=S.teams.filter(t=>stats(t).thru).length,done=S.teams.filter(t=>S.cierre[t.id]).length;
+  const info=st==="previo"?"Los equipos todavía no pueden anotar scores.":st==="en_juego"?`Comenzó a las ${hm(S.cfg.inicio)} · ${played} de ${S.teams.length} equipos en cancha · ${done} cerraron su ronda con tarjeta.`:`Finalizó a las ${hm(S.cfg.fin)}. Los scores quedaron cerrados y el podio está visible para todos.`;
+  const action={previo:["Iniciar torneo","en_juego","Desde ese momento todos pueden anotar scores."],en_juego:["Finalizar torneo","finalizado",done<S.teams.length?`Aún faltan ${S.teams.length-done} equipos por cerrar su ronda. Se cerrarán los scores y se mostrará el podio.`:"Se cerrarán los scores y se mostrará el podio."],finalizado:["Reabrir torneo","en_juego","Los equipos podrán volver a anotar y corregir scores."]}[st];
   const label={previo:"Por comenzar",en_juego:"En juego",finalizado:"Finalizado"}[st];
   if(S.confirmReset){box.innerHTML=`<div class="lbl">Reiniciar torneo</div><p class="sub" style="margin:0">Esto no se puede deshacer. El torneo vuelve a "Por comenzar".</p>
     <div class="resetopts"><button class="btn" id="rsScores">Borrar solo scores<small>Mantiene equipos, jugadores y fotos</small></button>
     <button class="btn danger" id="rsAll">Borrar todo<small>Scores, equipos, jugadores y fotos</small></button>
     <button class="btn" id="rsNo">Cancelar</button></div>`;
     $("rsNo").onclick=()=>{S.confirmReset=false;renderStateBox()};
-    const doReset=async all=>{const u={scores:null,salidas:null,ts:null,por:null,concursos:null,apuestas:null,"config/estado":"previo","config/inicio":0,"config/fin":0,"config/podio":false,"config/publicado":null};
+    const doReset=async all=>{const u={scores:null,salidas:null,ts:null,por:null,concursos:null,apuestas:null,cierre:null,tarjetas:null,"config/estado":"previo","config/inicio":0,"config/fin":0,"config/podio":false,"config/publicado":null};
       if(all){u.equipos=null;u.fotos=null}
       S.confirmReset=false;try{await S.db.ref().update(u);toast(all?"Torneo borrado por completo":"Scores borrados, equipos intactos")}catch(e){writeErr(e)}renderStateBox()};
     $("rsScores").onclick=()=>doReset(false);$("rsAll").onclick=()=>doReset(true);return}
   box.innerHTML=S.confirmState?`<div class="lbl">¿${action[0]}?</div><p class="sub" style="margin:0">${action[2]}</p>
     <div class="row2"><button class="btn primary" id="stYes">Sí, ${action[0].toLowerCase()}</button><button class="btn" id="stNo">Cancelar</button></div>`
-   :`<div class="strow"><div><div class="lbl">Estado del torneo</div><div class="stlabel s-${st}">${label}</div></div><button class="btn ${st==="en_juego"?"danger":"primary"} stbtn" id="stGo">${action[0]}</button></div><p class="sub" style="margin:0">${info}</p>${st==="finalizado"&&(currentWinner()||currentLoser())?`<button class="btn" id="pubGo">${S.cfg.publicado?"Volver a publicar campeón y ucornianos":"Publicar campeón y ucornianos"}</button>`:""}<button class="linkbtn" id="resetGo">Reiniciar torneo…</button>`;
+   :`<div class="strow"><div><div class="lbl">Estado del torneo</div><div class="stlabel s-${st}">${label}</div></div><button class="btn ${st==="en_juego"?"danger":"primary"} stbtn" id="stGo">${action[0]}</button></div><p class="sub" style="margin:0">${info}</p>${st==="finalizado"&&(currentWinner()||currentLoser())?`<button class="btn" id="pubGo">${S.cfg.publicado?"Volver a publicar campeón y ucornianos":"Publicar campeón y ucornianos"}</button>`:""}${st!=="previo"&&S.teams.length?`<div><div class="lbl">Rondas y tarjetas · ${done} de ${S.teams.length}</div>${S.teams.map(t=>{const x=stats(t),c=S.cierre[t.id];return `<div class="tjrow"><span>${esc(t.name)} <small>${c?"✅ cerrada"+(c.ts?" "+hm(c.ts):""):x.thru===x.total?"18 anotados · falta cerrar":x.thru?x.thru+" hoyos":"sin empezar"}</small></span>${c?`<button type="button" class="btn" data-tjv="${esc(t.id)}">Ver tarjeta</button>`:""}</div>`}).join("")}</div>`:""}<button class="linkbtn" id="resetGo">Reiniciar torneo…</button>`;
   if($("resetGo"))$("resetGo").onclick=()=>{S.confirmReset=true;renderStateBox()};
+  box.querySelectorAll("[data-tjv]").forEach(b=>b.onclick=()=>{const t=S.teams.find(x=>x.id===b.dataset.tjv);if(t)verTarjeta(t)});
   if($("stGo"))$("stGo").onclick=()=>{S.confirmState=true;renderStateBox()};
   if($("stNo"))$("stNo").onclick=()=>{S.confirmState=false;renderStateBox()};
   if($("stYes"))$("stYes").onclick=async()=>{const next=action[1];const upd={estado:next};
@@ -1209,7 +1306,10 @@ function renderConfig(){
   const full=S.teams.length>=MAX_TEAMS&&!S.editId;$("addForm").hidden=full;$("fullNote").hidden=!full;syncForm();
   const pl=$("plist");
   if(pl.contains(document.activeElement)&&document.activeElement.classList.contains("hin"))return;
-  pl.innerHTML=S.teams.length?S.teams.map((t,i)=>`<div class="pitem"><span class="idx">${i+1}</span><span class="n">${hasFotos(t)?`<span class="stack">${CATS.map(c=>av(t,c,"mini")).join("")}</span>`:""}${esc(t.name)}<small>${CATS.map(c=>`${c}: ${esc(pName(t,c))}`).join(" · ")}</small><button class="linkbtn" data-edit="${esc(t.id)}">Editar</button></span>${(()=>{const hi=teamHcpInfo(t);return hi.fijo?`<label class="h hauto hfx" title="Índice fijado por el admin${hi.calc.auto?" (el calculado sería "+d2(hi.calc.v)+")":""}">Índice <input class="hin hfix" type="text" inputmode="numeric" data-id="${esc(t.id)}" value="${hi.v}" aria-label="Índice de ${esc(t.name)}"><small class="hfijo">fijo</small><button type="button" class="linkbtn hunfix" data-unfix="${esc(t.id)}">↺ auto${hi.calc.auto?" "+d2(hi.calc.v):""}</button></label>`:hi.auto?`<label class="h hauto hfx" title="Calculado con el índice de cada jugador. Cámbialo para fijarlo a mano.">Índice <input class="hin hfix" type="text" inputmode="numeric" data-id="${esc(t.id)}" value="${hi.v}" aria-label="Índice de ${esc(t.name)}"><small>auto</small></label>`:`<label class="h" title="Falta el índice de ${hi.missing.join(", ")}">Índice <input class="hin" type="text" inputmode="decimal" id="hcp-${esc(t.id)}" data-id="${esc(t.id)}" value="${dec(Number(t.hcp)||0)}"><small class="hmiss">falta ${hi.missing.join(", ")}</small></label>`})()}${S.confirmDel===t.id?`<button class="btn danger" data-del="${esc(t.id)}">Confirmar</button><button class="btn" data-cancel="1">No</button>`:`<button class="btn" data-ask="${esc(t.id)}">Quitar</button>`}</div>`).join(""):`<div class="note">Sin equipos todavía. Agrega el primero abajo.</div>`;
+  pl.innerHTML=S.teams.length?S.teams.map((t,i)=>`<div class="pitem"><span class="idx">${i+1}</span><span class="n">${hasFotos(t)?`<span class="stack">${CATS.map(c=>av(t,c,"mini")).join("")}</span>`:""}${esc(t.name)}<small>${CATS.map(c=>`${c}: ${esc(pName(t,c))}`).join(" · ")}</small><label class="salpick">🚩 Sale en <select data-sal="${esc(t.id)}" aria-label="Hoyo de salida de ${esc(t.name)}"><option value="">Sin asignar</option>${holes().map(h=>`<option value="${h.key}"${t.salida===h.key?" selected":""}>${esc(holeLabel(h))}${S.teams.some(x=>x.id!==t.id&&x.salida===h.key)?" (ocupado)":""}</option>`).join("")}</select></label><button class="linkbtn" data-edit="${esc(t.id)}">Editar</button></span>${(()=>{const hi=teamHcpInfo(t);return hi.fijo?`<label class="h hauto hfx" title="Índice fijado por el admin${hi.calc.auto?" (el calculado sería "+d2(hi.calc.v)+")":""}">Índice <input class="hin hfix" type="text" inputmode="numeric" data-id="${esc(t.id)}" value="${hi.v}" aria-label="Índice de ${esc(t.name)}"><small class="hfijo">fijo</small><button type="button" class="linkbtn hunfix" data-unfix="${esc(t.id)}">↺ auto${hi.calc.auto?" "+d2(hi.calc.v):""}</button></label>`:hi.auto?`<label class="h hauto hfx" title="Calculado con el índice de cada jugador. Cámbialo para fijarlo a mano.">Índice <input class="hin hfix" type="text" inputmode="numeric" data-id="${esc(t.id)}" value="${hi.v}" aria-label="Índice de ${esc(t.name)}"><small>auto</small></label>`:`<label class="h" title="Falta el índice de ${hi.missing.join(", ")}">Índice <input class="hin" type="text" inputmode="decimal" id="hcp-${esc(t.id)}" data-id="${esc(t.id)}" value="${dec(Number(t.hcp)||0)}"><small class="hmiss">falta ${hi.missing.join(", ")}</small></label>`})()}${S.confirmDel===t.id?`<button class="btn danger" data-del="${esc(t.id)}">Confirmar</button><button class="btn" data-cancel="1">No</button>`:`<button class="btn" data-ask="${esc(t.id)}">Quitar</button>`}</div>`).join(""):`<div class="note">Sin equipos todavía. Agrega el primero abajo.</div>`;
+  pl.querySelectorAll("[data-sal]").forEach(sel=>sel.onchange=async()=>{const t=S.teams.find(x=>x.id===sel.dataset.sal);if(!t)return;const v=sel.value||null;
+    try{await S.db.ref("equipos/"+t.id+"/salida").set(v);toast(v?`${t.name} sale en ${salidaLabel({salida:v})}`:`${t.name}: sin hoyo de salida`)}catch(e){writeErr(e)}});
+  {const nA=S.teams.filter(t=>t.salida).length;if($("salInfo"))$("salInfo").textContent=S.teams.length?`${nA} de ${S.teams.length} con hoyo de salida`:"";}
   pl.querySelectorAll(".hfix").forEach(inp=>inp.onchange=async()=>{
     const v0=parseHcp(inp.value);if(v0===null){toast("Índice entre 0 y 54");inp.value=teamHcp(S.teams.find(x=>x.id===inp.dataset.id));return}
     const v=Math.round(v0),t=S.teams.find(x=>x.id===inp.dataset.id);if(!t)return;const hi=teamHcpInfo(t);
@@ -1381,7 +1481,7 @@ function openProfile(){if(!S.me||!S.jug[S.me])return;const j=S.jug[S.me],t=myTea
   $("profTalla").innerHTML=`<span>Talla de polera</span><div class="ynseg">${TALLAS.map(x=>`<button type="button" class="segb${tl===x?" on":""}" data-pt="${x}" aria-pressed="${tl===x}">${x}</button>`).join("")}</div>`;
   $("profTalla").querySelectorAll("[data-pt]").forEach(b=>b.onclick=async()=>{const v=b.dataset.pt;if((S.jug[S.me]||{}).talla===v)return;
     try{await S.db.ref(`jugadores/${S.me}/talla`).set(v);if(S.jug[S.me])S.jug[S.me].talla=v;toast(`Talla ${v} guardada`);openProfile()}catch(e){toast("No se pudo guardar, intenta de nuevo")}});
-  $("profName").textContent=j.nombre;$("profInfo").textContent=`RUT ${j.rut}${jj===false?" · No juegas esta fecha":mc?` · Categoría ${mc.cat} (puesto ${mc.pos} por índice)`:jj===null?" · Responde si juegas para tener categoría":" · Sin categoría hasta que ingreses tu índice"}${t?` · ${t.name}`:""}`;
+  $("profName").textContent=j.nombre;$("profInfo").textContent=`RUT ${j.rut}${jj===false?" · No juegas esta fecha":mc?` · Categoría ${mc.cat} (puesto ${mc.pos} por índice)`:jj===null?" · Responde si juegas para tener categoría":" · Sin categoría hasta que ingreses tu índice"}${t?` · ${t.name}${t.salida?" · sale en "+salidaLabel(t):""}`:""}`;
   $("profHint").textContent=f?"Así te ven los demás en la tabla y en tu equipo.":"Sube una foto para que tus compañeros te reconozcan en la app.";
   $("profPhoto").textContent=f?"Cambiar mi foto":"Subir mi foto";$("profModal").hidden=false}
 function choosePhoto(){const tg=S.photoTarget||{};let who="";
@@ -1592,11 +1692,11 @@ function firebaseTime(){return (window.firebase&&firebase.database&&firebase.dat
 function writeErr(e){const c=String(e&&(e.code||e.message)||"");toast(/permission/i.test(c)?"Solo el administrador puede hacer esto":"No se pudo guardar, intenta de nuevo")}
 function saveStroke(tid,key,v,drive,stay){
   if(!S.db)return;
-  if(!S.isAdmin){const mt=myTeam();if(!mt||mt.id!==tid){toast("Solo puedes anotar en tu equipo");return}}
+  if(!S.isAdmin){const mt=myTeam();if(!mt||mt.id!==tid){toast("Solo puedes anotar en tu equipo");return}if(S.cierre[tid]){toast("La ronda ya está terminada");return}}
   const t=S.teams.find(x=>x.id===tid);if(!t)return;
   S.scores[tid]=Object.assign({},S.scores[tid],{[key]:v});S.salidas[tid]=Object.assign({},S.salidas[tid],{[key]:drive});
   if(v===null){delete S.scores[tid][key];delete S.salidas[tid][key];S.drive=null}
-  if(v!==null&&S.hole<holes().length-1)S.hole++;
+  if(v!==null){const nx=stepHole(t,S.hole,1);if(nx!==null)S.hole=nx}
   S.driveFor=null;
   renderEntry();renderBoard();
   // Score y salida se guardan juntos; sin señal, Firebase los envía cuando vuelve la conexión
@@ -1774,9 +1874,9 @@ function startDemo(){
       store.ts[id][h.key]=Date.now()-(thru[i]-k)*11*60000})});
   const get=p=>p.split("/").reduce((o,k)=>o&&o[k],store);
   const put=(p,v)=>{const ks=p.split("/");let o=store;ks.slice(0,-1).forEach(k=>{o[k]=o[k]||{};o=o[k]});if(v===null)delete o[ks[ks.length-1]];else o[ks[ks.length-1]]=v};
-  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores","campeones","jfotos","por","ucornianos"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,hcpFijo:v[id].hcpFijo,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
+  const sync=()=>{["equipos","scores","salidas","ts","concursos","fotos","jugadores","campeones","jfotos","por","ucornianos"].forEach(k=>{if(!store[k])store[k]={}});const v=store.equipos;S.teams=Object.keys(v).map(id=>({id,name:v[id].name,hcp:v[id].hcp,hcpFijo:v[id].hcpFijo,salida:v[id].salida,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created})).sort((a,b)=>a.created-b.created);
     S.scores=JSON.parse(JSON.stringify(store.scores));S.salidas=JSON.parse(JSON.stringify(store.salidas));
-    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.apuestas=JSON.parse(JSON.stringify(store.apuestas||{}));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));S.hof=JSON.parse(JSON.stringify(store.campeones||{}));S.jfotos=JSON.parse(JSON.stringify(store.jfotos||{}));S.por=JSON.parse(JSON.stringify(store.por||{}));S.uc=JSON.parse(JSON.stringify(store.ucornianos||{}));S.jugLoaded=true;applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
+    S.ts=JSON.parse(JSON.stringify(store.ts));S.concursos=JSON.parse(JSON.stringify(store.concursos));S.apuestas=JSON.parse(JSON.stringify(store.apuestas||{}));S.fotos=JSON.parse(JSON.stringify(store.fotos||{}));S.jug=JSON.parse(JSON.stringify(store.jugadores||{}));S.hof=JSON.parse(JSON.stringify(store.campeones||{}));S.jfotos=JSON.parse(JSON.stringify(store.jfotos||{}));S.por=JSON.parse(JSON.stringify(store.por||{}));S.cierre=JSON.parse(JSON.stringify(store.cierre||{}));S.uc=JSON.parse(JSON.stringify(store.ucornianos||{}));S.jugLoaded=true;applyConfig(JSON.parse(JSON.stringify(store.config)));renderAll()};
   S.db={ref:(p)=>({set:async v=>{put(p,v);sync()},update:async m=>{Object.keys(m).forEach(k=>put(p?p+"/"+k:k,m[k]));sync()},push:async v=>{put(p+"/n"+Date.now(),v);sync()}})};
   S.dbGet=async p=>JSON.parse(JSON.stringify(get(p)??null));
   S.isAdmin=true;sync();setLive(true,"Demo");showBanner("Modo demo con equipos de ejemplo: puedes probar todo, pero nada se guarda.");
@@ -1803,7 +1903,7 @@ if(location.hash==="#demo"||!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==="P
   db.ref(".info/connected").on("value",s=>setLive(!!s.val(),s.val()?"En vivo":"Sin señal · se guarda igual"));
   db.ref("config").on("value",s=>{applyConfig(s.val());renderAll()});
   db.ref("equipos").on("value",s=>{const v=s.val()||{};
-    S.teams=Object.keys(v).map(id=>({id,name:String(v[id].name||"Equipo"),hcp:v[id].hcp,hcpFijo:typeof v[id].hcpFijo==="number"?v[id].hcpFijo:undefined,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created||0})).sort((a,b)=>a.created-b.created);
+    S.teams=Object.keys(v).map(id=>({id,name:String(v[id].name||"Equipo"),hcp:v[id].hcp,hcpFijo:typeof v[id].hcpFijo==="number"?v[id].hcpFijo:undefined,salida:typeof v[id].salida==="string"?v[id].salida:undefined,players:v[id].players||{},ruts:v[id].ruts||{},created:v[id].created||0})).sort((a,b)=>a.created-b.created);
     renderAll()});
   db.ref("scores").on("value",s=>{S.scores=s.val()||{};renderBoard();renderEntry()});
   db.ref("salidas").on("value",s=>{S.salidas=s.val()||{};renderBoard();renderEntry()});
@@ -1814,6 +1914,7 @@ if(location.hash==="#demo"||!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey==="P
   db.ref("jugadores").on("value",s=>{S.jug=s.val()||{};S.jugLoaded=true;
     if(S.me&&!S.jug[S.me]){S.me=null;try{localStorage.removeItem("fsc-me")}catch(e){}}renderAll()});
   db.ref("por").on("value",s=>{S.por=s.val()||{};renderEntry()});
+  db.ref("cierre").on("value",s=>{S.cierre=s.val()||{};renderBoard();renderEntry();renderStateBox()});
   S.realDb=true;S.dbGet=p=>db.ref(p).once("value").then(s=>s.val());
   db.ref("jfotov").on("value",s=>{S.jfotov=s.val()||{};syncJfotos()});
   db.ref("campeones").on("value",s=>{S.hof=s.val()||{};renderHof();migrateFotos()});
